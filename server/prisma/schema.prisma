@@ -1,0 +1,596 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// ENUMS: Expanded for better coverage
+// ========================================
+enum Role {
+  EMPLOYEE
+  MANAGER
+  HR_ADMIN
+  RECRUITER
+  CANDIDATE // For external applicants
+  SYSTEM_ADMIN
+}
+
+enum ContractType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+  FREELANCE
+}
+
+enum LeaveType {
+  VACATION
+  SICK
+  MATERNITY
+  PATERNITY
+  BEREAVEMENT
+  UNPAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum EvalPeriod {
+  QUARTERLY
+  SEMI_ANNUAL
+  ANNUAL
+  AD_HOC
+}
+
+enum PostingStatus {
+  OPEN
+  CLOSED
+  DRAFT
+  PAUSED
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWED
+  INTERVIEW
+  SELECTED
+  REJECTED
+  OFFERED
+  HIRED
+}
+
+enum TrainingType {
+  INTERNAL
+  EXTERNAL
+  ONLINE
+  IN_PERSON
+  MANDATORY
+}
+
+enum DepartureReason {
+  RESIGNATION
+  FIRING
+  RETIREMENT
+  TERMINATION
+  LAYOFF
+}
+
+enum ReportType {
+  PERFORMANCE
+  ABSENCE
+  SALARY
+  TURNOVER
+  DIVERSITY
+  COMPLIANCE
+}
+
+// ========================================
+// CORE AUTH & USER MANAGEMENT
+// ========================================
+model User {
+  id               Int       @id @default(autoincrement())
+  email            String    @unique
+  passwordHash     String // Hashed password (use bcrypt/argon2)
+  role             Role
+  isActive         Boolean   @default(true)
+  isEmailVerified  Boolean   @default(false)
+  emailVerifiedAt  DateTime?
+  lastLoginAt      DateTime?
+  otp              String? // One-time password
+  otpExpiry        DateTime?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  refreshTokenHash String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime? // Soft delete
+
+  // Tenant/multi-site support
+  tenantId String? // For multi-tenancy (company/organization ID)
+
+  // One-to-one: Every user has exactly one profile
+  profile Profile? @relation("UserProfile")
+
+  // Messaging (internal communication)
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+
+  // Job Postings created by user
+  jobPostingsCreated JobPosting[] @relation("JobPostingsCreated")
+
+  // Audit trails
+  createdBy    User?  @relation("AuditCreatedBy", fields: [createdById], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  createdById  Int?
+  createdUsers User[] @relation("AuditCreatedBy")
+  updatedBy    User?  @relation("AuditUpdatedBy", fields: [updatedById], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  updatedById  Int?
+  updatedUsers User[] @relation("AuditUpdatedBy")
+
+  // Audit logs performed by this user
+  auditLogs AuditLog[] @relation("UserAuditLogs")
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([tenantId])
+  @@index([deletedAt]) // For soft delete queries
+}
+
+// ========================================
+// PROFILE: Unified model for all roles (polymorphic via role & JSON)
+// ========================================
+model Profile {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique
+  user   User @relation("UserProfile", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Common fields across roles
+  fullName        String
+  avatarUrl       String?
+  phone           String?
+  site            String? // e.g., "New York Office"
+  department      String?
+  position        String?
+  hireDate        DateTime?
+  terminationDate DateTime?
+  isTerminated    Boolean       @default(false)
+  seniority       Int? // Years of experience/seniority
+  contractType    ContractType?
+  contractStart   DateTime?
+  contractEnd     DateTime?
+
+  // Role-specific data (JSON for flexibility & extensibility)
+  roleData Json? // e.g., { manager: {teamIds: [1,2]}, hrAdmin: {sites: ["NY"]}, recruiter: {specialties: ["Tech"]} }
+
+  // Hierarchical relationships (manager-employee)
+  managedProfiles Profile[] @relation("ManagerProfiles")
+  manager         Profile?  @relation("ManagerProfiles", fields: [managerId], references: [id])
+  managerId       Int?
+
+  // Common relationships
+  documents            Document[]    @relation("ProfileDocuments")
+  leaves               Leave[]       @relation("ProfileLeaves")
+  managedLeaves        Leave[]       @relation("ManagerLeaveApprovals")
+  hrAdminLeaves        Leave[]       @relation("HRAdminLeaveOverrides")
+  schedules            Schedule[]    @relation("ProfileSchedules")
+  evaluations          Evaluation[]  @relation("ProfileEvaluations")
+  evaluatorEvaluations Evaluation[]  @relation("EvaluatorEvaluations")
+  trainings            Training[]    @relation("ProfileTrainings")
+  assignedTrainings    Training[]    @relation("AssignedTrainings")
+  payments             Payment[]     @relation("ProfilePayments")
+  processedPayments    Payment[]     @relation("ProcessedPayments")
+  departures           Departure?    @relation("ProfileDeparture")
+  processedDepartures  Departure[]   @relation("ProcessedDepartures")
+  applications         Application[] @relation("ProfileApplications") // For candidates/recruiters
+
+  // Announcements (HR only, but linked via profile)
+  announcements Announcement[] @relation("ProfileAnnouncements")
+
+  // Reports (HR only)
+  reports Report[] @relation("ProfileReports")
+
+  // Job postings (recruiter only)
+  jobPostings JobPosting[] @relation("ProfileJobPostings")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  @@index([userId])
+  @@index([department])
+  @@index([site])
+  @@index([managerId])
+  @@index([isTerminated, deletedAt])
+}
+
+// ========================================
+// PERMISSIONS: RBAC system
+// ========================================
+model Permissions {
+  id       Int      @id @default(autoincrement())
+  role     Role
+  resource String // e.g., "Leave", "Payment", "JobPosting"
+  actions  String[] // e.g., ["read", "create", "update", "delete", "approve"]
+  site     String? // Site-specific permissions
+  tenantId String? // Multi-tenant permissions
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([role, resource, site, tenantId]) // Prevent duplicates
+  @@index([role, resource])
+}
+
+// ========================================
+// CANDIDATE: Simplified external applicants
+// ========================================
+model Candidate {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  fullName    String
+  phone       String?
+  linkedinUrl String?
+  resumeUrl   String? // Link to stored resume
+  status      String   @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  applications Application[] @relation("CandidateApplications")
+  documents    Document[]    @relation("CandidateDocuments")
+
+  @@index([email])
+}
+
+// ========================================
+// RECRUITING
+// ========================================
+model JobPosting {
+  id           Int           @id @default(autoincrement())
+  title        String
+  description  String?
+  department   String?
+  site         String?
+  salaryRange  Json? // {min: 50000, max: 80000, currency: "USD"}
+  requirements String?
+  status       PostingStatus @default(OPEN)
+  publishedAt  DateTime?
+  expiresAt    DateTime?
+
+  // Linked to recruiter profile
+  recruiterId Int?
+  recruiter   Profile? @relation("ProfileJobPostings", fields: [recruiterId], references: [id])
+
+  applications Application[]
+
+  createdBy     Int?
+  createdByUser User? @relation("JobPostingsCreated", fields: [createdBy], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([recruiterId])
+  @@index([status])
+  @@index([site, department])
+}
+
+model Application {
+  id          Int        @id @default(autoincrement())
+  candidateId Int?
+  candidate   Candidate? @relation("CandidateApplications", fields: [candidateId], references: [id], onDelete: SetNull)
+  postingId   Int
+  posting     JobPosting @relation(fields: [postingId], references: [id], onDelete: Cascade)
+
+  // For internal applications (e.g., employee transfers)
+  profileId Int?
+  profile   Profile? @relation("ProfileApplications", fields: [profileId], references: [id], onDelete: SetNull)
+
+  status        ApplicationStatus @default(PENDING)
+  appliedAt     DateTime          @default(now())
+  interviewedAt DateTime?
+  offerSentAt   DateTime?
+  hiredAt       DateTime?
+
+  // Notes/feedback
+  feedback String?
+  score    Float? // AI or manual score (0-100)
+
+  document Document? @relation("ApplicationDocument")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([candidateId])
+  @@index([postingId])
+  @@index([status])
+  @@index([profileId])
+}
+
+// ========================================
+// DOCUMENTS: Centralized storage
+// ========================================
+model Document {
+  id           Int      @id @default(autoincrement())
+  fileName     String
+  type         String // e.g., "RESUME", "PAYSLIP", "CONTRACT", "MEDICAL_CERT"
+  mimeType     String? // e.g., "application/pdf"
+  size         Int? // In bytes
+  uploadUrl    String? // S3/GCS URL
+  thumbnailUrl String? // For previews
+  uploadDate   DateTime @default(now())
+
+  // Polymorphic: Can belong to Profile, Candidate, or Application
+  profileId Int?
+  profile   Profile? @relation("ProfileDocuments", fields: [profileId], references: [id], onDelete: Cascade)
+
+  candidateId Int?
+  candidate   Candidate? @relation("CandidateDocuments", fields: [candidateId], references: [id], onDelete: Cascade)
+
+  applicationId Int?         @unique
+  application   Application? @relation("ApplicationDocument", fields: [applicationId], references: [id], onDelete: Cascade)
+
+  deletedAt DateTime?
+
+  @@index([profileId])
+  @@index([candidateId])
+  @@index([applicationId])
+  @@index([type, uploadDate])
+}
+
+// ========================================
+// TIME & ATTENDANCE
+// ========================================
+model Leave {
+  id        Int     @id @default(autoincrement())
+  profileId Int
+  profile   Profile @relation("ProfileLeaves", fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Approvers
+  managerId Int?     @map("manager_id")
+  manager   Profile? @relation("ManagerLeaveApprovals", fields: [managerId], references: [id])
+  hrAdminId Int?     @map("hr_admin_id")
+  hrAdmin   Profile? @relation("HRAdminLeaveOverrides", fields: [hrAdminId], references: [id])
+
+  type          LeaveType
+  startDate     DateTime
+  endDate       DateTime
+  daysRequested Float       @default(1.0)
+  reason        String?
+  status        LeaveStatus @default(PENDING)
+  balanceUsed   Float       @default(0.0)
+  // attachments    Document[]  // Related docs // This relation is ambiguous without a foreign key.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId, status])
+  @@index([startDate, endDate])
+  @@index([managerId])
+}
+
+model Schedule {
+  id        Int     @id @default(autoincrement())
+  profileId Int     @unique
+  profile   Profile @relation("ProfileSchedules", fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Flexible shift structure
+  shifts        Json[] // e.g., [{day: "MON", start: "09:00", end: "17:00", location: "Office"}]
+  rotationType  String? // e.g., "Fixed", "Rotating"
+  workWeekHours Float? // Total weekly hours
+
+  effectiveFrom DateTime?
+  effectiveTo   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+}
+
+// ========================================
+// PERFORMANCE & LEARNING
+// ========================================
+model Evaluation {
+  id        Int     @id @default(autoincrement())
+  profileId Int
+  profile   Profile @relation("ProfileEvaluations", fields: [profileId], references: [id], onDelete: Cascade)
+
+  evaluatorId Int?
+  evaluator   Profile? @relation("EvaluatorEvaluations", fields: [evaluatorId], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+  period       EvalPeriod
+  overallScore Float? // 1-5 scale
+  scores       Json? // {competency1: 4, competency2: 3}
+  achievements String?
+  improvements String?
+  goals        Json? // Array of {goal: string, targetDate: date}
+  selfEval     Boolean    @default(false)
+  feedback     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId, period])
+  @@index([evaluatorId])
+}
+
+model Training {
+  id             Int          @id @default(autoincrement())
+  title          String
+  description    String?
+  type           TrainingType
+  durationHours  Float?
+  provider       String? // Internal or external provider
+  cost           Float?
+  completionDate DateTime?
+  certification  String? // Cert ID or name
+  status         String       @default("ASSIGNED") // ASSIGNED, IN_PROGRESS, COMPLETED
+
+  profileId Int
+  profile   Profile @relation("ProfileTrainings", fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Assigned by manager/HR
+  assignedById Int?
+  assignedBy   Profile? @relation("AssignedTrainings", fields: [assignedById], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+  // documents      Document[]    // Training materials/certs // This relation is ambiguous without a foreign key.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@index([status, completionDate])
+}
+
+// ========================================
+// PAYROLL & BENEFITS
+// ========================================
+model Payment {
+  id        Int     @id @default(autoincrement())
+  profileId Int
+  profile   Profile @relation("ProfilePayments", fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Processed/approved by HR
+  processedById Int?
+  processedBy   Profile? @relation("ProcessedPayments", fields: [processedById], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+  period        String // e.g., "2025-11"
+  baseSalary    Float
+  bonuses       Float?
+  deductions    Json? // {tax: 1000, benefits: 200}
+  overtimeHours Float?
+  totalNet      Float // Calculated net pay
+  payslipUrl    String? // Link to generated payslip
+  paymentDate   DateTime
+
+  status String @default("PAID") // DRAFT, PROCESSED, PAID
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId, period])
+  @@index([paymentDate])
+}
+
+// ========================================
+// COMMUNICATION & ENGAGEMENT
+// ========================================
+model Message {
+  id         Int  @id @default(autoincrement())
+  senderId   Int
+  sender     User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId Int
+  receiver   User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  // Optional: Channel-specific (e.g., recruiter-candidate)
+  channelType String? // "INTERNAL", "RECRUITING"
+
+  subject String?
+  content String
+  isRead  Boolean @default(false)
+  // attachments Document[] // This relation is ambiguous without a foreign key.
+
+  createdAt DateTime @default(now())
+
+  @@index([senderId, receiverId])
+  @@index([createdAt, isRead])
+}
+
+model Announcement {
+  id          Int       @id @default(autoincrement())
+  title       String
+  content     String
+  type        String? // e.g., "Policy Update", "Event"
+  isGlobal    Boolean   @default(false) // Company-wide or site-specific
+  targetSites String[] // If not global
+  publishDate DateTime  @default(now())
+  expiresAt   DateTime?
+
+  // Posted by HR profile
+  postedById Int
+  postedBy   Profile @relation("ProfileAnnouncements", fields: [postedById], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([postedById])
+  @@index([publishDate])
+}
+
+// ========================================
+// OFFBOARDING & REPORTING
+// ========================================
+model Departure {
+  id        Int     @id @default(autoincrement())
+  profileId Int     @unique
+  profile   Profile @relation("ProfileDeparture", fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Processed by HR
+  processedById Int?
+  processedBy   Profile? @relation("ProcessedDepartures", fields: [processedById], references: [id], onUpdate: NoAction, onDelete: NoAction)
+
+  reason             DepartureReason
+  exitDate           DateTime
+  noticePeriodDays   Int?
+  finalPayAmount     Float?
+  indemnity          Float?
+  exitInterviewNotes String?
+  surveyResponses    Json? // Structured feedback
+
+  status String @default("PENDING") // PENDING, APPROVED, COMPLETED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@index([exitDate, status])
+}
+
+model Report {
+  id          Int        @id @default(autoincrement())
+  type        ReportType
+  title       String?
+  filters     Json? // Query params: {department: "IT", period: "Q4"}
+  data        Json // Generated report content (e.g., CSV/JSON export)
+  fileUrl     String? // Exported file link
+  generatedAt DateTime   @default(now())
+
+  // Generated by HR profile
+  generatedById Int
+  generatedBy   Profile @relation("ProfileReports", fields: [generatedById], references: [id], onDelete: Cascade)
+
+  @@index([generatedById, type])
+  @@index([generatedAt])
+}
+
+// ========================================
+// AUDIT RELATIONS (Reused for consistency)
+// ========================================
+
+model AuditLog {
+  id         Int     @id @default(autoincrement())
+  action     String // e.g., "CREATE_USER", "UPDATE_LEAVE"
+  resource   String // e.g., "Profile", "Payment"
+  resourceId Int?
+  oldValues  Json?
+  newValues  Json?
+  ipAddress  String?
+  userAgent  String?
+
+  performedById Int
+  performedBy   User @relation("UserAuditLogs", fields: [performedById], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([performedById])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+}

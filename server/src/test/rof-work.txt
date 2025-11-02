@@ -1,0 +1,365 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums (aligned with HRMS requirements)
+enum Role {
+  EMPLOYEE
+  MANAGER
+  HR_ADMIN
+  RECRUITER
+}
+
+enum LeaveType {
+  VACATION
+  SICK
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ContractType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+}
+
+enum CandidateStatus {
+  PENDING
+  SELECTED
+  REJECTED
+}
+
+enum EvaluationType {
+  SELF
+  MANAGER
+  ANNUAL
+}
+
+// Core Models
+model User {
+  id               Int        @id @default(autoincrement())
+  email            String     @unique
+  password         String     // Hashed
+  role             Role
+  isActive         Boolean    @default(true)
+  isEmailVerified  Boolean    @default(false)
+  otpExpiry        String?
+  verifyOtp        String?
+  resetOtp         String?
+  resetOtpExpiry   String?
+  refreshTokenHash String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  // Relations
+  profile          Profile?   @relation("UserProfile")
+  profileId        Int?       @unique
+  sentMessages     Message[]  @relation("SentMessages")
+  receivedMessages Message[]  @relation("ReceivedMessages")
+  announcements    Announcement[] @relation("HRAdminAnnouncements")
+  jobPostings      JobPosting[] @relation("RecruiterPostings")
+  approvals        Leave[]    @relation("ManagerApprovals")
+  evaluations      Evaluation[] @relation("ManagerEvaluations")
+  assignments      Training[] @relation("ManagerAssignments")
+  overrides        Leave[]    @relation("HRAdminOverrides")
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Profile {
+  id              Int       @id @default(autoincrement())
+  firstName       String
+  lastName        String
+  phone           String?
+  department      String
+  site            String    // Multisite support
+  seniority       Int       @default(0)
+  contractStart   DateTime?
+  contractEnd     DateTime?
+  contractType    ContractType?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user            User?     @relation("UserProfile")
+  manager         Profile?  @relation("ManagerProfile", fields: [managerId], references: [id])
+  managerId       Int?      @map("manager_id")
+  team            Profile[] @relation("ManagerProfile")
+  contracts       Contract[]
+  documents       Document[] @relation("EmployeeDocuments")
+  leaves          Leave[]   @relation("EmployeeLeaves")
+  schedules       Schedule[]
+  evaluations     Evaluation[] @relation("EmployeeEvaluations")
+  trainings       Training[] @relation("EmployeeTrainings")
+  payments        Payment[]
+  departure       Departure? @relation("EmployeeDeparture")
+
+  @@index([site])
+  @@index([department])
+  @@map("profiles")
+}
+
+model Contract {
+  id              Int          @id @default(autoincrement())
+  type            ContractType
+  startDate       DateTime
+  endDate         DateTime?
+  salary          Decimal      @db.Decimal(10, 2)
+  benefits        String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  profile         Profile      @relation(fields: [profileId], references: [id])
+  profileId       Int
+
+  @@index([profileId])
+  @@map("contracts")
+}
+
+model Document {
+  id            Int      @id @default(autoincrement())
+  fileName      String
+  type          String   // e.g., "MedicalCert", "Payslip"
+  uploadDate    DateTime @default(now())
+  content       Bytes?   // Or URL
+  uploadedBy    Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  employee      Profile? @relation("EmployeeDocuments", fields: [employeeId], references: [id])
+  employeeId    Int?     @map("employee_id")
+  candidate     Candidate? @relation("CandidateDocuments", fields: [candidateId], references: [id])
+  candidateId   Int?     @map("candidate_id")
+  application   Application? @relation("ApplicationDocument", fields: [applicationId], references: [id])
+  applicationId Int?     @unique @map("application_id")
+
+  @@index([employeeId])
+  @@index([candidateId])
+  @@map("documents")
+}
+
+model Leave {
+  id               Int         @id @default(autoincrement())
+  type             LeaveType
+  startDate        DateTime
+  endDate          DateTime
+  status           LeaveStatus @default(PENDING)
+  balanceRemaining Float
+  reason           String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  employee         Profile     @relation("EmployeeLeaves", fields: [employeeId], references: [id])
+  employeeId       Int
+  manager          User?       @relation("ManagerApprovals", fields: [managerId], references: [id])
+  managerId        Int?
+  hrAdmin          User?       @relation("HRAdminOverrides", fields: [hrAdminId], references: [id])
+  hrAdminId        Int?
+
+  @@index([employeeId, status])
+  @@map("leaves")
+}
+
+model Schedule {
+  id           Int      @id @default(autoincrement())
+  startTime    DateTime
+  endTime      DateTime
+  shiftType    String
+  rotationType String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  employee     Profile  @relation("EmployeeSchedule", fields: [employeeId], references: [id])
+  employeeId   Int      @unique
+
+  @@index([employeeId])
+  @@map("schedules")
+}
+
+model Evaluation {
+  id              Int            @id @default(autoincrement())
+  type            EvaluationType
+  score           Int
+  comments        String?
+  period          String
+  achievements    String?
+  improvements    String?
+  goals           String[]
+  selfEval        Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  employee        Profile        @relation("EmployeeEvaluations", fields: [employeeId], references: [id])
+  employeeId      Int
+  manager         User?          @relation("ManagerEvaluations", fields: [managerId], references: [id])
+  managerId       Int?
+
+  @@index([employeeId, period])
+  @@map("evaluations")
+}
+
+model JobPosting {
+  id              Int            @id @default(autoincrement())
+  title           String
+  description     String
+  department      String
+  site            String
+  status          PostingStatus  @default(OPEN)
+  requirements    String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  recruiter       User           @relation("RecruiterPostings", fields: [recruiterId], references: [id])
+  recruiterId     Int
+  applications    Application[]
+
+  @@index([recruiterId, site])
+  @@map("job_postings")
+}
+
+model Application {
+  id              Int               @id @default(autoincrement())
+  status          ApplicationStatus @default(PENDING)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  candidate       Candidate         @relation("CandidateApplications", fields: [candidateId], references: [id])
+  candidateId     Int
+  jobPosting      JobPosting        @relation("PostingApplications", fields: [jobPostingId], references: [id])
+  jobPostingId    Int
+  recruiter       User?             @relation("RecruiterReviews", fields: [recruiterId], references: [id])
+  recruiterId     Int?
+  document        Document?         @relation("ApplicationDocument")
+
+  @@index([candidateId, jobPostingId])
+  @@map("applications")
+}
+
+model Training {
+  id              Int           @id @default(autoincrement())
+  title           String
+  type            TrainingType
+  description     String?
+  completionDate  DateTime?
+  certification   String?
+  status          String        @default("PENDING")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  employee        Profile       @relation("EmployeeTrainings", fields: [employeeId], references: [id])
+  employeeId      Int
+  manager         User?         @relation("ManagerAssignments", fields: [managerId], references: [id])
+  managerId       Int?
+
+  @@index([employeeId])
+  @@map("trainings")
+}
+
+model Payment {
+  id              Int       @id @default(autoincrement())
+  baseSalary      Decimal   @db.Decimal(10, 2)
+  bonuses         Decimal   @db.Decimal(10, 2) @default(0)
+  primes          Decimal   @db.Decimal(10, 2) @default(0)
+  payslipDate     DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  employee        Profile   @relation("EmployeePayments", fields: [employeeId], references: [id])
+  employeeId      Int
+  hrAdmin         User?     @relation("HRAdminPayments", fields: [hrAdminId], references: [id])
+  hrAdminId       Int?
+
+  @@index([employeeId, payslipDate])
+  @@map("payments")
+}
+
+model Message {
+  id          Int        @id @default(autoincrement())
+  content     String
+  timestamp   DateTime   @default(now())
+  isRead      Boolean    @default(false)
+
+  sender      User       @relation("SentMessages", fields: [senderId], references: [id])
+  senderId    Int
+  receiver    User       @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiverId  Int
+  recruiter   User?      @relation("RecruiterMessages", fields: [recruiterId], references: [id])
+  recruiterId Int?
+
+  @@index([senderId, receiverId])
+  @@map("messages")
+}
+
+model Announcement {
+  id              Int       @id @default(autoincrement())
+  title           String
+  content         String
+  publishDate     DateTime  @default(now())
+
+  hrAdmin         User      @relation("HRAdminAnnouncements", fields: [hrAdminId], references: [id])
+  hrAdminId       Int
+
+  @@index([hrAdminId])
+  @@map("announcements")
+}
+
+model Departure {
+  id              Int             @id @default(autoincrement())
+  reason          DepartureReason
+  exitDate        DateTime
+  indemnity       Decimal?        @db.Decimal(10, 2)
+  surveyResponses Json?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  employee        Profile         @relation("EmployeeDeparture", fields: [employeeId], references: [id])
+  employeeId      Int             @unique
+  hrAdmin         User?           @relation("HRAdminDepartures", fields: [hrAdminId], references: [id])
+  hrAdminId       Int?
+
+  @@index([employeeId])
+  @@map("departures")
+}
+
+model Report {
+  id              Int        @id @default(autoincrement())
+  type            ReportType
+  data            Json
+  generatedDate   DateTime   @default(now())
+
+  hrAdmin         User       @relation("HRAdminReports", fields: [hrAdminId], references: [id])
+  hrAdminId       Int
+
+  @@index([hrAdminId, type])
+  @@map("reports")
+}
+
+model Candidate {
+  id              Int       @id @default(autoincrement())
+  firstName       String
+  lastName        String
+  email           String    @unique
+  phone           String?
+  status          CandidateStatus @default(PENDING)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  applications    Application[]
+  documents       Document[]
+
+  @@index([email])
+  @@map("candidates")
+}
