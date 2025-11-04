@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from './user/user.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ThrottlerModule } from '@nestjs/throttler/dist/throttler.module';
 import { ConfigModule } from '@nestjs/config';
 import { EmailModule } from './email/email.module';
-import { DocumentModule } from './document/document.module';
 import { UserModule } from './user/user.module';
 import { ProfileModule } from './profile/profile.module';
 
@@ -23,7 +21,6 @@ import { ProfileModule } from './profile/profile.module';
       },
     ]),
     EmailModule,
-    DocumentModule,
     ProfileModule,],
   controllers: [AppController],
   providers: [AppService],

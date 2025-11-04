@@ -44,7 +44,7 @@ export class AuthService {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    const {id, email, role} = user;
+    const { id, email, role } = user;
 
     return {
       user: { id, email, role },
@@ -54,10 +54,12 @@ export class AuthService {
 
   async login(loginDto: LoginDto, res: Response) {
     const user = await this.userService.findByemail(loginDto.email);
-    if (
-      user &&
-      (await this.comparePassword(loginDto.password, user.password))
-    ) {
+    const isPasswordValid = await this.comparePassword(
+      loginDto.password,
+      user.password,
+    );
+
+    if (user && isPasswordValid) {
       const tokens = this.generateTokens(user);
 
       // Set tokens in HTTP-only cookies
@@ -84,7 +86,7 @@ export class AuthService {
         data: { refreshTokenHash: hashedToken },
       });
 
-          const {id, email, role} = user;
+      const { id, email, role } = user;
       return {
         user: { id, email, role },
         ...tokens,
@@ -192,8 +194,8 @@ export class AuthService {
       if (user.isEmailVerified) {
         throw new UnprocessableEntityException('Email is already verified');
       }
-      const genOtp = this.sixDigitOtp;
-      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toString(); // OTP valid for 10 minutes
+      const genOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
       await this.prismaService.user.update({
         where: { id: userId },
         data: { otp: genOtp, otpExpiry },
@@ -211,7 +213,10 @@ export class AuthService {
     }
   }
 
-  async verifyOtp(userId: number, genOtp: string): Promise<{ message: string }> {
+  async verifyOtp(
+    userId: number,
+    genOtp: string,
+  ): Promise<{ message: string }> {
     const user = await this.userService.findOne(userId);
     if (user.isEmailVerified) {
       throw new NotFoundException('User is already verified');
@@ -238,10 +243,8 @@ export class AuthService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const otp = Math.floor(
-    100000 + Math.random() * 900000,
-  ).toString();
-      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toString(); // OTP valid for 10 minutes
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
       await this.prismaService.user.update({
         where: { id: user.id },
         data: { resetOtp: otp, resetOtpExpiry: otpExpiry },

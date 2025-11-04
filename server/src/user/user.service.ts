@@ -70,18 +70,16 @@ export class UserService {
     // Strip all password hashes
     return users.map(({ password, ...user }) => user);
   }
-
+  
   async findByemail(email: string): Promise<User> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
-      throw new NotFoundException(`User with ID ${email} not found`);
+      throw new NotFoundException(`Invalid credentials`);
     }
-
-    const { password, ...result } = user;
-    return  result as User;
+    return  user;
   }
 
   async findOne(id: number): Promise<Omit<User, 'password'>> {
