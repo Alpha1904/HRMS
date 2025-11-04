@@ -14,7 +14,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Response } from 'express';
 import { RegisterDto } from './dto/register.dto';
 
-interface userWithoutPassword extends Omit<User, 'password'> {}
+interface userWithoutPassword extends Omit<User, 'passwordHash'> {}
 @Injectable()
 export class AuthService {
   constructor(
@@ -44,15 +44,14 @@ export class AuthService {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    const { password, ...result } = user;
     return {
-      user: result,
+      user: user,
       ...tokens,
     };
   }
 
   async login(loginDto: LoginDto, res: Response) {
-    const user = await this.userService.findByContactInfo(loginDto.contactInfo);
+    const user = await this.userService.findByemail(loginDto.email);
     if (
       user &&
       (await this.comparePassword(loginDto.password, user.password))
@@ -83,9 +82,8 @@ export class AuthService {
         data: { refreshTokenHash: hashedToken },
       });
 
-      const { password, ...result } = user;
       return {
-        user: result,
+        user: user,
         ...tokens,
       };
     }
@@ -150,7 +148,7 @@ export class AuthService {
 
   private generateAccessToken(user: userWithoutPassword): string {
     const payload = {
-      contactInfo: user.contactInfo,
+      email: user.email,
       id: user.id,
       role: user.role,
     };
@@ -199,7 +197,7 @@ export class AuthService {
       });
       // Send OTP via email
       await this.emailService.sendEmail({
-        to: user.contactInfo,
+        to: user.email,
         subject: 'Your OTP Code',
         text: `Your OTP code is ${otp}. It is valid for 10 minutes.`,
       });
@@ -231,9 +229,9 @@ export class AuthService {
 
   // ==========   reset password verification ===========
 
-  async sendResetOtp(contactInfo: string) {
+  async sendResetOtp(email: string) {
     try {
-      const user = await this.userService.findByContactInfo(contactInfo);
+      const user = await this.userService.findByemail(email);
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -247,7 +245,7 @@ export class AuthService {
       });
       // Send OTP via email
       await this.emailService.sendEmail({
-        to: user.contactInfo,
+        to: user.email,
         subject: 'Your Password Reset OTP',
         text: `Your OTP code is ${otp}. It is valid for 10 minutes.`,
       });
@@ -259,12 +257,12 @@ export class AuthService {
   }
 
   async resetPassword(
-    contactInfo: string,
+    email: string,
     otp: string,
     newPassword: string,
   ): Promise<{ message: string }> {
     try {
-      const user = await this.userService.findByContactInfo(contactInfo);
+      const user = await this.userService.findByemail(email);
       if (!user) {
         throw new NotFoundException('User not found');
       }

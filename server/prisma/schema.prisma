@@ -144,7 +144,7 @@ model User {
   @@index([deletedAt]) // For soft delete queries
 }
 
-// ========================================
+// ======================================== 
 // PROFILE: Unified model for all roles (polymorphic via role & JSON)
 // ========================================
 model Profile {

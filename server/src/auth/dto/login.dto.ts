@@ -6,7 +6,7 @@ export class LoginDto {
     @IsString()
     @IsNotEmpty({ message: "Contact information is required" })
     @IsEmail({}, { message: 'Invalid email format' })
-    contactInfo: string;
+    email: string;
 
     @ApiProperty({ description: 'The password of the user' })
     @IsString()

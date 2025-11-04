@@ -1,68 +1,55 @@
-import { ContractType, Role } from '@prisma/client';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsEmail, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { Role, ContractType } from '@prisma/client';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class CreateUserDto {
-  @ApiProperty({ description: 'The name of the user' })
+// A small, nested DTO for the profile data
+class CreateUserProfileDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  fullName: string;
 
-  @ApiProperty({ description: 'The email of the user' })
-  @IsString()
-  @IsEmail({}, { message: 'Invalid email format' })
-  @IsNotEmpty({ message: "Contact information is required" })
-  contactInfo: string;
-
-  @ApiProperty({ description: 'The password of the user' })
-  @IsString()
-  @IsNotEmpty( { message: "Password is required" })
-  password: string;
-
-  @ApiProperty({ description: 'The avatar of the user' })
   @IsString()
   @IsOptional()
-  site: string;
-
-  @ApiProperty({ description: 'The role of the user', enum: Role })
-  @IsEnum(Role)
-  role: Role;
-
-    // Optional employee-specific fields
-  @IsOptional()
-  @IsString()
-  position?: string;
-
-  @IsOptional()
-  @IsString()
   department?: string;
 
+  @IsString()
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Type(() => Number)
-  seniority?: number;
+  position?: string;
 
-  @IsOptional()
-  @IsDateString()
-  contractStart?: string;
-
-  @IsOptional()
-  @IsDateString()
-  contractEnd?: string;
-
-  @IsOptional()
   @IsEnum(ContractType)
+  @IsOptional()
   contractType?: ContractType;
+}
 
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  managerId?: number;
+export class CreateUserDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
 
-  // Optional HR Admin specific fields
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(3, { message: 'Password must be at least 3 characters long' })
+  password: string;
+
+  @IsEnum(Role)
+  @IsNotEmpty()
+  role: Role;
+
+  @IsString()
   @IsOptional()
-  @IsString({ each: true })
-  sitesManaged?: string[];
+  tenantId?: string;
+  
+  // We validate the nested profile object
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => CreateUserProfileDto)
+  profile: CreateUserProfileDto;
 }

@@ -7,8 +7,8 @@ import {
 @Injectable()
 export class LoginThrottlerGuard extends ThrottlerGuard {
   protected async getTracker(req: Record<string, any>): Promise<string> {
-    const contactInfo = req.body?.contactInfo || 'anonymous';
-    return `login-${contactInfo}`;
+    const email = req.body?.email || 'anonymous';
+    return `login-${email}`;
   }
 
   //set limit to 5 attempts

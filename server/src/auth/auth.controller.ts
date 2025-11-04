@@ -50,17 +50,17 @@ export class AuthController {
   }
 
   @Post('forgot-pwd')
-  async sendResetOtp(@Body('contactInfo') contactInfo: string) {
-    return await this.authService.sendResetOtp(contactInfo);
+  async sendResetOtp(@Body('email') email: string) {
+    return await this.authService.sendResetOtp(email);
   }
 
   @Post('reset-pwd')
   async resetPassword(
-    @Body('contactInfo') contactInfo: string,
+    @Body('email') email: string,
     @Body('otp') otp: string,
     @Body('newPassword') newPassword: string,
   ) {
-    return await this.authService.resetPassword(contactInfo, otp, newPassword);
+    return await this.authService.resetPassword(email, otp, newPassword);
   }
 
   @UseGuards(JwtAuthGuard)

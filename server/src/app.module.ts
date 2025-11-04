@@ -8,6 +8,8 @@ import { ThrottlerModule } from '@nestjs/throttler/dist/throttler.module';
 import { ConfigModule } from '@nestjs/config';
 import { EmailModule } from './email/email.module';
 import { DocumentModule } from './document/document.module';
+import { UserModule } from './user/user.module';
+import { ProfileModule } from './profile/profile.module';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -21,7 +23,8 @@ import { DocumentModule } from './document/document.module';
       },
     ]),
     EmailModule,
-    DocumentModule,],
+    DocumentModule,
+    ProfileModule,],
   controllers: [AppController],
   providers: [AppService],
 })
