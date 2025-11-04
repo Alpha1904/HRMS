@@ -32,7 +32,7 @@ CREATE TYPE "public"."ReportType" AS ENUM ('PERFORMANCE', 'ABSENCE', 'SALARY', '
 CREATE TABLE "public"."User" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
-    "passwordHash" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
     "role" "public"."Role" NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "isEmailVerified" BOOLEAN NOT NULL DEFAULT false,

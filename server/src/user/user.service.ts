@@ -13,7 +13,7 @@ import { User } from '@prisma/client';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'passwordHash'>> {
+  async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
     const { email, password, role, tenantId, profile } = createUserDto;
 
     // Check for existing user
@@ -32,10 +32,9 @@ export class UserService {
       const user = await this.prisma.user.create({
         data: {
           email,
-          passwordHash,
+          password: passwordHash,
           role,
           tenantId,
-          // Create the associated profile in the same operation
           profile: {
             create: {
               fullName: profile.fullName,
@@ -50,7 +49,7 @@ export class UserService {
         },
       });
 
-      const { passwordHash: _, ...result } = user;
+      const { password, ...result } = user;
       return result;
 
     } catch (error) {
@@ -59,7 +58,7 @@ export class UserService {
     }
   }
 
-  async findAll(): Promise<Omit<User, 'passwordHash'>[]> {
+  async findAll(): Promise<Omit<User, 'password'>[]> {
     // Note: We assume the Prisma Middleware for soft-delete is active
     const users = await this.prisma.user.findMany({
       include: {
@@ -69,10 +68,23 @@ export class UserService {
       },
     });
     // Strip all password hashes
-    return users.map(({ passwordHash, ...user }) => user);
+    return users.map(({ password, ...user }) => user);
   }
 
-  async findOne(id: number): Promise<Omit<User, 'passwordHash'>> {
+  async findByemail(email: string): Promise<User> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${email} not found`);
+    }
+
+    const { password, ...result } = user;
+    return  result as User;
+  }
+
+  async findOne(id: number): Promise<Omit<User, 'password'>> {
     const user = await this.prisma.user.findUnique({
       where: { id },
       include: { profile: true },
@@ -82,7 +94,7 @@ export class UserService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    const { passwordHash, ...result } = user;
+    const { password, ...result } = user;
     return result;
   }
 
@@ -96,7 +108,7 @@ export class UserService {
       data: updateUserDto,
     });
 
-    const { passwordHash, ...result } = user;
+    const { password, ...result } = user;
     return result as User;
   }
 

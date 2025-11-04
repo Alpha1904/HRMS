@@ -98,7 +98,7 @@ enum ReportType {
 model User {
   id               Int       @id @default(autoincrement())
   email            String    @unique
-  passwordHash     String // Hashed password (use bcrypt/argon2)
+  password     String // Hashed password (use bcrypt/argon2)
   role             Role
   isActive         Boolean   @default(true)
   isEmailVerified  Boolean   @default(false)
@@ -106,8 +106,8 @@ model User {
   lastLoginAt      DateTime?
   otp              String? // One-time password
   otpExpiry        DateTime?
-  resetToken       String?
-  resetTokenExpiry DateTime?
+  resetOtp       String?
+  resetOtpExpiry DateTime?
   refreshTokenHash String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt

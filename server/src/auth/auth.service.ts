@@ -14,7 +14,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Response } from 'express';
 import { RegisterDto } from './dto/register.dto';
 
-interface userWithoutPassword extends Omit<User, 'passwordHash'> {}
+interface userWithoutPassword extends Omit<User, 'password'> {}
 @Injectable()
 export class AuthService {
   constructor(
@@ -44,8 +44,10 @@ export class AuthService {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
+    const {id, email, role} = user;
+
     return {
-      user: user,
+      user: { id, email, role },
       ...tokens,
     };
   }
@@ -82,8 +84,9 @@ export class AuthService {
         data: { refreshTokenHash: hashedToken },
       });
 
+          const {id, email, role} = user;
       return {
-        user: user,
+        user: { id, email, role },
         ...tokens,
       };
     }
@@ -96,7 +99,7 @@ export class AuthService {
         secret: 'refresh_secret',
       });
 
-      const user = await this.userService.getById(payload.id);
+      const user = await this.userService.findOne(payload.id);
 
       if (!user) {
         throw new UnauthorizedException('Invalid token');
@@ -111,7 +114,7 @@ export class AuthService {
   }
   async logout(userId: number, res: Response) {
     // Invalidate refresh token in DB
-    const user = await this.userService.getById(userId);
+    const user = await this.userService.findOne(userId);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
@@ -136,7 +139,7 @@ export class AuthService {
   }
   //   Find the current user by ID
   async getUserById(userId: number): Promise<userWithoutPassword> {
-    return await this.userService.getById(userId);
+    return await this.userService.findOne(userId);
   }
 
   generateTokens(user: userWithoutPassword) {
@@ -182,24 +185,24 @@ export class AuthService {
 
   async sendOtp(userId: number) {
     try {
-      const user = await this.userService.getById(userId);
+      const user = await this.userService.findOne(userId);
       if (!user) {
         throw new NotFoundException('User not found');
       }
       if (user.isEmailVerified) {
         throw new UnprocessableEntityException('Email is already verified');
       }
-      const otp = this.sixDigitOtp;
+      const genOtp = this.sixDigitOtp;
       const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toString(); // OTP valid for 10 minutes
       await this.prismaService.user.update({
         where: { id: userId },
-        data: { verifyOtp: otp, otpExpiry },
+        data: { otp: genOtp, otpExpiry },
       });
       // Send OTP via email
       await this.emailService.sendEmail({
         to: user.email,
         subject: 'Your OTP Code',
-        text: `Your OTP code is ${otp}. It is valid for 10 minutes.`,
+        text: `Your OTP code is ${genOtp}. It is valid for 10 minutes.`,
       });
       return { message: 'OTP sent to your email' };
     } catch (error) {
@@ -208,12 +211,12 @@ export class AuthService {
     }
   }
 
-  async verifyOtp(userId: number, otp: string): Promise<{ message: string }> {
-    const user = await this.userService.getById(userId);
+  async verifyOtp(userId: number, genOtp: string): Promise<{ message: string }> {
+    const user = await this.userService.findOne(userId);
     if (user.isEmailVerified) {
       throw new NotFoundException('User is already verified');
     }
-    if (user.verifyOtp !== otp) {
+    if (user.otp !== genOtp) {
       throw new UnprocessableEntityException('Invalid OTP');
     }
     const isExpired = !user.otpExpiry || new Date(user.otpExpiry) < new Date();
@@ -222,7 +225,7 @@ export class AuthService {
     }
     await this.prismaService.user.update({
       where: { id: userId },
-      data: { isEmailVerified: true, verifyOtp: null, otpExpiry: null },
+      data: { isEmailVerified: true, otp: null, otpExpiry: null },
     });
     return { message: 'Email verified successfully' };
   }
