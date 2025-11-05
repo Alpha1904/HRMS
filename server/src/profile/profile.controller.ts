@@ -11,10 +11,15 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  Query,
+  ParseFilePipeBuilder,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { QueryProfileDto } from './dto/query-profile.dto';
+import { FileTypePipe } from 'src/helpers/image-validator';
+import { MIME_TYPES } from 'src/helpers/image-validator/mime-types.enum';
 
 // @UseGuards(...) // TODO: Add Auth Guards
 @Controller('profiles')
@@ -22,8 +27,8 @@ export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Get()
-  findAll() {
-    return this.profileService.findAll();
+  findAll(@Query() query: QueryProfileDto) {
+    return this.profileService.findAll(query);
   }
 
   // Get a profile by its *Profile ID*
@@ -48,7 +53,16 @@ export class ProfileController {
   }
 
   @Patch(':id/avatar')
-  @UseInterceptors(FileInterceptor('file')) // 'file' is the field name
+  @UseInterceptors(FileInterceptor('file'
+    , {
+    fileFilter: (req, file, callback) => {
+      if (!file.mimetype.match(/^image\/(png|jpeg|jpg)$/)) {
+        callback(new Error('Only image files (png/jpeg/jpg) are allowed!'), false);
+      }
+      callback(null, true);
+    }
+  }
+))
   updateAvatar(
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile(
@@ -56,11 +70,12 @@ export class ProfileController {
         validators: [
           // 5MB file size limit
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-          // Only allow png, jpeg, jpg
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
+          // Only allow png or jpeg images
+        // new FileTypeValidator({ fileType: 'image/(png|jpeg)' })
         ],
       }),
     )
+
     file: Express.Multer.File,
   ) {
     return this.profileService.updateAvatar(id, file);

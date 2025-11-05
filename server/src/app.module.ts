@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { EmailModule } from './email/email.module';
 import { UserModule } from './user/user.module';
 import { ProfileModule } from './profile/profile.module';
+import { ManagerModule } from './manager/manager.module';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -21,7 +22,9 @@ import { ProfileModule } from './profile/profile.module';
       },
     ]),
     EmailModule,
-    ProfileModule,],
+    ProfileModule,
+    ManagerModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

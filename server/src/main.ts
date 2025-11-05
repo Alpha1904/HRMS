@@ -12,7 +12,13 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  // Enable CORS to allow requests from different origins (e.g., your frontend)
+  app.enableCors({
+    origin: true, // Reflect the request origin
+    credentials: true, // Allow cookies to be sent
+  });
+
+  app.useGlobalPipes(new ValidationPipe({transform: true, whitelist: true }));
   app.use(cookieParser());
   await app.listen(process.env.PORT ?? 3000);
 }

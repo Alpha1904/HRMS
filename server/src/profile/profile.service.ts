@@ -1,21 +1,88 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { Profile } from '@prisma/client';
+import { Profile, Prisma, Role } from '@prisma/client';
+import { QueryProfileDto } from './dto/query-profile.dto'
 import * as fs from 'fs';
 import { join } from 'path';
 
+export interface PaginatedProfileResult {
+  data: Profile[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    lastPage: number;
+  };
+}
 @Injectable()
 export class ProfileService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(): Promise<Profile[]> {
-    // We assume soft-delete middleware is active for Profiles as well
-    // If not, you must add: where: { deletedAt: null }
-    return this.prisma.profile.findMany({
-      // You would add { where: { deletedAt: null } } if you
-      // haven't added 'Profile' to your soft-delete middleware
-    });
+async findAll(
+    query: QueryProfileDto,
+  ): Promise<PaginatedProfileResult> {
+    const { page = 1, limit = 10, search, department } = query;
+
+    // 1. Calculate pagination
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    // 2. Build the dynamic 'where' clause
+    const where: Prisma.ProfileWhereInput = {
+      // CRITICAL: Explicitly filter soft-deleted records
+      deletedAt: null,
+    };
+
+    if (department) {
+      where.department = {
+        equals: department,
+        mode: 'insensitive', // 'Engineering' == 'engineering'
+      };
+    }
+
+    if (search) {
+      where.OR = [
+        // Search by full name on the Profile model
+        { fullName: { contains: search, mode: 'insensitive' } },
+        // Search by email on the related User model
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    // 3. Run queries in a transaction for efficiency
+    const [profiles, total] = await this.prisma.$transaction([
+      // Query for the data
+      this.prisma.profile.findMany({
+        where,
+        skip,
+        take,
+        include: {
+          user: {
+            select: { email: true, role: true, isActive: true },
+          },
+        },
+        orderBy: {
+          fullName: 'asc', // Default sorting
+        },
+      }),
+      // Query for the total count
+      this.prisma.profile.count({ where }),
+    ]);
+
+    // 4. Calculate pagination metadata
+    const lastPage = Math.ceil(total / limit);
+
+    // 5. Return the paginated response
+    return {
+      data: profiles,
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage,
+      },
+    };
   }
 
   /**
@@ -61,6 +128,7 @@ export class ProfileService {
     });
   }
 
+
   async remove(id: number): Promise<{ message: string }> {
     // This is the "Profile ID", not the "User ID"
     const profile = await this.findOne(id);
@@ -82,6 +150,10 @@ export class ProfileService {
 
     return { message: `Profile with ID ${id} and associated user have been soft-deleted.` };
   }
+
+  /**
+   * Updates the avatar for a profile
+   */
 
 async updateAvatar(
     id: number,
@@ -125,4 +197,100 @@ async updateAvatar(
     return updatedProfile;
   }
   
+
+  /*
+  * Gets all manager profiles.
+  */
+
+  async getAllManagers(): Promise<Profile[]> {
+    return this.prisma.profile.findMany({
+      where: {
+        user: {
+          role: Role.MANAGER,
+        },
+        deletedAt: null, // Only return active managers
+      }, 
+      include: {
+        user: {
+          select: { email: true, role: true, isActive: true },
+        },
+      },
+    });
+  }
+
+
+  /**
+   * Gets all profiles that report to a specific manager.
+   * @param managerProfileId The *Profile ID* of the manager
+   */
+  async getTeamByManagerId(managerProfileId: number): Promise<Profile[]> {
+    // 1. Verify the manager profile exists
+    await this.findOne(managerProfileId);
+
+    // 2. Find all profiles where managerId matches
+    return this.prisma.profile.findMany({
+      where: {
+        managerId: managerProfileId,
+        deletedAt: null, // Only return active employees
+      },
+      include: {
+        user: {
+          select: { email: true, role: true, isActive: true },
+        },
+      },
+    });
+  }
+
+  /**
+   * Assigns a list of employees to a manager.
+   * @param managerProfileId The *Profile ID* of the manager
+   * @param employeeProfileIds An array of *Profile IDs* of employees
+   */
+  async addTeamMembers(
+    managerProfileId: number,
+    employeeProfileIds: number[],
+  ): Promise<{ count: number }> {
+    // 1. Verify the manager profile exists
+    await this.findOne(managerProfileId);
+
+    // 2. Update the managerId for all specified employees
+    const result = await this.prisma.profile.updateMany({
+      where: {
+        id: { in: employeeProfileIds },
+      },
+      data: {
+        managerId: managerProfileId,
+      },
+    });
+
+    return { count: result.count };
+  }
+
+  /**
+   * Removes a list of employees from a manager's team.
+   * This sets their managerId to null.
+   * @param managerProfileId The *Profile ID* of the manager
+   * @param employeeProfileIds An array of *Profile IDs* of employees
+   */
+  async removeTeamMembers(
+    managerProfileId: number,
+    employeeProfileIds: number[],
+  ): Promise<{ count: number }> {
+    // 1. Verify the manager profile exists (already done by findOne)
+    await this.findOne(managerProfileId);
+
+    // 2. Update the managerId to null *only* for employees who
+    //    are in the list AND currently report to this manager.
+    const result = await this.prisma.profile.updateMany({
+      where: {
+        id: { in: employeeProfileIds },
+        managerId: managerProfileId, // Safety check
+      },
+      data: {
+        managerId: null, // Un-assign the manager
+      },
+    });
+
+    return { count: result.count };
+  }
 }
