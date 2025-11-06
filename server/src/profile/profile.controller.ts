@@ -71,7 +71,7 @@ export class ProfileController {
           // 5MB file size limit
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
           // Only allow png or jpeg images
-        // new FileTypeValidator({ fileType: 'image/(png|jpeg)' })
+         new FileTypeValidator({ fileType: 'image/(png|jpeg)' })
         ],
       }),
     )

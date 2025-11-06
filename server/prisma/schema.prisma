@@ -34,6 +34,7 @@ enum LeaveType {
   PATERNITY
   BEREAVEMENT
   UNPAID
+  OTHER
 }
 
 enum LeaveStatus {
@@ -98,7 +99,7 @@ enum ReportType {
 model User {
   id               Int       @id @default(autoincrement())
   email            String    @unique
-  password     String // Hashed password (use bcrypt/argon2)
+  password         String // Hashed password (use bcrypt/argon2)
   role             Role
   isActive         Boolean   @default(true)
   isEmailVerified  Boolean   @default(false)
@@ -106,8 +107,8 @@ model User {
   lastLoginAt      DateTime?
   otp              String? // One-time password
   otpExpiry        DateTime?
-  resetOtp       String?
-  resetOtpExpiry DateTime?
+  resetOtp         String?
+  resetOtpExpiry   DateTime?
   refreshTokenHash String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -118,6 +119,8 @@ model User {
 
   // One-to-one: Every user has exactly one profile
   profile Profile? @relation("UserProfile")
+  // [NEW] Relation to Notifications
+  notifications    Notification[] @relation("UserNotifications")
 
   // Messaging (internal communication)
   sentMessages     Message[] @relation("SentMessages")
@@ -178,6 +181,7 @@ model Profile {
   // Common relationships
   documents            Document[]    @relation("ProfileDocuments")
   leaves               Leave[]       @relation("ProfileLeaves")
+  leaveBalances   LeaveBalance[] @relation("ProfileLeaveBalances")
   managedLeaves        Leave[]       @relation("ManagerLeaveApprovals")
   hrAdminLeaves        Leave[]       @relation("HRAdminLeaveOverrides")
   schedules            Schedule[]    @relation("ProfileSchedules")
@@ -376,6 +380,65 @@ model Leave {
   @@index([managerId])
 }
 
+// This is the "Bank Account" for leave *balances*
+model LeaveBalance {
+  id              Int       @id @default(autoincrement())
+  
+  profileId       Int
+  profile         Profile   @relation("ProfileLeaveBalances", fields: [profileId], references: [id], onDelete: Cascade)
+  
+  leaveType       LeaveType // e.g., VACATION, SICK
+  year            Int       // e.g., 2025 (Balances are almost always annual)
+  
+  totalAllocated  Float     // Total days given for the year (e.g., 20)
+  daysUsed        Float     @default(0) // Total days approved and taken
+  
+  // Optional: Track days carried over from last year
+  daysCarriedOver Float     @default(0) 
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Ensures one balance record per employee, per type, per year
+  @@unique([profileId, leaveType, year])
+  @@index([profileId])
+}
+
+//  This is the "Rules Engine" for leave *policies*
+model LeavePolicy {
+  id              Int       @id @default(autoincrement())
+  name            String    @unique // e.g., "Senior Engineer Policy", "Standard UK Policy"
+  description     String?
+  
+  leaveType       LeaveType // The type of leave this policy grants
+  daysAllocated   Float     // How many days it grants
+  
+  // --- Applicability Criteria (who does this apply to?) ---
+  // A 'null' value for a criteria means "applies to all"
+  
+  contractType    ContractType? // e.g., Only for FULL_TIME
+  role            Role?         // e.g., Only for MANAGER
+  department      String?       // e.g., Only for "Engineering"
+  site            String?       // e.g., Only for "New York Office"
+  
+  // Apply policy based on years of service (uses 'seniority' from Profile)
+  minSeniority    Int?          @default(0) // Min years of service
+  maxSeniority    Int?          // Max years of service (null = no max)
+  
+  // Can this leave be carried over?
+  isCarryOverAllowed Boolean   @default(false)
+  maxCarryOverDays   Float?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([contractType, role, department])
+}
+
+// ========================================
+// SCHEDULING
+// ========================================
+
 model Schedule {
   id        Int     @id @default(autoincrement())
   profileId Int     @unique
@@ -525,6 +588,24 @@ model Announcement {
   @@index([publishDate])
 }
 
+//This is the "Alert System" for in-app notifications
+model Notification {
+  id          Int       @id @default(autoincrement())
+  
+  recipientId Int       // The User ID of the person to notify
+  recipient   User      @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  
+  message     String    // e.g., "Jane Doe has requested 3 days of vacation."
+  isRead      Boolean   @default(false)
+  
+  // Optional: A link to navigate to on-click
+  // e.g., "/app/leaves/123" or "/app/announcements/45"
+  linkUrl     String?   
+  
+  createdAt   DateTime  @default(now())
+  
+  @@index([recipientId, isRead])
+}
 // ========================================
 // OFFBOARDING & REPORTING
 // ========================================

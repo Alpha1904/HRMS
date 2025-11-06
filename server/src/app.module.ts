@@ -9,6 +9,7 @@ import { EmailModule } from './email/email.module';
 import { UserModule } from './user/user.module';
 import { ProfileModule } from './profile/profile.module';
 import { ManagerModule } from './manager/manager.module';
+import { LeaveModule } from './leave/leave.module';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -24,6 +25,7 @@ import { ManagerModule } from './manager/manager.module';
     EmailModule,
     ProfileModule,
     ManagerModule,
+    LeaveModule,
   ],
   controllers: [AppController],
   providers: [AppService],
