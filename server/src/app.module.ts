@@ -10,6 +10,9 @@ import { UserModule } from './user/user.module';
 import { ProfileModule } from './profile/profile.module';
 import { ManagerModule } from './manager/manager.module';
 import { LeaveModule } from './leave/leave.module';
+import { LeavePolicyModule } from './leave-policy/leave-policy.module';
+import { NotificationModule } from './notification/notification.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -22,10 +25,13 @@ import { LeaveModule } from './leave/leave.module';
         limit: 5,
       },
     ]),
+    EventEmitterModule.forRoot(),
     EmailModule,
     ProfileModule,
     ManagerModule,
     LeaveModule,
+    LeavePolicyModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -10,9 +10,11 @@ import {
   ValidationPipe,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { ProfileService } from '../profile/profile.service';
 import { UpdateTeamDto } from './dto/update-team.dto';
+import { QueryAvailabilityDto } from './dto/query-availability.dto';
 
 /**
  * Controller for managing manager-employee relationships.
@@ -73,6 +75,33 @@ export class ManagerController {
     return this.profileService.removeTeamMembers(
       managerProfileId,
       updateTeamDto.employeeProfileIds,
+    );
+  }
+
+
+  /**
+   * GET /manager/:managerProfileId/team-availability
+   *
+   * Gets all approved leave for a manager's team within a
+   * specified date range.
+   *
+   * @example
+   * GET /manager/2/team-availability?startDate=2025-11-01&endDate=2025-11-30
+   */
+  @Get(':managerProfileId/team-availability')
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  getTeamAvailability(
+    @Param('managerProfileId', ParseIntPipe) managerProfileId: number,
+    @Query() query: QueryAvailabilityDto,
+  ) {
+    // Convert string dates from DTO to Date objects for the service
+    const startDate = new Date(query.startDate);
+    const endDate = new Date(query.endDate);
+
+    return this.profileService.getTeamAvailability(
+      managerProfileId,
+      startDate,
+      endDate,
     );
   }
 }

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { Profile, Prisma, Role } from '@prisma/client';
+import { Profile, Leave, Prisma, Role } from '@prisma/client';
 import { QueryProfileDto } from './dto/query-profile.dto'
 import * as fs from 'fs';
 import { join } from 'path';
@@ -292,5 +292,55 @@ async updateAvatar(
     });
 
     return { count: result.count };
+  }
+
+
+
+  /**
+   * ###  Real-Time Availability
+   * Finds all approved leave for a manager's team that overlaps
+   * with a given date range.
+   */
+  async getTeamAvailability(
+    managerProfileId: number,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Leave[]> {
+    
+    // 1. Verify the manager exists (findOne handles this)
+    await this.findOne(managerProfileId);
+
+    // 2. Find all leave records where:
+    //    - The profile's manager is the one we're asking about
+    //    - The status is APPROVED
+    //    - The leave period *overlaps* with the query range
+    
+    return this.prisma.leave.findMany({
+      where: {
+        profile: {
+          managerId: managerProfileId, // Filter by the manager's team
+        },
+        status: 'APPROVED', // Only show confirmed leave
+        AND: [
+          // Leave starts *before* or *on* the query's end date
+          { startDate: { lte: endDate } },
+          // Leave ends *after* or *on* the query's start date
+          { endDate: { gte: startDate } },
+        ],
+      },
+      include: {
+        // Include who is on leave for the frontend calendar
+        profile: {
+          select: {
+            id: true,
+            fullName: true,
+            avatarUrl: true,
+          },
+        },
+      },
+      orderBy: {
+        startDate: 'asc',
+      },
+    });
   }
 }
