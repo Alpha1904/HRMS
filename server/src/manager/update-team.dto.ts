@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsInt, ArrayNotEmpty } from 'class-validator';
 
-export class MarkReadDto {
+export class UpdateTeamDto {
   @ApiProperty({
-    description: 'An array of notification IDs to be marked as read.',
-    example: [1, 2, 3],
+    description: 'An array of employee profile IDs to add or remove from the team.',
+    example: [10, 11, 15],
     type: [Number],
   })
   @IsArray()
   @ArrayNotEmpty()
   @IsInt({ each: true })
-  notificationIds: number[];
+  employeeProfileIds: number[];
 }

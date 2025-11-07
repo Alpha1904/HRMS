@@ -44,7 +44,7 @@ export class LeaveNotificationListener {
     // 2. Create the notification for the manager
     await this.notificationService.create({
       recipientId: managerProfile.userId,
-      message: `${profile.fullName} has requested ${leave.daysRequested} days of ${leave.type} leave.`,
+      message: `${profile.fullName} of ID ${profile.id} has requested ${leave.daysRequested} days of ${leave.type} leave.`,
       linkUrl: `/app/leaves/approve/${leave.id}`, // A deep link for the manager
     });
   }
