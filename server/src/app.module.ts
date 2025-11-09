@@ -13,6 +13,8 @@ import { LeaveModule } from './leave/leave.module';
 import { LeavePolicyModule } from './leave-policy/leave-policy.module';
 import { NotificationModule } from './notification/notification.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from './schedule/schedule.module';
+import { ShiftRequestModule } from './shift-request/shift-request.module';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -32,6 +34,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     LeaveModule,
     LeavePolicyModule,
     NotificationModule,
+    ScheduleModule,
+    ShiftRequestModule,
   ],
   controllers: [AppController],
   providers: [AppService],

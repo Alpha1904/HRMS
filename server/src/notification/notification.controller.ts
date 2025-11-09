@@ -28,9 +28,9 @@ export class NotificationController {
    * Gets all notifications for the *authenticated* user.
    */
   @Get()
-  @ApiTags('Notifications')
+  @ApiTags('Notification')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get all notifications for the authenticated user' })
+  @ApiOperation({ summary: 'Get all notifications for the authenticated users' })
   @ApiResponse({ status: 200, description: 'Returns a list of notifications.', type: [NotificationDto] })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   getMyNotifications(@CurrentUser() user: User) {
@@ -44,7 +44,7 @@ export class NotificationController {
    * Gets a simple count of unread notifications.
    */
   @Get('unread-count')
-  @ApiTags('Notifications')
+  @ApiTags('Notification')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get the count of unread notifications for the authenticated user' })
   @ApiResponse({ status: 200, description: 'Returns the unread notification count.', schema: { example: { count: 5 } } })
@@ -58,7 +58,7 @@ export class NotificationController {
    * Marks specific notifications as read.
    */
   @Patch('read')
-  @ApiTags('Notifications')
+  @ApiTags('Notification')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mark specific notifications as read' })
   @ApiBody({ type: MarkReadDto, description: 'Array of notification IDs to mark as read' })
@@ -74,7 +74,7 @@ export class NotificationController {
    * Marks all of the user's unread notifications as read.
    */
   @Post('read-all')
-  @ApiTags('Notifications')
+  @ApiTags('Notification')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mark all unread notifications for the authenticated user as read' })
   @ApiResponse({ status: 200, description: 'All unread notifications successfully marked as read.' })

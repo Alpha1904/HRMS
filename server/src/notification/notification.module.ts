@@ -4,12 +4,14 @@ import { NotificationController } from './notification.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LeaveNotificationListener } from './listeners/leave.listener';
 import { AuthModule } from 'src/auth/auth.module';
+import { ProfileModule } from '../profile/profile.module';
+import { ShiftNotificationListener } from './listeners/shift.listener';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, ProfileModule],
   controllers: [NotificationController],
-  providers: [LeaveNotificationListener, NotificationService],
-  // We MUST export the service so other modules (like LeaveModule) can use it.
+  providers: [LeaveNotificationListener,
+    ShiftNotificationListener, NotificationService],
   exports: [NotificationService], 
 })
 export class NotificationModule {}

@@ -93,6 +93,13 @@ enum ReportType {
   COMPLIANCE
 }
 
+enum ShiftChangeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 // ========================================
 // CORE AUTH & USER MANAGEMENT
 // ========================================
@@ -118,9 +125,9 @@ model User {
   tenantId String? // For multi-tenancy (company/organization ID)
 
   // One-to-one: Every user has exactly one profile
-  profile Profile? @relation("UserProfile")
+  profile       Profile?       @relation("UserProfile")
   // [NEW] Relation to Notifications
-  notifications    Notification[] @relation("UserNotifications")
+  notifications Notification[] @relation("UserNotifications")
 
   // Messaging (internal communication)
   sentMessages     Message[] @relation("SentMessages")
@@ -179,21 +186,22 @@ model Profile {
   managerId       Int?
 
   // Common relationships
-  documents            Document[]    @relation("ProfileDocuments")
-  leaves               Leave[]       @relation("ProfileLeaves")
-  leaveBalances   LeaveBalance[] @relation("ProfileLeaveBalances")
-  managedLeaves        Leave[]       @relation("ManagerLeaveApprovals")
-  hrAdminLeaves        Leave[]       @relation("HRAdminLeaveOverrides")
-  schedules            Schedule[]    @relation("ProfileSchedules")
-  evaluations          Evaluation[]  @relation("ProfileEvaluations")
-  evaluatorEvaluations Evaluation[]  @relation("EvaluatorEvaluations")
-  trainings            Training[]    @relation("ProfileTrainings")
-  assignedTrainings    Training[]    @relation("AssignedTrainings")
-  payments             Payment[]     @relation("ProfilePayments")
-  processedPayments    Payment[]     @relation("ProcessedPayments")
-  departures           Departure?    @relation("ProfileDeparture")
-  processedDepartures  Departure[]   @relation("ProcessedDepartures")
-  applications         Application[] @relation("ProfileApplications") // For candidates/recruiters
+  documents            Document[]           @relation("ProfileDocuments")
+  leaves               Leave[]              @relation("ProfileLeaves")
+  leaveBalances        LeaveBalance[]       @relation("ProfileLeaveBalances")
+  managedLeaves        Leave[]              @relation("ManagerLeaveApprovals")
+  hrAdminLeaves        Leave[]              @relation("HRAdminLeaveOverrides")
+  shifts               Shift[]              @relation("ProfileShifts")
+  shiftChangeRequests  ShiftChangeRequest[] @relation("ProfileShiftRequests")
+  evaluations          Evaluation[]         @relation("ProfileEvaluations")
+  evaluatorEvaluations Evaluation[]         @relation("EvaluatorEvaluations")
+  trainings            Training[]           @relation("ProfileTrainings")
+  assignedTrainings    Training[]           @relation("AssignedTrainings")
+  payments             Payment[]            @relation("ProfilePayments")
+  processedPayments    Payment[]            @relation("ProcessedPayments")
+  departures           Departure?           @relation("ProfileDeparture")
+  processedDepartures  Departure[]          @relation("ProcessedDepartures")
+  applications         Application[]        @relation("ProfileApplications") // For candidates/recruiters
 
   // Announcements (HR only, but linked via profile)
   announcements Announcement[] @relation("ProfileAnnouncements")
@@ -382,22 +390,22 @@ model Leave {
 
 // This is the "Bank Account" for leave *balances*
 model LeaveBalance {
-  id              Int       @id @default(autoincrement())
-  
-  profileId       Int
-  profile         Profile   @relation("ProfileLeaveBalances", fields: [profileId], references: [id], onDelete: Cascade)
-  
-  leaveType       LeaveType // e.g., VACATION, SICK
-  year            Int       // e.g., 2025 (Balances are almost always annual)
-  
-  totalAllocated  Float     // Total days given for the year (e.g., 20)
-  daysUsed        Float     @default(0) // Total days approved and taken
-  
-  // Optional: Track days carried over from last year
-  daysCarriedOver Float     @default(0) 
+  id Int @id @default(autoincrement())
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  profileId Int
+  profile   Profile @relation("ProfileLeaveBalances", fields: [profileId], references: [id], onDelete: Cascade)
+
+  leaveType LeaveType // e.g., VACATION, SICK
+  year      Int // e.g., 2025 (Balances are almost always annual)
+
+  totalAllocated Float // Total days given for the year (e.g., 20)
+  daysUsed       Float @default(0) // Total days approved and taken
+
+  // Optional: Track days carried over from last year
+  daysCarriedOver Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Ensures one balance record per employee, per type, per year
   @@unique([profileId, leaveType, year])
@@ -406,56 +414,120 @@ model LeaveBalance {
 
 //  This is the "Rules Engine" for leave *policies*
 model LeavePolicy {
-  id              Int       @id @default(autoincrement())
-  name            String    @unique // e.g., "Senior Engineer Policy", "Standard UK Policy"
-  description     String?
-  
-  leaveType       LeaveType // The type of leave this policy grants
-  daysAllocated   Float     // How many days it grants
-  
+  id          Int     @id @default(autoincrement())
+  name        String  @unique // e.g., "Senior Engineer Policy", "Standard UK Policy"
+  description String?
+
+  leaveType     LeaveType // The type of leave this policy grants
+  daysAllocated Float // How many days it grants
+
   // --- Applicability Criteria (who does this apply to?) ---
   // A 'null' value for a criteria means "applies to all"
-  
-  contractType    ContractType? // e.g., Only for FULL_TIME
-  role            Role?         // e.g., Only for MANAGER
-  department      String?       // e.g., Only for "Engineering"
-  site            String?       // e.g., Only for "New York Office"
-  
+
+  contractType ContractType? // e.g., Only for FULL_TIME
+  role         Role? // e.g., Only for MANAGER
+  department   String? // e.g., Only for "Engineering"
+  site         String? // e.g., Only for "New York Office"
+
   // Apply policy based on years of service (uses 'seniority' from Profile)
-  minSeniority    Int?          @default(0) // Min years of service
-  maxSeniority    Int?          // Max years of service (null = no max)
-  
+  minSeniority Int? @default(0) // Min years of service
+  maxSeniority Int? // Max years of service (null = no max)
+
   // Can this leave be carried over?
-  isCarryOverAllowed Boolean   @default(false)
+  isCarryOverAllowed Boolean @default(false)
   maxCarryOverDays   Float?
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([contractType, role, department])
 }
 
 // ========================================
-// SCHEDULING
+// [NEW] SCHEDULE & TIMETABLE MANAGEMENT
 // ========================================
 
-model Schedule {
-  id        Int     @id @default(autoincrement())
-  profileId Int     @unique
-  profile   Profile @relation("ProfileSchedules", fields: [profileId], references: [id], onDelete: Cascade)
+// This is the "Rule Book" or "Pattern" (e.g., "M-F 9-5")
+model WorkScheduleTemplate {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
 
-  // Flexible shift structure
-  shifts        Json[] // e.g., [{day: "MON", start: "09:00", end: "17:00", location: "Office"}]
-  rotationType  String? // e.g., "Fixed", "Rotating"
-  workWeekHours Float? // Total weekly hours
+  // Applicability criteria (null = applies to all)
+  site       String?
+  department String?
+  role       Role?
 
-  effectiveFrom DateTime?
-  effectiveTo   DateTime?
+  // Rotation settings
+  isRotation      Boolean @default(false) // For the "Shift Rotations" feature
+  rotationDaysOn  Int? // e.g., 7
+  rotationDaysOff Int? // e.g., 3
+
+  // Standard hours for this template
+  // We use strings for flexibility (e.g., "09:00", "17:00")
+  defaultStartTime String?
+  defaultEndTime   String?
+
+  // This template can be used to generate many shifts
+  shifts Shift[] @relation("TemplateShifts")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([profileId])
+  @@index([site, department, role])
+}
+
+// This is a *single assigned shift* for one person
+model Shift {
+  id        Int     @id @default(autoincrement())
+  profileId Int
+  profile   Profile @relation("ProfileShifts", fields: [profileId], references: [id], onDelete: Cascade)
+
+  date      DateTime @db.Date // The specific day of the shift
+  startTime DateTime @db.Time // The start time (e.g., 09:00:00)
+  endTime   DateTime @db.Time // The end time (e.g., 17:00:00)
+
+  // Optional: The template this shift was generated from
+  templateId Int?
+  template   WorkScheduleTemplate? @relation("TemplateShifts", fields: [templateId], references: [id], onDelete: SetNull)
+
+  // This shift can have change requests
+  changeRequests ShiftChangeRequest[] @relation("ShiftChangeRequests")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId, date])
+  @@index([templateId])
+}
+
+// This is an "Employee Modification" request
+model ShiftChangeRequest {
+  id Int @id @default(autoincrement())
+
+  shiftId Int // The specific shift being changed
+  shift   Shift @relation("ShiftChangeRequests", fields: [shiftId], references: [id], onDelete: Cascade)
+
+  requesterId Int // The employee (Profile) asking for the change
+  requester   Profile @relation("ProfileShiftRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  reason String?
+  status ShiftChangeStatus @default(PENDING)
+
+  // Proposed new times (null = no change)
+  newDate      DateTime? @db.Date
+  newStartTime DateTime? @db.Time
+  newEndTime   DateTime? @db.Time
+
+  // For manager/HR approval
+  managerFeedback String?
+  processedById   Int? // User ID of the manager who actioned this
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shiftId])
+  @@index([requesterId, status])
 }
 
 // ========================================
@@ -590,22 +662,23 @@ model Announcement {
 
 //This is the "Alert System" for in-app notifications
 model Notification {
-  id          Int       @id @default(autoincrement())
-  
-  recipientId Int       // The User ID of the person to notify
-  recipient   User      @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
-  
-  message     String    // e.g., "Jane Doe has requested 3 days of vacation."
-  isRead      Boolean   @default(false)
-  
+  id Int @id @default(autoincrement())
+
+  recipientId Int // The User ID of the person to notify
+  recipient   User @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  message String // e.g., "Jane Doe has requested 3 days of vacation."
+  isRead  Boolean @default(false)
+
   // Optional: A link to navigate to on-click
   // e.g., "/app/leaves/123" or "/app/announcements/45"
-  linkUrl     String?   
-  
-  createdAt   DateTime  @default(now())
-  
+  linkUrl String?
+
+  createdAt DateTime @default(now())
+
   @@index([recipientId, isRead])
 }
+
 // ========================================
 // OFFBOARDING & REPORTING
 // ========================================

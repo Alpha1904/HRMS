@@ -91,8 +91,8 @@ async findAll(
   async findOne(id: number): Promise<Profile> {
     const profile = await this.prisma.profile.findUnique({
       where: { id },
-      // include: { user: true } // Optionally include user data
-    });
+       include: { user: { select: { email: true, role: true } } 
+    }});
 
     if (!profile) {
       throw new NotFoundException(`Profile with ID ${id} not found`);
@@ -106,8 +106,8 @@ async findAll(
   async findOneByUserId(userId: number): Promise<Profile> {
     const profile = await this.prisma.profile.findUnique({
       where: { userId },
-      // include: { user: true }
-    });
+       include: { user: { select: { email: true, role: true } }
+    }});
 
     if (!profile) {
       throw new NotFoundException(`Profile for User ID ${userId} not found`);
