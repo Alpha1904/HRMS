@@ -100,6 +100,14 @@ enum ShiftChangeStatus {
   CANCELLED
 }
 
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
 // ========================================
 // CORE AUTH & USER MANAGEMENT
 // ========================================
@@ -194,6 +202,7 @@ model Profile {
   shifts               Shift[]              @relation("ProfileShifts")
   shiftChangeRequests  ShiftChangeRequest[] @relation("ProfileShiftRequests")
   evaluations          Evaluation[]         @relation("ProfileEvaluations")
+  goals                Goal[]               @relation("ProfileGoals")
   evaluatorEvaluations Evaluation[]         @relation("EvaluatorEvaluations")
   trainings            Training[]           @relation("ProfileTrainings")
   assignedTrainings    Training[]           @relation("AssignedTrainings")
@@ -546,7 +555,7 @@ model Evaluation {
   scores       Json? // {competency1: 4, competency2: 3}
   achievements String?
   improvements String?
-  goals        Json? // Array of {goal: string, targetDate: date}
+  goalsSet     Goal[]     @relation("EvaluationGoalsSet")
   selfEval     Boolean    @default(false)
   feedback     String?
 
@@ -555,6 +564,27 @@ model Evaluation {
 
   @@index([profileId, period])
   @@index([evaluatorId])
+}
+
+model Goal {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profileId Int // The employee this goal belongs to
+  profile   Profile @relation("ProfileGoals", fields: [profileId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  status      GoalStatus @default(NOT_STARTED) // Dynamic tracking enum
+  progress    Int?       @default(0) // e.g., 0-100%
+  targetDate  DateTime?
+
+  // Optional: Which evaluation event created this goal?
+  createdInEvaluationId Int?
+  createdInEvaluation   Evaluation? @relation("EvaluationGoalsSet", fields: [createdInEvaluationId], references: [id], onDelete: SetNull)
+
+  @@index([profileId, status])
 }
 
 model Training {

@@ -15,6 +15,8 @@ import { NotificationModule } from './notification/notification.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from './schedule/schedule.module';
 import { ShiftRequestModule } from './shift-request/shift-request.module';
+import { GoalModule } from './goal/goal.module';
+import { EvaluationModule } from './evaluation/evaluation.module';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -36,6 +38,8 @@ import { ShiftRequestModule } from './shift-request/shift-request.module';
     NotificationModule,
     ScheduleModule,
     ShiftRequestModule,
+    GoalModule,
+    EvaluationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -6,6 +6,8 @@ import {
   ShiftChangeStatus,
   LeaveStatus,
   Prisma,
+  GoalStatus,
+  EvalPeriod
 } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
@@ -232,6 +234,49 @@ async function main() {
       },
     });
   }
+
+  // --- 6. [NEW] CREATE PERFORMANCE REVIEW DATA ---
+  console.log('Creating performance review data...');
+  const targetEmployee = employees[9]; // Employee 10
+  const employeeManager = managers.find(m => m.id === targetEmployee.managerId)!;
+
+  // A. Create a historical, completed Evaluation (Manager)
+  const historicalEvaluation = await prisma.evaluation.create({
+    data: {
+      profileId: targetEmployee.id,
+      evaluatorId: employeeManager.id,
+      period: EvalPeriod.QUARTERLY,
+      overallScore: 3.8,
+      scores: { communication: 4, technical: 4, leadership: 3 },
+      achievements: 'Led successful Q3 initiative.',
+      improvements: 'Needs to delegate more.',
+      selfEval: false,
+    },
+  });
+
+  // B. Create a historical Goal (Goal 1: 75% complete)
+  await prisma.goal.create({
+    data: {
+      profileId: targetEmployee.id,
+      title: 'Reduce bug count by 25%',
+      description: 'Q3 target for quality improvement.',
+      status: GoalStatus.IN_PROGRESS,
+      progress: 75,
+      targetDate: faker.date.future({ years: 0.1, refDate: '2025-10-01' }),
+      createdInEvaluationId: historicalEvaluation.id,
+    },
+  });
+
+  // C. Create a historical Self-Evaluation
+  await prisma.evaluation.create({
+    data: {
+      profileId: targetEmployee.id,
+      period: EvalPeriod.QUARTERLY,
+      achievements: 'Successfully completed the migration.',
+      selfEval: true,
+      feedback: 'Overall, a great quarter.',
+    },
+  });
 
   console.log('---');
   console.log('Database seeding complete.');
