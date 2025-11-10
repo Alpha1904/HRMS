@@ -17,6 +17,9 @@ import { ScheduleModule } from './schedule/schedule.module';
 import { ShiftRequestModule } from './shift-request/shift-request.module';
 import { GoalModule } from './goal/goal.module';
 import { EvaluationModule } from './evaluation/evaluation.module';
+import { MessageModule } from './message/message.module';
+import { AnnouncementModule } from './announcement/announcement.module';
+import { ForumModule } from './forum/forum.module';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -40,6 +43,9 @@ import { EvaluationModule } from './evaluation/evaluation.module';
     ShiftRequestModule,
     GoalModule,
     EvaluationModule,
+    MessageModule,
+    AnnouncementModule,
+    ForumModule,
   ],
   controllers: [AppController],
   providers: [AppService],

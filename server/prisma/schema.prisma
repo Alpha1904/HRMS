@@ -214,6 +214,8 @@ model Profile {
 
   // Announcements (HR only, but linked via profile)
   announcements Announcement[] @relation("ProfileAnnouncements")
+  topics        Topic[]        @relation("ProfileTopics")
+  replies       Reply[]        @relation("ProfileReplies")
 
   // Reports (HR only)
   reports Report[] @relation("ProfileReports")
@@ -688,6 +690,64 @@ model Announcement {
 
   @@index([postedById])
   @@index([publishDate])
+}
+
+// The top-level "space" or "category"
+model Forum {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  // Optional: Restrict this forum to a specific department
+  department String?
+
+  // A forum contains many topics
+  topics Topic[]
+
+  createdAt DateTime @default(now())
+
+  @@index([department])
+}
+
+// The "thread" or "post" that starts a discussion
+model Topic {
+  id       Int     @id @default(autoincrement())
+  title    String
+  content  String // The original post content
+  isPinned Boolean @default(false)
+
+  forumId Int
+  forum   Forum @relation(fields: [forumId], references: [id], onDelete: Cascade)
+
+  authorId Int // The Profile ID of the author
+  author   Profile @relation("ProfileTopics", fields: [authorId], references: [id])
+
+  // A topic has many replies
+  replies Reply[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([forumId])
+  @@index([authorId])
+}
+
+// A "comment" or "reply" to a Topic
+model Reply {
+  id      Int    @id @default(autoincrement())
+  content String
+
+  topicId Int
+  topic   Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  authorId Int // The Profile ID of the author
+  author   Profile @relation("ProfileReplies", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([topicId])
+  @@index([authorId])
 }
 
 //This is the "Alert System" for in-app notifications

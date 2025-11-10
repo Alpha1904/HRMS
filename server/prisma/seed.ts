@@ -5,38 +5,44 @@ import {
   LeaveType,
   ShiftChangeStatus,
   LeaveStatus,
-  Prisma,
   GoalStatus,
-  EvalPeriod
+  EvalPeriod,
+  Prisma,
 } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-const MANAGER_COUNT = 5;
+const MANAGER_COUNT = 4;
 const EMPLOYEE_COUNT = 45;
 const DEFAULT_PASSWORD = 'password123';
 
 /**
- * Helper to convert HH:MM string to a Date object (for Prisma Time type)
+ * Helper to convert HH:MM string to a Date object (for Prisma Time type).
  * We use UTC to ensure the time is stored purely, without timezone offsets.
  */
 function convertToTime(timeStr: string): Date {
   const [hours, minutes] = timeStr.split(':').map(Number);
   const date = new Date();
-  date.setUTCHours(hours, minutes, 0, 0); // Use UTC
+  date.setUTCHours(hours, minutes, 0, 0);
   return date;
 }
 
 async function main() {
   console.log('Seeding database...');
-  const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, salt);
+  const salt = await bcrypt.hash(DEFAULT_PASSWORD, 10);
 
   // --- 1. CLEANUP (Reverse order of dependency) ---
   console.log('Cleaning existing data...');
+  await prisma.reply.deleteMany();
+  await prisma.topic.deleteMany();
+  await prisma.forum.deleteMany();
+  await prisma.announcement.deleteMany();
+  await prisma.message.deleteMany();
   await prisma.notification.deleteMany();
+  await prisma.goal.deleteMany();
+  await prisma.evaluation.deleteMany();
   await prisma.shiftChangeRequest.deleteMany();
   await prisma.shift.deleteMany();
   await prisma.workScheduleTemplate.deleteMany();
@@ -46,22 +52,45 @@ async function main() {
   await prisma.profile.deleteMany();
   await prisma.user.deleteMany();
 
-  // --- 2. CREATE USERS & PROFILES ---
-  const departments = ['Engineering', 'HR', 'Sales', 'Marketing', 'Finance'];
-  const managers: { id: number; department: string; userId: number }[] = [];
-  const employees: { id: number; department: string; userId: number; managerId: number }[] = [];
+  // --- 2. CREATE CORE USERS ---
+  console.log('Creating core users (HR Admin, Managers, Employees)...');
 
-  console.log(`Creating ${MANAGER_COUNT} managers...`);
+  // A. Create HR Admin User (for Announcements, top-level management)
+  const hrUser = await prisma.user.create({
+    data: {
+      email: `hr_admin@test.local`,
+      password: salt,
+      role: Role.HR_ADMIN,
+      isActive: true,
+      isEmailVerified: true,
+      profile: {
+        create: {
+          fullName: 'HR Administrator',
+          department: 'HR',
+          position: 'HR Director',
+          contractType: ContractType.FULL_TIME,
+          hireDate: faker.date.past({ years: 10 }),
+          site: 'New York',
+        },
+      },
+    },
+    include: { profile: true },
+  });
+
+  if (!hrUser.profile) {
+    throw new Error('HR Admin profile could not be created.');
+  }
+  const hrAdminProfileId = hrUser.profile.id;
+
+  // B. Create Managers
+  const managers: { id: number; department: string; userId: number }[] = [];
+  const departments = ['Engineering', 'HR', 'Sales', 'Marketing'];
   for (let i = 0; i < MANAGER_COUNT; i++) {
     const department = departments[i % departments.length];
     const user = await prisma.user.create({
       data: {
-        email: faker.internet.email({
-          firstName: 'Manager',
-          lastName: `${i}`,
-          provider: 'test.local',
-        }),
-        password: passwordHash,
+        email: `manager${i}@test.local`,
+        password: salt,
         role: Role.MANAGER,
         isActive: true,
         isEmailVerified: true,
@@ -75,7 +104,8 @@ async function main() {
             position: 'Manager',
             contractType: ContractType.FULL_TIME,
             hireDate: faker.date.past({ years: 5 }),
-            site: 'New York',
+            site: faker.helpers.arrayElement(['New York', 'London', 'Remote']),
+            managerId: hrAdminProfileId,
           },
         },
       },
@@ -90,17 +120,30 @@ async function main() {
     }
   }
 
-  console.log(`Creating ${EMPLOYEE_COUNT} employees...`);
+  // C. Create Employees
+  const employees: {
+    id: number;
+    department: string;
+    site: string;
+    userId: number;
+    managerId: number;
+  }[] = [];
+  const testManager = managers[0]; // Manager 0 will be our specific test manager
+
   for (let i = 0; i < EMPLOYEE_COUNT; i++) {
-    const randomManager = faker.helpers.arrayElement(managers);
+    // Ensure employee 9 is our specific test case
+    const isTestEmployee = i === 9;
+    const randomManager = isTestEmployee
+      ? testManager
+      : faker.helpers.arrayElement(managers);
+    const employeeSite = isTestEmployee
+      ? 'New York'
+      : faker.helpers.arrayElement(['London', 'Remote', 'Paris']);
+
     const user = await prisma.user.create({
       data: {
-        email: faker.internet.email({
-          firstName: 'Employee',
-          lastName: `${i}`,
-          provider: 'test.local',
-        }),
-        password: passwordHash,
+        email: `employee${i}@test.local`,
+        password: salt,
         role: Role.EMPLOYEE,
         isActive: true,
         isEmailVerified: true,
@@ -117,7 +160,7 @@ async function main() {
               ContractType.PART_TIME,
             ]),
             hireDate: faker.date.past({ years: 3 }),
-            site: faker.helpers.arrayElement(['New York', 'London', 'Remote']),
+            site: employeeSite,
             managerId: randomManager.id,
           },
         },
@@ -128,13 +171,16 @@ async function main() {
       employees.push({
         id: user.profile.id,
         department: user.profile.department!,
+        site: user.profile.site!,
         userId: user.id,
         managerId: user.profile.managerId!,
       });
     }
   }
 
-  // --- 3. CREATE LEAVE POLICIES ---
+  // --- 3. CREATE SUPPORTING DATA (Policies, Schedules, etc.) ---
+
+  // A. Leave Policies
   console.log('Creating leave policies...');
   await prisma.leavePolicy.createMany({
     data: [
@@ -145,12 +191,6 @@ async function main() {
         contractType: ContractType.FULL_TIME,
       },
       {
-        name: 'Standard Vacation (Part-Time)',
-        leaveType: LeaveType.VACATION,
-        daysAllocated: 10,
-        contractType: ContractType.PART_TIME,
-      },
-      {
         name: 'Standard Sick Days (All)',
         leaveType: LeaveType.SICK,
         daysAllocated: 10,
@@ -158,60 +198,75 @@ async function main() {
     ],
   });
 
-  // --- 4. [NEW] CREATE SCHEDULE TEMPLATES ---
-  console.log('Creating schedule templates...');
-  const template1 = await prisma.workScheduleTemplate.create({
-    data: {
-      name: 'Standard Day (9-5)',
-      isRotation: false,
-      defaultStartTime: '09:00',
-      defaultEndTime: '17:00',
-      department: 'Engineering',
-    },
-  });
-  const template2 = await prisma.workScheduleTemplate.create({
-    data: {
-      name: 'Morning Shift (7-3)',
-      isRotation: false,
-      defaultStartTime: '07:00',
-      defaultEndTime: '15:00',
-      department: 'Sales',
-    },
+  // B. Forum Structure
+  console.log('Creating forum structure...');
+  await prisma.forum.createMany({
+    data: [
+      { name: 'General Discussion', description: 'A place for company-wide chat.' },
+      { name: 'Engineering Best Practices', description: 'Sharing technical tips.', department: 'Engineering' },
+      { name: 'HR Policies & Q&A', description: 'Official HR communications.' },
+    ],
   });
 
-  // --- 5. [NEW] CREATE SHIFTS ---
-  console.log('Creating shifts for the next 5 days...');
-  const today = new Date();
-  const shiftsToCreate: Prisma.ShiftCreateManyInput[] = [];
-  const firstTenEmployees = employees.slice(0, 10);
+  // --- 4. CREATE TEST-SPECIFIC SCENARIOS ---
+  console.log('Creating specific scenarios for testing...');
 
-  for (const emp of firstTenEmployees) {
-    for (let i = 0; i < 5; i++) {
-      const shiftDate = new Date(today);
-      shiftDate.setDate(today.getDate() + i);
-      
-      const template = emp.department === 'Engineering' ? template1 : template2;
+  // Find the specific users we created for reliable testing
+  const testUser = await prisma.user.findUnique({
+    where: { email: 'employee9@test.local' },
+  });
+  const targetEmployee = employees.find(e => e.userId === testUser?.id);
 
-      shiftsToCreate.push({
-        profileId: emp.id,
-        date: shiftDate,
-        startTime: convertToTime(template.defaultStartTime!),
-        endTime: convertToTime(template.defaultEndTime!),
-        templateId: template.id,
-      });
-    }
+  if (!targetEmployee) {
+    throw new Error("Target Employee (employee9@test.local) not found. Check creation loop.");
   }
-  await prisma.shift.createMany({ data: shiftsToCreate });
 
-  // --- 6. [NEW] CREATE PENDING REQUESTS (for testing) ---
-  console.log('Creating pending requests for testing...');
+  // A. Initial Topic/Reply in Forum
+  const generalForum = await prisma.forum.findUnique({ where: { name: 'General Discussion' } });
+  if (generalForum) {
+    const initialTopic = await prisma.topic.create({
+      data: {
+        forumId: generalForum.id,
+        authorId: hrAdminProfileId,
+        title: 'Welcome to the New HR Platform!',
+        content: 'Please use the forums to ask any non-private questions.',
+        isPinned: true,
+      },
+    });
 
-  // Create a pending Leave Request
-  const employeeForLeave = employees[0];
+    await prisma.reply.create({
+      data: {
+        topicId: initialTopic.id,
+        authorId: testManager.id,
+        content: "Great resource! I've already posted it to my team channel.",
+      },
+    });
+  }
+
+  // B. Initial Announcements
+  await prisma.announcement.createMany({
+    data: [
+      {
+        title: 'Welcome to the New Year!',
+        content: 'Happy 2026! A reminder that all goals need to be set by the end of Q1.',
+        isGlobal: true,
+        postedById: hrAdminProfileId,
+      },
+      {
+        title: 'New York Office Policy Update',
+        content: 'Mandatory remote day every Friday starting next week.',
+        isGlobal: false,
+        targetSites: ['New York'], // This will be visible to targetEmployee
+        postedById: hrAdminProfileId,
+      },
+    ],
+  });
+
+  // C. Pending Leave Request for Target Employee
   await prisma.leave.create({
     data: {
-      profileId: employeeForLeave.id,
-      managerId: employeeForLeave.managerId,
+      profileId: targetEmployee.id,
+      managerId: targetEmployee.managerId,
       type: LeaveType.VACATION,
       status: LeaveStatus.PENDING,
       startDate: new Date('2025-12-20'),
@@ -221,30 +276,11 @@ async function main() {
     },
   });
 
-  // Create a pending Shift Change Request
-  const firstShift = await prisma.shift.findFirst();
-  if (firstShift) {
-    await prisma.shiftChangeRequest.create({
-      data: {
-        shiftId: firstShift.id,
-        requesterId: firstShift.profileId,
-        status: ShiftChangeStatus.PENDING,
-        reason: 'Doctor appointment',
-        newStartTime: convertToTime('11:00'), // Requesting to start at 11:00
-      },
-    });
-  }
-
-  // --- 6. [NEW] CREATE PERFORMANCE REVIEW DATA ---
-  console.log('Creating performance review data...');
-  const targetEmployee = employees[9]; // Employee 10
-  const employeeManager = managers.find(m => m.id === targetEmployee.managerId)!;
-
-  // A. Create a historical, completed Evaluation (Manager)
+  // D. Performance Review Data for Target Employee
   const historicalEvaluation = await prisma.evaluation.create({
     data: {
       profileId: targetEmployee.id,
-      evaluatorId: employeeManager.id,
+      evaluatorId: testManager.id,
       period: EvalPeriod.QUARTERLY,
       overallScore: 3.8,
       scores: { communication: 4, technical: 4, leadership: 3 },
@@ -254,7 +290,6 @@ async function main() {
     },
   });
 
-  // B. Create a historical Goal (Goal 1: 75% complete)
   await prisma.goal.create({
     data: {
       profileId: targetEmployee.id,
@@ -262,24 +297,17 @@ async function main() {
       description: 'Q3 target for quality improvement.',
       status: GoalStatus.IN_PROGRESS,
       progress: 75,
-      targetDate: faker.date.future({ years: 0.1, refDate: '2025-10-01' }),
+      targetDate: new Date('2025-10-01'),
       createdInEvaluationId: historicalEvaluation.id,
     },
   });
 
-  // C. Create a historical Self-Evaluation
-  await prisma.evaluation.create({
-    data: {
-      profileId: targetEmployee.id,
-      period: EvalPeriod.QUARTERLY,
-      achievements: 'Successfully completed the migration.',
-      selfEval: true,
-      feedback: 'Overall, a great quarter.',
-    },
-  });
 
   console.log('---');
   console.log('Database seeding complete.');
+  console.log(`HR Admin Profile ID: ${hrAdminProfileId} (Email: ${hrUser.email})`);
+  console.log(`Test Manager Profile ID: ${testManager.id} (Email: manager0@test.local)`);
+  console.log(`Test Employee Profile ID: ${targetEmployee.id} (Email: employee9@test.local)`);
   console.log(`Password for all users: "${DEFAULT_PASSWORD}"`);
   console.log('---');
 }
