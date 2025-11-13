@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-Time Communication Test Client</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+        padding: 20px;
+        background-color: #181a20;
+        color: #e0e0e0;
+      }
+      .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        width: 100%;
+        max-width: 1400px;
+      }
+      .client-box {
+        background: #23272f;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+      }
+      .feature-box {
+        background: #22242b;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 15px;
+        border: 1px solid #333;
+      }
+      h2 {
+        border-bottom: 2px solid #333;
+        padding-bottom: 5px;
+        margin-top: 0;
+        color: #e0e0e0;
+      }
+      h4 {
+        margin-top: 10px;
+        color: #b0b8c1;
+      }
+      label,
+      input,
+      button {
+        display: block;
+        margin-bottom: 10px;
+      }
+      input[type='text'],
+      textarea {
+        width: 95%;
+        padding: 8px;
+        border: 1px solid #444;
+        border-radius: 4px;
+        resize: vertical;
+        background: #181a20;
+        color: #e0e0e0;
+      }
+      button {
+        padding: 8px 12px;
+        background-color: #007bff;
+        color: #e0e0e0;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 5px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .log-container {
+        border: 1px solid #333;
+        height: 180px;
+        overflow-y: scroll;
+        padding: 10px;
+        background-color: #23272f;
+        border-radius: 4px;
+        margin-top: 10px;
+      }
+      .log-entry {
+        padding: 5px 0;
+        border-bottom: 1px dashed #444;
+        font-size: 0.9em;
+        color: #e0e0e0;
+      }
+      .log-entry:last-child {
+        border-bottom: none;
+      }
+      .message {
+        background: #263238;
+        border-left: 5px solid #00bcd4;
+      }
+      .announcement {
+        background: #33331a;
+        border-left: 5px solid #ffeb3b;
+        color: #fffde7;
+      }
+      .reply {
+        background: #1b2e1b;
+        border-left: 5px solid #4caf50;
+      }
+      .status {
+        color: #b0b8c1;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Internal Communication System Test</h1>
+    <div class="grid-container">
+      <div class="client-box">
+        <h2>Client A (User ID 260) - Receiver</h2>
+        <button onclick="connectAndRegister(260)">
+          1. Connect & Register as User 260
+        </button>
+
+        <div class="feature-box">
+          <h4>Forum Room Control</h4>
+          <p>Topic ID 1 is seeded. Join this room to receive replies.</p>
+          <button onclick="joinTopic(260, 1)">Join Topic 1</button>
+          <button onclick="leaveTopic(260, 1)">Leave Topic 1</button>
+          <div class="feature-box">
+            <h4>Forum Reply (As User 10)</h4>
+            <p>Reply to Topic 1 to test full interaction.</p>
+            <input
+              type="text"
+              id="reply-content-10"
+              placeholder="Type your reply as User 10..."
+              value="I agree with the manager's comment."
+            />
+            <button onclick="postReply(260, 1, 'reply-content-10')">
+              Reply to Topic 1 (REST)
+            </button>
+          </div>
+        </div>
+
+        <div class="log-container" id="log-260"></div>
+      </div>
+
+      <div class="client-box">
+        <h2>Client B (User ID 254) - Admin/Sender</h2>
+        <button onclick="connectAndRegister(254)">
+          1. Connect & Register as User 254
+        </button>
+
+        <div class="feature-box">
+          <h4>Messaging (Point-to-Point)</h4>
+          <p>Send a message (REST) to User 260.</p>
+          <input
+            type="text"
+            id="message-content"
+            placeholder="Type your message..."
+            value="URGENT: Check your email."
+          />
+          <button onclick="sendMessage(254, 260)">
+            2. Send Message (254 → 260)
+          </button>
+        </div>
+
+        <div class="feature-box">
+          <h4>Announcement (Global Broadcast)</h4>
+          <input
+            type="text"
+            id="announcement-title"
+            placeholder="Title"
+            value="System Update Reminder"
+          />
+          <textarea id="announcement-content" placeholder="Content">
+                The system maintenance is scheduled for midnight.
+                </textarea
+          >
+          <button onclick="postAnnouncement(254)">
+            3. Post Announcement (REST)
+          </button>
+        </div>
+
+        <div class="feature-box">
+          <h4>Forum Reply (Room Broadcast)</h4>
+          <p>Reply to Topic 1 to test room push.</p>
+          <input
+            type="text"
+            id="reply-content"
+            placeholder="Type your reply..."
+            value="This confirms the topic is active."
+          />
+          <button onclick="postReply(254, 1)">
+            4. Post Reply to Topic 1 (REST)
+          </button>
+        </div>
+
+        <div class="log-container" id="log-254"></div>
+      </div>
+    </div>
+
+    <script>
+      const API_URL = 'http://localhost:3000/api';
+      const WS_URL = 'ws://localhost:3000';
+      const sockets = {}; // Stores connections: {260: socket, 2: socket}
+
+      function log(userId, message, type = 'status') {
+        const logElement = document.getElementById(`log-${userId}`);
+        if (!logElement) return;
+
+        const div = document.createElement('div');
+        div.innerHTML = message;
+        div.className = `log-entry ${type}`;
+        logElement.prepend(div);
+      }
+
+      // --- 1. SOCKET.IO CONNECTION & REGISTRATION ---
+      function connectAndRegister(userId) {
+        if (sockets[userId] && sockets[userId].connected) {
+          log(userId, `Already connected.`, 'status');
+          return;
+        }
+
+        const socket = io(WS_URL);
+        sockets[userId] = socket;
+
+        socket.on('connect', () => {
+          log(
+            userId,
+            `<strong>Connected!</strong> Sending registration...`,
+            'status',
+          );
+          socket.emit('register', userId);
+          log(userId, `Registered as User ${userId}`, 'status');
+        });
+
+        socket.on('disconnect', () => {
+          log(userId, `<strong>Disconnected!</strong>`, 'error');
+        });
+        socket.on('connect_error', (err) => {
+          log(userId, `Connection Error: ${err.message}`, 'error');
+        });
+
+        // LISTENER: 1-to-1 Messaging
+        socket.on('newMessage', (data) => {
+          const senderName =
+            data.sender.profile?.fullName || `User ${data.senderId}`;
+          log(
+            userId,
+            `<strong>[MESSAGE]</strong> From ${senderName}: ${data.content}`,
+            'message',
+          );
+        });
+
+        // LISTENER: Announcement (Global Broadcast)
+        socket.on('newAnnouncement', (data) => {
+          log(
+            userId,
+            `<strong>[ANNOUNCEMENT]</strong> Title: ${data.title}. Content: ${data.content.substring(0, 40)}...`,
+            'announcement',
+          );
+        });
+
+        // LISTENER: Forum Reply (Room-based)
+        socket.on('newReply', (data) => {
+          const authorName = data.author?.fullName || `User ${data.authorId}`;
+          log(
+            userId,
+            `<strong>[FORUM REPLY]</strong> Topic ${data.topicId} by ${authorName}: ${data.content}`,
+            'reply',
+          );
+        });
+      }
+
+      // --- 2. FORUM ROOM CONTROL (Client A only) ---
+      function joinTopic(userId, topicId) {
+        if (sockets[userId] && sockets[userId].connected) {
+          sockets[userId].emit('joinTopic', topicId);
+          log(userId, `Joined Topic Room: topic:${topicId}`, 'status');
+        } else {
+          log(userId, 'Error: Must be connected first.', 'error');
+        }
+      }
+
+      function leaveTopic(userId, topicId) {
+        if (sockets[userId] && sockets[userId].connected) {
+          sockets[userId].emit('leaveTopic', topicId);
+          log(userId, `Left Topic Room: topic:${topicId}`, 'status');
+        } else {
+          log(userId, 'Error: Must be connected first.', 'error');
+        }
+      }
+
+      // --- 3. REST API TRIGGERS ---
+
+      async function makeRequest(endpoint, method, body, userId) {
+        try {
+          const response = await fetch(`${API_URL}${endpoint}`, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            log(
+              userId,
+              `REST Success (${method} ${endpoint}): Saved ID ${data.id || 'N/A'}`,
+              'status',
+            );
+            return true;
+          } else {
+            log(
+              userId,
+              `REST Error (${response.status}): ${data.message || 'Unknown Error'}`,
+              'error',
+            );
+            return false;
+          }
+        } catch (error) {
+          log(userId, `Fetch Error: ${error.message}`, 'error');
+          return false;
+        }
+      }
+
+      // Messaging Trigger
+      function sendMessage(senderId, receiverId) {
+        const content = document.getElementById('message-content').value;
+        log(senderId, `Triggering POST /messages...`, 'status');
+        makeRequest(
+          '/messages',
+          'POST',
+          { senderId, receiverId, content },
+          senderId,
+        );
+      }
+
+      // Announcement Trigger (requires User 2 to be an HR_ADMIN role)
+      function postAnnouncement(postedById) {
+        const title = document.getElementById('announcement-title').value;
+        const content = document.getElementById('announcement-content').value;
+        log(postedById, `Triggering POST /announcements...`, 'status');
+        makeRequest(
+          '/announcements',
+          'POST',
+          {
+            postedById,
+            title,
+            content,
+            isGlobal: true,
+          },
+          postedById,
+        );
+      }
+
+      // Forum Reply Trigger
+      function postReply(authorId, topicId, inputId = 'reply-content') {
+        const content = document.getElementById('reply-content').value;
+        log(authorId, `Triggering POST /forums/replies as User ${authorId}...`, 'status');
+        makeRequest(
+          '/forums/replies',
+          'POST',
+          {
+            authorId,
+            topicId,
+            content,
+          },
+          authorId,
+        );
+      }
+    </script>
+  </body>
+</html>

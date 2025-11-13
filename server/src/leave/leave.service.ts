@@ -7,30 +7,39 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfileService } from '../profile/profile.service';
 import { CreateLeaveDto } from './dto/create-leave.dto';
-import { Leave, LeaveBalance, LeaveType, Prisma, Profile, Role } from '@prisma/client';
+import {
+  Leave,
+  LeaveBalance,
+  LeaveType,
+  Prisma,
+  Profile,
+  Role,
+} from '@prisma/client';
 import { UpdateLeaveStatusDto } from './dto/update-leave-status.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class LeaveService {
   constructor(
     private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
     private profileService: ProfileService, // Used to check if profile exists
   ) {}
 
- 
   private calculateDaysRequested(startDate: Date, endDate: Date): number {
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
     // Convert to days and add 1 for inclusive count
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
     if (diffDays <= 0) {
-      throw new BadRequestException('End date must be after or on the start date.');
+      throw new BadRequestException(
+        'End date must be after or on the start date.',
+      );
     }
     return diffDays;
   }
 
-
-async createRequest(dto: CreateLeaveDto): Promise<Leave> {
+  async createRequest(dto: CreateLeaveDto): Promise<Leave> {
     const startDate = new Date(dto.startDate);
     const endDate = new Date(dto.endDate);
     const currentYear = startDate.getFullYear();
@@ -41,14 +50,16 @@ async createRequest(dto: CreateLeaveDto): Promise<Leave> {
       include: {
         user: {
           select: {
-            role: true
-          }
-        }
+            role: true,
+          },
+        },
       },
     });
 
     if (!profile) {
-      throw new NotFoundException(`Profile with ID ${dto.profileId} not found.`);
+      throw new NotFoundException(
+        `Profile with ID ${dto.profileId} not found.`,
+      );
     }
 
     // 2. Calculate days requested
@@ -85,6 +96,14 @@ async createRequest(dto: CreateLeaveDto): Promise<Leave> {
       },
     });
 
+    //  EMIT THE EVENT
+    if (newLeave.managerId) {
+      this.eventEmitter.emit('leave.created', {
+        leave: newLeave,
+        profile, // Pass the profile along with the leave object
+      });
+    }
+
     return newLeave;
   }
 
@@ -98,7 +117,6 @@ async createRequest(dto: CreateLeaveDto): Promise<Leave> {
     year: number,
     profile: Profile & { user: { role: Role } }, // Profile with user relation
   ): Promise<LeaveBalance> {
-    
     // 1. Try to find the existing balance
     const existingBalance = await this.prisma.leaveBalance.findUnique({
       where: {
@@ -163,21 +181,26 @@ async createRequest(dto: CreateLeaveDto): Promise<Leave> {
       });
       return newBalance;
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
         // This is a "race condition": two requests tried to create the
         // balance at the same time. The other one won.
         // We can safely await the re-fetch of the one that was just created.
         const balance = await this.prisma.leaveBalance.findUnique({
-             where: {
-                profileId_leaveType_year: {
-                    profileId,
-                    leaveType,
-                    year,
-                }
-             }
+          where: {
+            profileId_leaveType_year: {
+              profileId,
+              leaveType,
+              year,
+            },
+          },
         });
         if (!balance) {
-          throw new InternalServerErrorException('Failed to create leave balance.');
+          throw new InternalServerErrorException(
+            'Failed to create leave balance.',
+          );
         }
         return balance;
       }
@@ -185,81 +208,12 @@ async createRequest(dto: CreateLeaveDto): Promise<Leave> {
     }
   }
 
-
-
-  /**
-   * ### Feature: Leave Request Submission
-   * 1. Check for profile existence.
-   * 2. Calculate the days requested.
-   * 3. Validate against the employee's current LeaveBalance.
-   * 4. Create the PENDING Leave record.
-   */
-//   async createRequest(dto: CreateLeaveDto): Promise<Leave> {
-//     // Check if the requesting profile exists
-//     await this.profileService.findOne(dto.profileId); 
-
-//     const startDate = new Date(dto.startDate);
-//     const endDate = new Date(dto.endDate);
-    
-//     // Check 1: Calculate days requested (simplified)
-//     const daysRequested = this.calculateDaysRequested(startDate, endDate);
-
-//     // Get the current year for balance lookup
-//     const currentYear = startDate.getFullYear();
-
-//     // Check 2: Retrieve the LeaveBalance for the employee/type/year
-//     const balance = await this.prisma.leaveBalance.findUnique({
-//       where: {
-//         profileId_leaveType_year: {
-//           profileId: dto.profileId,
-//           leaveType: dto.type,
-//           year: currentYear,
-
-//         },
-//       },
-//     });
-
-//     if (!balance) {
-//       // ASSUMPTION: If no balance exists, it means 0 days are available.
-//       // TRUTH: A proper system would create the balance automatically based on Policy on Jan 1st.
-//       throw new BadRequestException(
-//         `No leave balance found for ${dto.type} in ${currentYear}. You may have 0 days allocated.`,
-//       );
-//     }
-    
-//     const daysAvailable = balance.totalAllocated - balance.daysUsed;
-
-//     // Check 3: Validate the request against the available balance
-//     if (daysRequested > daysAvailable) {
-//       throw new BadRequestException(
-//         `Insufficient balance. Requested ${daysRequested} days, but only ${daysAvailable} days are available for ${dto.type}.`,
-//       );
-//     }
-
-//     // Check 4: Create the new PENDING leave request
-//     const newLeave = await this.prisma.leave.create({
-//       data: {
-//         profileId: dto.profileId,
-//         type: dto.type,
-//         startDate,
-//         endDate,
-//         daysRequested: daysRequested,
-//         reason: dto.reason,
-//         // The managerId is retrieved via a separate business rule/auth later
-//         // For now, let's look up the manager's ID
-//         managerId: (await this.profileService.findOne(dto.profileId)).managerId,
-//       },
-//     });
-
-//     return newLeave;
-//   }
-
   /**
    * ### Feature: Leave Balance Retrieval
    * This is necessary for the front-end to show "days remaining".
    */
   async getBalancesByProfile(profileId: number): Promise<LeaveBalance[]> {
-    await this.profileService.findOne(profileId); 
+    await this.profileService.findOne(profileId);
 
     return this.prisma.leaveBalance.findMany({
       where: { profileId },
@@ -278,7 +232,9 @@ async createRequest(dto: CreateLeaveDto): Promise<Leave> {
     });
 
     if (!leave) {
-      throw new NotFoundException(`Leave request with ID ${leaveId} not found.`);
+      throw new NotFoundException(
+        `Leave request with ID ${leaveId} not found.`,
+      );
     }
 
     // Test my reasoning: Does this allow managers to approve an already approved leave? No.
@@ -295,7 +251,6 @@ async createRequest(dto: CreateLeaveDto): Promise<Leave> {
 
     // Start the atomic transaction
     return this.prisma.$transaction(async (tx) => {
-      
       // Step A: Update the Leave record (either APPROVED or REJECTED)
       const updatedLeave = await tx.leave.update({
         where: { id: leaveId },
@@ -308,25 +263,27 @@ async createRequest(dto: CreateLeaveDto): Promise<Leave> {
 
       // Step B: If APPROVED, update the LeaveBalance
       if (dto.status === 'APPROVED') {
-        
         // Optional Pre-check (Good practice for race conditions)
         const balance = await tx.leaveBalance.findUnique({
-            where: {
-                profileId_leaveType_year: {
-                    profileId: profileId,
-                    leaveType: leaveType,
-                    year: year,
-                }
-            }
+          where: {
+            profileId_leaveType_year: {
+              profileId: profileId,
+              leaveType: leaveType,
+              year: year,
+            },
+          },
         });
 
-        if (!balance || (balance.totalAllocated - balance.daysUsed) < daysRequested) {
-             // Throwing here will automatically trigger a full rollback of Step A
-             throw new BadRequestException(
-                'Balance insufficient at time of approval. Transaction rolled back.'
-            );
+        if (
+          !balance ||
+          balance.totalAllocated - balance.daysUsed < daysRequested
+        ) {
+          // Throwing here will automatically trigger a full rollback of Step A
+          throw new BadRequestException(
+            'Balance insufficient at time of approval. Transaction rolled back.',
+          );
         }
-        
+
         // CRITICAL UPDATE: Safely decrement the available balance by incrementing daysUsed
         await tx.leaveBalance.update({
           where: {
@@ -344,6 +301,13 @@ async createRequest(dto: CreateLeaveDto): Promise<Leave> {
         });
       }
       
+      // EMIT THE ACTION EVENT
+      this.eventEmitter.emit('leave.actioned', {
+        leave: updatedLeave,
+        profile: await this.profileService.findOne(updatedLeave.profileId), // Fetch and pass the profile
+        status: dto.status, // "APPROVED" or "REJECTED"
+      });
+
       return updatedLeave;
     });
   }

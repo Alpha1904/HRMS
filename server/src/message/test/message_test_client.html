@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-Time Messaging Test Client</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 40px;
+        padding: 20px;
+        background-color: #f4f4f4;
+      }
+      .client-box {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        width: 400px;
+      }
+      h3 {
+        border-bottom: 2px solid #ccc;
+        padding-bottom: 10px;
+        margin-top: 0;
+      }
+      label,
+      input,
+      button {
+        display: block;
+        margin-bottom: 10px;
+      }
+      input[type='text'] {
+        width: 95%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button {
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      #log {
+        border: 1px solid #ddd;
+        height: 200px;
+        overflow-y: scroll;
+        padding: 10px;
+        background-color: #eee;
+        border-radius: 4px;
+        margin-top: 15px;
+      }
+      .message {
+        background: #e0f7fa;
+        padding: 5px;
+        margin-bottom: 5px;
+        border-left: 5px solid #00bcd4;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="client-box">
+      <h2>Client A (User ID 206)</h2>
+      <p>
+        This user will be the **primary receiver** of the real-time message.
+      </p>
+      <button onclick="connectAndRegister(206)">
+        Connect & Register as User 206
+      </button>
+      <div id="log-206" class="log"></div>
+    </div>
+
+    <div class="client-box">
+      <h2>Client B (User ID 210)</h2>
+      <p>This user will be the **sender** via the REST API.</p>
+      <button onclick="connectAndRegister(210)">
+        Connect & Register as User 210
+      </button>
+
+      <hr />
+
+      <h3>Send Message (REST)</h3>
+      <label for="content">Message Content:</label>
+      <input type="text" id="content" value="Hello, real-time world!" />
+
+      <button onclick="sendMessage(210, 206)">Send Message (210 → 206)</button>
+      <div id="log-210" class="log"></div>
+    </div>
+
+    <script>
+      const API_URL = 'http://localhost:3000/api';
+      const WS_URL = 'ws://localhost:3000';
+      const sockets = {}; // Stores connections: {10: socket, 2: socket}
+
+      function log(userId, message, type = 'status') {
+        const logElement = document.getElementById(`log-${userId}`);
+        const div = document.createElement('div');
+        div.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+        div.className = type === 'message' ? 'message' : '';
+        logElement.prepend(div);
+      }
+
+      // --- SOCKET.IO LOGIC (WebSocket) ---
+      function connectAndRegister(userId) {
+        if (sockets[userId] && sockets[userId].connected) {
+          log(userId, `Already connected.`, 'status');
+          return;
+        }
+
+        const socket = io(WS_URL);
+        sockets[userId] = socket;
+
+        socket.on('connect', () => {
+          log(userId, `Connected! Sending registration...`, 'status');
+          // This is the CRITICAL STEP: Emit the 'register' event with the User ID
+          socket.emit('register', userId);
+          log(userId, `Registered as User ${userId}`, 'status');
+        });
+
+        socket.on('disconnect', () => {
+          log(userId, `Disconnected!`, 'status');
+        });
+
+        // This is the CRITICAL STEP: Listen for the 'newMessage' event
+        socket.on('newMessage', (data) => {
+          const senderName =
+            data.sender.profile?.fullName || `User ${data.senderId}`;
+          log(
+            userId,
+            `<strong>REAL-TIME MESSAGE RECEIVED!</strong> From: ${senderName}: ${data.content}`,
+            'message',
+          );
+        });
+
+        socket.on('connect_error', (err) => {
+          log(userId, `Connection Error: ${err.message}`, 'error');
+        });
+      }
+
+      // --- REST API LOGIC (HTTP POST) ---
+      async function sendMessage(senderId, receiverId) {
+        const content = document.getElementById('content').value;
+        if (!content) return log(senderId, 'Content cannot be empty.', 'error');
+
+        log(senderId, `Sending message via REST API...`, 'status');
+
+        try {
+          const response = await fetch(`${API_URL}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senderId, receiverId, content }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            log(
+              senderId,
+              `Message successfully SAVED (HTTP 201). ID: ${data.id}`,
+              'status',
+            );
+          } else {
+            const error = await response.json();
+            log(
+              senderId,
+              `REST Error: ${response.status} - ${error.message || 'Unknown Error'}`,
+              'error',
+            );
+          }
+        } catch (error) {
+          log(senderId, `Fetch Error: ${error.message}`, 'error');
+        }
+      }
+    </script>
+  </body>
+</html>
