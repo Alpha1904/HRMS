@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  scroll-behavior: smooth;
+}
+
+:root {
+  --primary: #eb4c08;
+  --green: #0c724d;
+  --purple: #6a1cb8;
+  --px: 1rem;
+  --white: #fff;
+  --py : 5rem;
+  --mobPy : 2rem;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--white);
+}
+
+::-webkit-scrollbar {
+  width: 0.2rem;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 5rem;
+}
+
+body {
+  /* font-family: 'Montserrat', sans serif; */
+  font-family: "Faculty Glyphic", sans-serif;
+  background-color: #fafafa;
+  color: #1f1f1f;
+}
+
+.header {
+  top: 8%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+}
+
+.h-bold {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+}
+
+.banner {
+  background-image: url(../public/img/coverBanner.jpeg);
+  background-size: cover;
+  /* background-attachment: fixed; */
+  background-position: center;
+}
+
+.bannerContainer, .bgGrad {
+  /* background: #1a1310e7; */
+  background-image: linear-gradient(100deg, #030202f6, #6e341bf3);
+}
+
+.montserrat {
+  font-family: "Montserrat", sans-serif;
+}
+
+.secPadding {
+  padding-left: var(--px);
+  padding-right: var(--px);
+}
+
+.secDefault {
+  padding: var(--py) var(--px);
+}
+
+.stepsNumber, .loginAbso {
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.absolute {
+  top: 50;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.steps1:hover {
+  transform: translateY(-20px);
+  transition: all .5s ease-in-out;
+}
+
+.formNewsletter input:focus {
+  border: transparent;
+  outline: none;
+}
+/* .formNewsletter input:focus ~ .formNewsletter form {
+  border: transparent;
+} */
+
+@media screen and (max-width: 800px) {
+  .header {
+    top: 6%;
+  }
+
+.secDefault {
+  padding: var(--mobPy) var(--px);
+}
+}
