@@ -5,22 +5,12 @@
 // import { useNavigate } from "react-router-dom";
 // import { useDispatch } from "react-redux";
 // import { setCredentials } from "../../store/slices/authSlice";
-// // import { auth } from "../../api/api"; // Laissez-le commenté ou retirez-le si vous ne l'utilisez pas
 // import { toast } from "react-toastify";
 // import "react-toastify/dist/ReactToastify.css";
+// // IMPORT DE L'API AUTHENTIFICATION
+// import { auth } from "../../api/api"; 
 
-// // --- MOCK DATA TEMPORAIRE ---
-// const MOCK_EMAIL = "admin@hr.com";
-// const MOCK_PASSWORD = "password123";
-// const MOCK_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwMDEiLCJyb2xlIjoiYWRtaW4ifQ.H4p29WbTf8b_c5wM3tZkL7xS9jE4g2X0Gg6sY1Z3kM8";
-// const MOCK_USER = {
-//     id: "001",
-//     name: "Jumael Kamga",
-//     email: MOCK_EMAIL,
-//     role: "admin",
-// };
-// // ---------------------------
-
+// // Schéma de validation
 // const schema = yup.object().shape({
 //   email: yup
 //     .string()
@@ -29,49 +19,53 @@
 //   password: yup
 //     .string()
 //     .required("Mot de passe requis"),
-//   remember: yup.boolean(), 
+//   remember: yup.boolean(),
 // });
 
 // export default function Login() {
 //   const {
 //     register,
 //     handleSubmit,
-//     formState: { errors },
+//     formState: { errors, isSubmitting }, // Ajout de isSubmitting pour désactiver le bouton
 //   } = useForm({ resolver: yupResolver(schema) });
+  
 //   const navigate = useNavigate();
 //   const dispatch = useDispatch();
 
 //   const onSubmit = async (data) => {
-//     // --- DÉBUT DE LA LOGIQUE DE MOCKING ---
-    
-//     // 1. Simuler l'échec si les identifiants ne correspondent pas aux mocks
-//     if (data.email !== MOCK_EMAIL || data.password !== MOCK_PASSWORD) {
-//          toast.error("Identifiants de test incorrects. Utilisez admin@hr.com / password123");
-//          return;
-//     }
-
 //     try {
-//         // Simuler le délai réseau (optionnel, pour l'effet)
-//         await new Promise(resolve => setTimeout(resolve, 500)); 
-        
-//         // 2. Définir les données à partir des mocks
-//         const token = MOCK_TOKEN;
-//         const user = MOCK_USER;
-        
-//         // 3. Procéder comme si l'API avait réussi
-//         dispatch(setCredentials({ user, token }));
+//       // 1. Appel de l'API : Envoi de l'email et du mot de passe au backend
+//       const response = await auth.login(data);
+      
+//       // La réponse de l'API devrait idéalement ressembler à { token: '...', user: { ... } }
+//       const { token, user } = response.data;
+      
+//       if (!token || !user) {
+//         throw new Error("Réponse API invalide : jeton ou utilisateur manquant.");
+//       }
 
-//         // Stocker le token selon l'option "remember me"
-//         if (data.remember) localStorage.setItem("token", token);
-//         else sessionStorage.setItem("token", token);
-        
-//         toast.success("Connecté (Mode Mock)");
-//         navigate("/dashboard");
+//       // 2. Stockage des identifiants dans Redux
+//       dispatch(setCredentials({ user, token }));
+
+//       // 3. Stockage du token dans le stockage local ou de session
+//       if (data.remember) {
+//         localStorage.setItem("token", token);
+//       } else {
+//         sessionStorage.setItem("token", token);
+//       }
+
+//       toast.success("Connexion réussie !");
+//       navigate("/dashboard");
 //     } catch (err) {
-//       // Cette partie devrait être inaccessible en mode mock simple
-//       toast.error("Erreur de connexion simulée");
+//       console.error("Erreur de connexion:", err);
+      
+//       // Gérer les erreurs spécifiques de l'API (ex: 401 Unauthorized)
+//       const errorMessage = 
+//         err.response?.data?.message || 
+//         "Identifiants incorrects ou erreur de serveur.";
+
+//       toast.error(errorMessage);
 //     }
-//     // --- FIN DE LA LOGIQUE DE MOCKING ---
 //   };
 
 //   return (
@@ -79,7 +73,7 @@
 //       <div className="relative w-full max-w-md bg-white rounded-lg shadow py-8 px-4 md:p-8">
 //         <div className="flex justify-center mb-4">
 //           <div className="absolute w-28 h-28 rounded-full flex items-center justify-center overflow-hidden loginAbso border border-primary">
-//             <img src="./img/log.png" alt="" className="w-full h-full object-cover" />
+//             <img src="./img/log.png" alt="Logo" className="w-full h-full object-cover" />
 //           </div>
 //         </div>
 //         <h2 className="text-center text-3xl font-bold text-[color:var(--primary)] mb-2 mt-12">
@@ -117,19 +111,17 @@
 //           </div>
 //           <button
 //             type="submit"
-//             className="w-full bg-[color:var(--primary)] text-white py-3 rounded"
+//             disabled={isSubmitting} // Désactiver pendant la soumission
+//             className="w-full bg-[color:var(--primary)] text-white py-3 rounded disabled:opacity-50"
 //           >
-//             Connexion
+//             {isSubmitting ? "Connexion en cours..." : "Connexion"}
 //           </button>
-//           <div className="text-xs text-center text-gray-500 pt-2">
-//               Mode Développement : Utilisez <strong>{MOCK_EMAIL}</strong> / <strong>{MOCK_PASSWORD}</strong>
-//           </div>
+          
 //         </form>
 //       </div>
 //     </div>
 //   );
 // }
-
 
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -140,34 +132,9 @@ import { useDispatch } from "react-redux";
 import { setCredentials } from "../../store/slices/authSlice";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { auth } from "../../api/api"; 
 
-// --- MOCK DATA TEMPORAIRE avec 2 rôles ---
-const MOCK_USERS = [
-  {
-    email: "admin@hr.com",
-    password: "password123",
-    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwMDEiLCJyb2xlIjoiYWRtaW4ifQ.H4p29WbTf8b_c5wM3tZkL7xS9jE4g2X0Gg6sY1Z3kM8",
-    user: {
-      id: "001",
-      name: "Jumael Kamga (Admin)",
-      email: "admin@hr.com",
-      role: "admin",
-    },
-  },
-  {
-    email: "employe@hr.com",
-    password: "password456",
-    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwMDIiLCJyb2xlIjoiZW1wbG95ZSJ9.Q9m_p8aL7yG_c5wM3tZkL7xS9jE4g2X0Gg6sY1Z3kM8",
-    user: {
-      id: "002",
-      name: "Alice Dubois (Employé)",
-      email: "employe@hr.com",
-      role: "employe",
-    },
-  },
-];
-// ---------------------------
-
+// Schéma de validation inchangé
 const schema = yup.object().shape({
   email: yup
     .string()
@@ -176,56 +143,83 @@ const schema = yup.object().shape({
   password: yup
     .string()
     .required("Mot de passe requis"),
-  remember: yup.boolean(), 
+  remember: yup.boolean(),
 });
 
 export default function Login() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({ resolver: yupResolver(schema) });
+  
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const onSubmit = async (data) => {
-    // --- DÉBUT DE LA LOGIQUE DE MOCKING MISE À JOUR ---
-    
-    // 1. Chercher l'utilisateur dans les mocks
-    const mockUser = MOCK_USERS.find(
-      (u) => u.email === data.email && u.password === data.password
-    );
-
-    // 2. Simuler l'échec si les identifiants ne correspondent pas
-    if (!mockUser) {
-        toast.error("Identifiants incorrects. Voir les identifiants de test ci-dessous.");
-        return;
-    }
-
     try {
-        // Simuler le délai réseau (optionnel)
-        await new Promise(resolve => setTimeout(resolve, 500)); 
-        
-        // 3. Définir les données à partir des mocks trouvés
-        const token = mockUser.token;
-        const user = mockUser.user;
-        
-        // 4. Procéder comme si l'API avait réussi
-        dispatch(setCredentials({ user, token }));
+      // 1. Appel de l'API pour la connexion
+      // Si votre backend renvoie le JWT dans un cookie HTTP-only, 
+      // il n'apparaîtra pas dans response.data.
+      const response = await auth.login(data);
+      
+      // On s'attend à ce que le corps de la réponse contienne au moins l'objet 'user'.
+      // S'il est vide, ajustez à 'const user = response.data;'
+      // Si votre backend envoie seulement { user: {...} }, utilisez 'const { user } = response.data;'
+      const user = response.data.user || response.data; // Adaptez ceci si la réponse est { user: {...} }
 
-        // Stocker le token selon l'option "remember me"
-        if (data.remember) localStorage.setItem("token", token);
-        else sessionStorage.setItem("token", token);
-        
-        toast.success(`Connecté comme : ${user.role} (Mode Mock)`);
-        navigate("/dashboard");
+      if (!user) {
+        // Cela devrait être géré par une erreur 401, mais au cas où...
+        throw new Error("L'objet utilisateur est manquant dans la réponse.");
+      }
+
+      // 2. Le JWT est stocké dans un cookie HTTP-only par le backend.
+      // Le TOKEN N'EST PAS NÉCESSAIREMENT ENREGISTRÉ DANS REDUX/LOCAL STORAGE ici,
+      // car Axios va l'envoyer automatiquement via les cookies pour les requêtes futures.
+      // Nous stockons uniquement les infos utilisateur dans Redux.
+      
+      // Si votre 'authSlice' nécessite un champ 'token' même vide pour être valide, 
+      // passez une valeur par défaut, mais le jeton réel est dans le cookie.
+      const tokenPlaceholder = 'COOKIE_BASED_TOKEN'; 
+      
+      dispatch(setCredentials({ user, token: tokenPlaceholder })); 
+
+      // 3. OPTIONNEL : Si vous utilisiez 'remember' pour le token, 
+      // cette logique n'est plus nécessaire avec les cookies HTTP-only.
+      // Vous pourriez utiliser 'remember' pour régler la durée du cookie côté serveur.
+      
+      toast.success("Connexion réussie ! Redirection en cours...");
+      
+      // IMPORTANT : Vous devez avoir configuré Axios dans api.js avec 
+      // 'withCredentials: true' pour envoyer les cookies à chaque requête.
+      navigate("/dashboard");
+
     } catch (err) {
-      // Cette partie devrait être inaccessible en mode mock simple
-      toast.error("Erreur de connexion simulée");
+      console.error("Erreur de connexion:", err);
+      
+      // 4. Gestion des erreurs
+      let errorMessage = "Erreur de connexion. Vérifiez les identifiants ou le CORS.";
+      
+      if (err.response) {
+        if (err.response.status === 401) {
+             errorMessage = "Identifiants incorrects.";
+        } else if (err.response.data && err.response.data.message) {
+             // Tente de récupérer le message d'erreur du backend NestJS
+             errorMessage = Array.isArray(err.response.data.message) 
+                          ? err.response.data.message[0]
+                          : err.response.data.message;
+        } else if (err.response.status === 403) {
+             errorMessage = "Erreur de permission ou de CORS. Vérifiez la configuration du serveur.";
+        } else {
+             errorMessage = `Erreur serveur (Statut ${err.response.status}).`;
+        }
+      }
+
+      toast.error(errorMessage);
     }
-    // --- FIN DE LA LOGIQUE DE MOCKING MISE À JOUR ---
   };
 
+  // Rendu JSX (inchangé)
   return (
     <div className="secDefault min-h-screen flex items-center justify-center">
       <div className="relative w-full max-w-md bg-white rounded-lg shadow py-8 px-4 md:p-8">
@@ -246,6 +240,7 @@ export default function Login() {
               {...register("email")}
               placeholder="Adresse email"
               className="w-full p-3 border rounded"
+              disabled={isSubmitting}
             />
             <p className="text-sm text-red-500">{errors.email?.message}</p>
           </div>
@@ -255,12 +250,13 @@ export default function Login() {
               type="password"
               placeholder="Mot de passe"
               className="w-full p-3 border rounded"
+              disabled={isSubmitting}
             />
             <p className="text-sm text-red-500">{errors.password?.message}</p>
           </div>
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2">
-              <input type="checkbox" {...register("remember")} /> Garder la
+              <input type="checkbox" {...register("remember")} disabled={isSubmitting} /> Garder la
               session
             </label>
             <button type="button" className="text-sm text-gray-500">
@@ -269,20 +265,11 @@ export default function Login() {
           </div>
           <button
             type="submit"
-            className="w-full bg-[color:var(--primary)] text-white py-3 rounded"
+            disabled={isSubmitting}
+            className="w-full bg-[color:var(--primary)] text-white py-3 rounded disabled:opacity-50 transition-opacity"
           >
-            Connexion
+            {isSubmitting ? "Connexion en cours..." : "Connexion"}
           </button>
-          
-          {/* Instructions de connexion mises à jour */}
-          {/* <div className="text-sm text-center text-gray-500 pt-2 border-t border-gray-200 mt-4">
-            <h3 className="font-semibold mb-2 text-gray-700">Mode Développement (Tests) :</h3>
-            <p className="text-xs mb-1">
-                <strong>Administrateur :</strong> 
-                <br />
-                `admin@hr.com` / `password123`
-            </p>
-          </div> */}
         </form>
       </div>
     </div>

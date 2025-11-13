@@ -11,7 +11,10 @@ export default function NotFound() {
         </p>
 
         <div className="btn">
-          <Link to="" className="py-4 px-6 rounded-full bg-primary text-white hover:primary/30 transition-colors">
+          <Link
+            to="login"
+            className="py-4 px-6 rounded-full bg-primary text-white hover:primary/30 transition-colors"
+          >
             Retour à l'acceuil
           </Link>
         </div>

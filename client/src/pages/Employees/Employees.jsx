@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { employees } from "../../api/api";
-import { PlusCircle, Eye, Edit2, Trash2, Users, UserCheck, UserX, UserPlus } from "lucide-react"; // icones
+import { PlusCircle, Eye, Edit2, Trash2, Users, UserCheck, UserX, UserPlus, Pencil } from "lucide-react"; // icones
 // import { Users, UserCheck, UserX, UserPlus } from "lucide-react"; // icones
 import { toast } from "react-toastify"; // alerte (succes, info, echec et etc ...)
 
@@ -272,19 +272,19 @@ export default function Employees() {
                   <td className="p-4">{String(idx + 1).padStart(2, "0")}</td>
                   <td className="p-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                      {emp.avatar ? (
+                      {emp.avatarUrl ? (
                         <img
-                          src={emp.avatar} // image de l'utilisateur
-                          alt={emp.name}
+                          src={emp.avatarUrl} // image de l'utilisateur
+                          alt={emp.fullName}
                           className="object-cover w-full h-full"
                         />
                       ) : (
                         <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 font-bold">
-                          {emp.name ? emp.name[0] : "U"}
+                          {emp.fullName ? emp.fullName[0] : "U"}
                         </div>
                       )}
                     </div>
-                    <div>{emp.name || "—"}</div>
+                    <div>{emp.fullName || "—"}</div>
                   </td>
                   <td className="p-4">{emp.email}</td>
                   <td className="p-4">{emp.phone || "—"}</td>
@@ -300,9 +300,9 @@ export default function Employees() {
                     </button>
                     <button
                       title="Modifier"
-                      className="p-2 bg-green-500 hover:bg-green-600 text-white rounded transition-colors"
+                      className="p-2 bg-[#458F4A] hover:bg-green-600 text-white rounded transition-colors"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       title="Supprimer"
@@ -327,3 +327,248 @@ export default function Employees() {
     </div>
   );
 }
+
+
+// import { useEffect, useState } from "react";
+// import { Eye, Pencil, Trash2, Search, Users, UserCheck, UserX, UserPlus } from "lucide-react";
+
+// export default function Employees() {
+//   const [users, setUsers] = useState([]);
+//   const [filteredUsers, setFilteredUsers] = useState([]);
+//   const [search, setSearch] = useState("");
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const usersPerPage = 5;
+
+//   const [stats, setStats] = useState({
+//     total: 0,
+//     active: 0,
+//     inactive: 0,
+//     new: 0,
+//   });
+
+//   // ===== FETCH USERS FROM API =====
+//   useEffect(() => {
+//     const fetchUsers = async () => {
+//       try {
+//         const savedUsers = localStorage.getItem("usersData");
+//         if (savedUsers) {
+//           const parsed = JSON.parse(savedUsers);
+//           setUsers(parsed);
+//           setFilteredUsers(parsed);
+//           computeStats(parsed);
+//           return;
+//         }
+
+//         const res = await fetch("http://localhost:3000/api/users");
+//         const data = await res.json();
+//         setUsers(data);
+//         setFilteredUsers(data);
+//         localStorage.setItem("usersData", JSON.stringify(data));
+//         computeStats(data);
+//       } catch (error) {
+//         console.error("Erreur de récupération des utilisateurs:", error);
+//       }
+//     };
+//     fetchUsers();
+//   }, []);
+
+//   // ===== FILTRAGE DIRECT =====
+//   useEffect(() => {
+//     const result = users.filter((u) =>
+//       u.email?.toLowerCase().includes(search.toLowerCase())
+//     );
+//     setFilteredUsers(result);
+//     setCurrentPage(1);
+//   }, [search, users]);
+
+//   // ===== PAGINATION =====
+//   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+//   const startIndex = (currentPage - 1) * usersPerPage;
+//   const currentUsers = filteredUsers.slice(startIndex, startIndex + usersPerPage);
+
+//   const handleNextPage = () => {
+//     if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+//   };
+//   const handlePrevPage = () => {
+//     if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+//   };
+
+//   // ===== SUPPRESSION =====
+//   const handleDelete = (id) => {
+//     const updated = users.filter((u) => u.id !== id);
+//     setUsers(updated);
+//     localStorage.setItem("usersData", JSON.stringify(updated));
+//     computeStats(updated);
+//   };
+
+//   // ====== CALCUL DES STATS ======
+//   const computeStats = (data) => {
+//     const total = data.length;
+
+//     // Pour ce code : on suppose que "active" = tous les utilisateurs (à adapter selon ton API)
+//     const active = data.length;
+//     const inactive = 0;
+
+//     // Nouveaux employés = inscrits depuis moins de 7 jours
+//     const now = new Date();
+//     const newUsers = data.filter((u) => {
+//       const date = new Date(u.created_at);
+//       const diff = (now - date) / (1000 * 60 * 60 * 24);
+//       return diff <= 7;
+//     }).length;
+
+//     setStats({ total, active, inactive, new: newUsers });
+//   };
+
+//   return (
+//     <div className="p-6 bg-gray-50 min-h-screen">
+//       <h1 className="text-2xl font-bold mb-4 text-gray-800">Liste des utilisateurs</h1>
+
+//       {/* ====== STATS ====== */}
+//       <div className="grid grid-cols-4 gap-4 mb-6">
+//         <div className="flex items-center gap-4 p-4 rounded-xl shadow text-white bg-gradient-to-r from-[#EB7808] to-[#a54218]">
+//           <div className="p-3 rounded-full bg-white/20">
+//             <Users className="w-8 h-8" />
+//           </div>
+//           <div>
+//             <p className="text-sm">Effectif Total</p>
+//             <h2 className="text-3xl font-bold">{stats.total}</h2>
+//           </div>
+//         </div>
+
+//         <div className="flex items-center gap-4 p-4 rounded-xl shadow text-white bg-gradient-to-r from-[#458F4A] to-[#266712]">
+//           <div className="p-3 rounded-full bg-white/20">
+//             <UserCheck className="w-8 h-8" />
+//           </div>
+//           <div>
+//             <p className="text-sm">Employés Actifs</p>
+//             <h2 className="text-3xl font-bold">{stats.active}</h2>
+//           </div>
+//         </div>
+
+//         <div className="flex items-center gap-4 p-4 rounded-xl shadow text-white bg-gradient-to-r from-[#CC3C3C] to-[#B81C7F]">
+//           <div className="p-3 rounded-full bg-white/20">
+//             <UserX className="w-8 h-8" />
+//           </div>
+//           <div>
+//             <p className="text-sm">Employés Inactifs</p>
+//             <h2 className="text-3xl font-bold">{stats.inactive}</h2>
+//           </div>
+//         </div>
+
+//         <div className="flex items-center gap-4 p-4 rounded-xl shadow text-white bg-gradient-to-r from-[#480dbf] to-[#2F0B82]">
+//           <div className="p-3 rounded-full bg-white/20">
+//             <UserPlus className="w-8 h-8" />
+//           </div>
+//           <div>
+//             <p className="text-sm">Nouveaux Employés (7j)</p>
+//             <h2 className="text-3xl font-bold">{stats.new}</h2>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Barre de recherche */}
+//       <div className="flex items-center gap-3 mb-6">
+//         <div className="relative w-full max-w-md">
+//           <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+//           <input
+//             type="text"
+//             placeholder="Rechercher par email..."
+//             value={search}
+//             onChange={(e) => setSearch(e.target.value)}
+//             className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+//           />
+//         </div>
+//       </div>
+
+//       {/* Tableau des utilisateurs */}
+//       <div className="overflow-x-auto bg-white rounded-lg shadow">
+//         <table className="w-full text-left border-collapse">
+//           <thead className="bg-gray-100 text-gray-700">
+//             <tr>
+//               <th className="p-3">ID</th>
+//               <th className="p-3">Profil</th>
+//               <th className="p-3">Email</th>
+//               <th className="p-3">Téléphone</th>
+//               <th className="p-3">Département</th>
+//               <th className="p-3">Absence</th>
+//               <th className="p-3">Membre depuis</th>
+//               <th className="p-3 text-center">Action</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {currentUsers.map((user) => (
+//               <tr key={user.id} className="border-t hover:bg-gray-50">
+//                 <td className="p-3">{String(user.id).padStart(2, "0")}</td>
+//                 <td className="p-3">
+//                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">
+//                     {user.email?.charAt(0).toUpperCase() || "U"}
+//                   </div>
+//                 </td>
+//                 <td className="p-3">{user.email}</td>
+//                 <td className="p-3">{user.phone || "—"}</td>
+//                 <td className="p-3">{user.department || "—"}</td>
+//                 <td className="p-3 text-center">{user.absence || 0}</td>
+//                 <td className="p-3">{user.created_at?.slice(0, 10) || "—"}</td>
+//                 <td className="p-3 flex justify-center gap-2">
+//                   <button className="p-2 bg-indigo-500 text-white rounded hover:bg-indigo-600">
+//                     <Eye className="w-4 h-4" />
+//                   </button>
+//                   <button className="p-2 bg-green-600 text-white rounded hover:bg-green-700">
+//                     <Pencil className="w-4 h-4" />
+//                   </button>
+//                   <button
+//                     onClick={() => handleDelete(user.id)}
+//                     className="p-2 bg-red-600 text-white rounded hover:bg-red-700"
+//                   >
+//                     <Trash2 className="w-4 h-4" />
+//                   </button>
+//                 </td>
+//               </tr>
+//             ))}
+//             {currentUsers.length === 0 && (
+//               <tr>
+//                 <td colSpan="8" className="text-center py-6 text-gray-500">
+//                   Aucun utilisateur trouvé
+//                 </td>
+//               </tr>
+//             )}
+//           </tbody>
+//         </table>
+//       </div>
+
+//       {/* Pagination */}
+//       {totalPages > 1 && (
+//         <div className="flex justify-between items-center mt-4">
+//           <button
+//             onClick={handlePrevPage}
+//             disabled={currentPage === 1}
+//             className={`px-4 py-2 rounded ${
+//               currentPage === 1
+//                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+//                 : "bg-[#EA5B0C] text-white hover:bg-orange-700"
+//             }`}
+//           >
+//             Précédent
+//           </button>
+
+//           <p className="text-gray-600">
+//             Page {currentPage} sur {totalPages}
+//           </p>
+
+//           <button
+//             onClick={handleNextPage}
+//             disabled={currentPage === totalPages}
+//             className={`px-4 py-2 rounded ${
+//               currentPage === totalPages
+//                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+//                 : "bg-[#EA5B0C] text-white hover:bg-orange-700"
+//             }`}
+//           >
+//             Suivant
+//           </button>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
