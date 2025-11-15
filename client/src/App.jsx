@@ -43,6 +43,53 @@
 //   );
 // }
 
+// import React from "react";
+// import { Routes, Route } from "react-router-dom";
+// import Login from "./pages/Auth/Login";
+// import Layout from "./layout/Layout";
+// import Dashboard from "./pages/Dashboard/Dashboard";
+// import Employees from "./pages/Employees/Employees";
+// import Leaves from "./pages/Leaves/Leaves";
+// import Schedules from "./pages/Schedules/Schedules";
+// import Recruitment from "./pages/Recruitment/Recruitment";
+// import Trainings from "./pages/Trainings/Trainings";
+// import Payroll from "./pages/Payroll/Payroll";
+// import Evaluations from "./pages/Evaluations/Evaluations";
+// import Communication from "./pages/Communication/Communication";
+// import Reports from "./pages/Reports/Reports";
+// import LandingPage from "./pages/landingPage/Index";
+// import NotFound from "./NotFound/Index";
+// // import PrivateRoute from "./routes/PrivateRoute"; // Plus nécessaire pour le moment
+
+// export default function App() {
+//   return (
+//     <Routes>
+//       <Route path="*" element={<NotFound />} /> {/* Page d'erreur en cas de non existance d'une page */}
+//       {/* Route de connexion (publique) */}
+//       <Route path="/login" element={<Login />} />
+
+//       <Route index element={<LandingPage />} />
+//       <Route
+//         path="/"
+//         element={<Layout />} // <Layout /> est maintenant directement l'élément de la route parent
+//       >
+//         {/* Routes enfants qui s'affichent dans le <Layout /> */}
+//         <Route path="dashboard" element={<Dashboard />} />
+//         <Route path="leaves" element={<Leaves />} />
+//         <Route path="schedules" element={<Schedules />} />
+//         <Route path="recruitment" element={<Recruitment />} />
+//         <Route path="trainings" element={<Trainings />} />
+//         <Route path="payroll" element={<Payroll />} />
+//         <Route path="evaluations" element={<Evaluations />} />
+//         <Route path="communication" element={<Communication />} />
+//         <Route path="reports" element={<Reports />} />
+//         <Route path="employees" element={<Employees />} />
+//       </Route>
+//     </Routes>
+//   );
+// }
+
+
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Auth/Login";
@@ -59,31 +106,40 @@ import Communication from "./pages/Communication/Communication";
 import Reports from "./pages/Reports/Reports";
 import LandingPage from "./pages/landingPage/Index";
 import NotFound from "./NotFound/Index";
-// import PrivateRoute from "./routes/PrivateRoute"; // Plus nécessaire pour le moment
+import PrivateRoute from "./routes/PrivateRoute"; 
+
+// Rôles Gestionnaires ayant accès aux outils d'administration
+const GESTIONNAIRE_ROLES = ['MANAGER', 'RECRUITER', 'SYSTEM_ADMIN'];
+// Tous les rôles connectés (minimum requis pour accéder au Layout)
+const ALL_AUTHENTICATED_ROLES = ['EMPLOYEE', 'MANAGER', 'RECRUITER', 'CANDIDATE', 'SYSTEM_ADMIN', 'HR_ADMIN']; 
 
 export default function App() {
   return (
     <Routes>
-      <Route path="*" element={<NotFound />} /> {/* Page d'erreur en cas de non existance d'une page */}
-      {/* Route de connexion (publique) */}
+      <Route path="*" element={<NotFound />} />
+      
+      {/* Routes publiques */}
       <Route path="/login" element={<Login />} />
-
       <Route index element={<LandingPage />} />
+      
+      {/* Routes Protégées (Layout et toutes les routes enfants) */}
       <Route
         path="/"
-        element={<Layout />} // <Layout /> est maintenant directement l'élément de la route parent
+        element={<PrivateRoute allowedRoles={ALL_AUTHENTICATED_ROLES}><Layout /></PrivateRoute>}
       >
-        {/* Routes enfants qui s'affichent dans le <Layout /> */}
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="leaves" element={<Leaves />} />
-        <Route path="schedules" element={<Schedules />} />
-        <Route path="recruitment" element={<Recruitment />} />
-        <Route path="trainings" element={<Trainings />} />
-        <Route path="payroll" element={<Payroll />} />
-        <Route path="evaluations" element={<Evaluations />} />
-        <Route path="communication" element={<Communication />} />
-        <Route path="reports" element={<Reports />} />
-        <Route path="employees" element={<Employees />} />
+        {/* Routes nécessitant les permissions de GESTIONNAIRE */}
+        <Route path="employees" element={<PrivateRoute allowedRoles={GESTIONNAIRE_ROLES}><Employees /></PrivateRoute>} />
+        <Route path="leaves" element={<PrivateRoute allowedRoles={GESTIONNAIRE_ROLES}><Leaves /></PrivateRoute>} />
+        <Route path="schedules" element={<PrivateRoute allowedRoles={GESTIONNAIRE_ROLES}><Schedules /></PrivateRoute>} />
+        <Route path="recruitment" element={<PrivateRoute allowedRoles={GESTIONNAIRE_ROLES}><Recruitment /></PrivateRoute>} />
+        <Route path="trainings" element={<PrivateRoute allowedRoles={GESTIONNAIRE_ROLES}><Trainings /></PrivateRoute>} />
+        <Route path="payroll" element={<PrivateRoute allowedRoles={GESTIONNAIRE_ROLES}><Payroll /></PrivateRoute>} />
+        <Route path="evaluations" element={<PrivateRoute allowedRoles={GESTIONNAIRE_ROLES}><Evaluations /></PrivateRoute>} />
+        <Route path="reports" element={<PrivateRoute allowedRoles={GESTIONNAIRE_ROLES}><Reports /></PrivateRoute>} />
+
+        {/* Routes accessibles à tous les utilisateurs connectés (le Layout gère déjà l'authentification) */}
+        <Route path="dashboard" element={<Dashboard />} /> 
+        <Route path="communication" element={<Communication />} /> 
       </Route>
     </Routes>
   );

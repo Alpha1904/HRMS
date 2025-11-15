@@ -134,7 +134,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { auth } from "../../api/api"; 
 
-// Schéma de validation inchangé
+// Schéma de validation
 const schema = yup.object().shape({
   email: yup
     .string()
@@ -159,59 +159,47 @@ export default function Login() {
   const onSubmit = async (data) => {
     try {
       // 1. Appel de l'API pour la connexion
-      // Si votre backend renvoie le JWT dans un cookie HTTP-only, 
-      // il n'apparaîtra pas dans response.data.
       const response = await auth.login(data);
       
-      // On s'attend à ce que le corps de la réponse contienne au moins l'objet 'user'.
-      // S'il est vide, ajustez à 'const user = response.data;'
-      // Si votre backend envoie seulement { user: {...} }, utilisez 'const { user } = response.data;'
-      const user = response.data.user || response.data; // Adaptez ceci si la réponse est { user: {...} }
-
-      if (!user) {
-        // Cela devrait être géré par une erreur 401, mais au cas où...
-        throw new Error("L'objet utilisateur est manquant dans la réponse.");
+      // ATTENTION: Assurez-vous que l'API retourne { token, user } dans response.data. 
+      const { token, user } = response.data;
+      
+      if (!token || !user) {
+        throw new Error("Jeton ou utilisateur manquant dans la réponse de l'API.");
       }
 
-      // 2. Le JWT est stocké dans un cookie HTTP-only par le backend.
-      // Le TOKEN N'EST PAS NÉCESSAIREMENT ENREGISTRÉ DANS REDUX/LOCAL STORAGE ici,
-      // car Axios va l'envoyer automatiquement via les cookies pour les requêtes futures.
-      // Nous stockons uniquement les infos utilisateur dans Redux.
-      
-      // Si votre 'authSlice' nécessite un champ 'token' même vide pour être valide, 
-      // passez une valeur par défaut, mais le jeton réel est dans le cookie.
-      const tokenPlaceholder = 'COOKIE_BASED_TOKEN'; 
-      
-      dispatch(setCredentials({ user, token: tokenPlaceholder })); 
+      // 2. Stockage dans Redux : Mettre à jour l'état d'authentification
+      dispatch(setCredentials({ user, token }));
 
-      // 3. OPTIONNEL : Si vous utilisiez 'remember' pour le token, 
-      // cette logique n'est plus nécessaire avec les cookies HTTP-only.
-      // Vous pourriez utiliser 'remember' pour régler la durée du cookie côté serveur.
-      
+      // 3. Stockage du jeton dans le navigateur
+      if (data.remember) {
+        // Persistance longue
+        localStorage.setItem("token", token);
+      } else {
+        // Persistance courte (session)
+        sessionStorage.setItem("token", token);
+      }
+
       toast.success("Connexion réussie ! Redirection en cours...");
-      
-      // IMPORTANT : Vous devez avoir configuré Axios dans api.js avec 
-      // 'withCredentials: true' pour envoyer les cookies à chaque requête.
       navigate("/dashboard");
 
     } catch (err) {
       console.error("Erreur de connexion:", err);
       
-      // 4. Gestion des erreurs
-      let errorMessage = "Erreur de connexion. Vérifiez les identifiants ou le CORS.";
-      
+      // 4. Gestion des erreurs, incluant l'erreur 429
+      let errorMessage = "Identifiants incorrects ou erreur de serveur.";
+
       if (err.response) {
-        if (err.response.status === 401) {
-             errorMessage = "Identifiants incorrects.";
+        if (err.response.status === 429) {
+          // Gère spécifiquement l'erreur "Too Many Requests" (Limitation de débit)
+          errorMessage = "Trop de tentatives de connexion. Veuillez patienter une minute avant de réessayer.";
+        } else if (err.response.status === 401) {
+          errorMessage = "Identifiants incorrects.";
         } else if (err.response.data && err.response.data.message) {
-             // Tente de récupérer le message d'erreur du backend NestJS
-             errorMessage = Array.isArray(err.response.data.message) 
-                          ? err.response.data.message[0]
-                          : err.response.data.message;
-        } else if (err.response.status === 403) {
-             errorMessage = "Erreur de permission ou de CORS. Vérifiez la configuration du serveur.";
+          // Tente de récupérer le message d'erreur du backend
+          errorMessage = err.response.data.message;
         } else {
-             errorMessage = `Erreur serveur (Statut ${err.response.status}).`;
+          errorMessage = `Erreur serveur (Statut ${err.response.status}).`;
         }
       }
 
@@ -219,7 +207,7 @@ export default function Login() {
     }
   };
 
-  // Rendu JSX (inchangé)
+  // Rendu JSX
   return (
     <div className="secDefault min-h-screen flex items-center justify-center">
       <div className="relative w-full max-w-md bg-white rounded-lg shadow py-8 px-4 md:p-8">
