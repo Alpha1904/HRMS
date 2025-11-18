@@ -177,7 +177,7 @@ model Profile {
   site            String? // e.g., "New York Office"
   department      String?
   position        String?
-  hireDate        DateTime?
+  hireDate        String?
   terminationDate DateTime?
   isTerminated    Boolean       @default(false)
   seniority       Int? // Years of experience/seniority

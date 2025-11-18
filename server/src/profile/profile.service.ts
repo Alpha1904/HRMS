@@ -5,6 +5,7 @@ import { Profile, Leave, Prisma, Role } from '@prisma/client';
 import { QueryProfileDto } from './dto/query-profile.dto'
 import * as fs from 'fs';
 import { join } from 'path';
+import { UpdateUserDto } from 'src/user/dto/update-user.dto';
 
 export interface PaginatedProfileResult {
   data: Profile[];
@@ -22,7 +23,7 @@ export class ProfileService {
 async findAll(
     query: QueryProfileDto,
   ): Promise<PaginatedProfileResult> {
-    const { page = 1, limit = 10, search, department } = query;
+    const { page = 1, limit = 10, search, department, sortBy, sortOrder } = query;
 
     // 1. Calculate pagination
     const skip = (page - 1) * limit;
@@ -50,6 +51,24 @@ async findAll(
       ];
     }
 
+    // Build orderBy dynamically but restrict to allowed fields to avoid injections
+    let orderBy: any = { fullName: 'asc' };
+    if (sortBy) {
+      const dir = sortOrder && String(sortOrder).toLowerCase() === 'desc' ? 'desc' : 'asc';
+      // Allow simple fields on Profile and a few nested user fields
+      const simpleFields = ['id', 'fullName', 'phone', 'department', 'hireDate'];
+      const userFields = ['email', 'isActive'];
+
+      if (simpleFields.includes(sortBy)) {
+        orderBy = { [sortBy]: dir };
+      } else if (sortBy.startsWith('user.') ) {
+        const [, ufield] = sortBy.split('.');
+        if (userFields.includes(ufield)) {
+          orderBy = { user: { [ufield]: dir } };
+        }
+      }
+    }
+
     // 3. Run queries in a transaction for efficiency
     const [profiles, total] = await this.prisma.$transaction([
       // Query for the data
@@ -62,9 +81,7 @@ async findAll(
             select: { email: true, role: true, isActive: true },
           },
         },
-        orderBy: {
-          fullName: 'asc', // Default sorting
-        },
+        orderBy,
       }),
       // Query for the total count
       this.prisma.profile.count({ where }),
@@ -119,13 +136,47 @@ async findAll(
     id: number,
     updateProfileDto: UpdateProfileDto,
   ): Promise<Profile> {
-    // Ensure profile exists first
-    await this.findOne(id);
+    // Ensure profile exists first and get current profile (includes userId)
+    const existing = await this.findOne(id);
 
-    return this.prisma.profile.update({
-      where: { id },
-      data: updateProfileDto,
-    });
+    const incoming: any = updateProfileDto || {};
+    const { user: userPayload, ...profilePayload } = incoming;
+
+    const ops: Prisma.PrismaPromise<any>[] = [];
+
+    if (Object.keys(profilePayload).length > 0) {
+      ops.push(
+        this.prisma.profile.update({
+          where: { id },
+          data: profilePayload,
+        }),
+      );
+    }
+
+    if (userPayload && Object.keys(userPayload).length > 0) {
+      ops.push(
+        this.prisma.user.update({
+          where: { id: existing.userId },
+          data: userPayload as any,
+        }),
+      );
+    }
+
+    // If nothing to update, simply return the existing profile
+    if (ops.length === 0) {
+      return existing;
+    }
+
+    try {
+      await this.prisma.$transaction(ops);
+      return this.findOne(id);
+    } catch (err: any) {
+      // Surface validation errors as BadRequest for clearer API responses.
+      if (err && err.message) {
+        throw new BadRequestException(err.message);
+      }
+      throw err;
+    }
   }
 
 
@@ -134,9 +185,6 @@ async findAll(
     const profile = await this.findOne(id);
     const userId = profile.userId;
 
-    // To maintain data integrity, we soft-delete BOTH the Profile and
-    // its associated User in a transaction.
-    // This logic is identical to the one in UserService.
     await this.prisma.$transaction([
       this.prisma.profile.update({
         where: { id },
@@ -169,7 +217,8 @@ async updateAvatar(
 
     // 2. Define the new web-accessible URL
     // This matches the static path we set up
-    const newAvatarUrl = `/uploads/avatars/${file.filename}`;
+    const serverUrl = 'http://localhost:3000';
+    const newAvatarUrl = `${serverUrl}/public/uploads/avatars/${file.filename}`;
 
     // 3. Update the database
     const updatedProfile = await this.prisma.profile.update({

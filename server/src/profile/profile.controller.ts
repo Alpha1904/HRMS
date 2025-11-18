@@ -13,12 +13,15 @@ import {
   ParseIntPipe,
   Query,
   ParseFilePipeBuilder,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { QueryProfileDto } from './dto/query-profile.dto';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 // @UseGuards(...) // TODO: Add Auth Guards
 @ApiTags('profiles')
@@ -74,16 +77,32 @@ export class ProfileController {
     },
   })
   @ApiResponse({ status: 200, description: 'Avatar updated successfully.'})
-  @UseInterceptors(FileInterceptor('file'
-    , {
-    fileFilter: (req, file, callback) => {
-      if (!file.mimetype.match(/^image\/(png|jpeg|jpg)$/)) {
-        callback(new Error('Only image files (png/jpeg/jpg) are allowed!'), false);
-      }
-      callback(null, true);
-    }
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './public/uploads/avatars',
+        filename: (req, file, callback) => {
+          const name = file.originalname.split('.')[0];
+          const fileExtName = extname(file.originalname);
+          const randomName = Array(16)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
+          callback(null, `${name}-${randomName}${fileExtName}`);
+        },
+      }),
+      fileFilter: (req, file, callback) => {
+  if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+    // Return an error if the file extension is not allowed
+    return callback(
+      new BadRequestException('Only image files are allowed!'),
+      false,
+    );
   }
-))
+  callback(null, true);
+},
+    }),
+  )
   updateAvatar(
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile(
@@ -91,8 +110,6 @@ export class ProfileController {
         validators: [
           // 5MB file size limit
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-          // Only allow png or jpeg images
-         new FileTypeValidator({ fileType: 'image/(png|jpeg)' })
         ],
       }),
     )

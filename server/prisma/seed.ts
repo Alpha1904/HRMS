@@ -60,16 +60,19 @@ async function main() {
     data: {
       email: `hr_admin@test.local`,
       password: salt,
+      tenantId: faker.string.uuid(),
       role: Role.HR_ADMIN,
       isActive: true,
       isEmailVerified: true,
       profile: {
         create: {
           fullName: 'HR Administrator',
+          avatarUrl: faker.image.avatar(),
+          phone: faker.phone.number(),
           department: 'HR',
           position: 'HR Director',
           contractType: ContractType.FULL_TIME,
-          hireDate: faker.date.past({ years: 10 }),
+          hireDate: faker.date.past({ years: 10 }).toISOString().split('T')[0],
           site: 'New York',
         },
       },
@@ -91,19 +94,19 @@ async function main() {
       data: {
         email: `manager${i}@test.local`,
         password: salt,
+        tenantId: faker.string.uuid(),
         role: Role.MANAGER,
         isActive: true,
         isEmailVerified: true,
         profile: {
           create: {
-            fullName: faker.person.fullName({
-              firstName: 'Manager',
-              lastName: `${i}`,
-            }),
+            fullName: faker.person.fullName(),
+            avatarUrl: faker.image.avatar(),
+            phone: faker.phone.number(),
             department,
             position: 'Manager',
             contractType: ContractType.FULL_TIME,
-            hireDate: faker.date.past({ years: 5 }),
+            hireDate: faker.date.past({ years: 5 }).toISOString().split('T')[0],
             site: faker.helpers.arrayElement(['New York', 'London', 'Remote']),
             managerId: hrAdminProfileId,
           },
@@ -144,22 +147,22 @@ async function main() {
       data: {
         email: `employee${i}@test.local`,
         password: salt,
+        tenantId: faker.string.uuid(),
         role: Role.EMPLOYEE,
         isActive: true,
         isEmailVerified: true,
         profile: {
           create: {
-            fullName: faker.person.fullName({
-              firstName: 'Employee',
-              lastName: `${i}`,
-            }),
+            fullName: faker.person.fullName(),
+            avatarUrl: faker.image.avatar(),
+            phone: faker.phone.number(),
             department: randomManager.department,
             position: faker.person.jobTitle(),
             contractType: faker.helpers.arrayElement([
               ContractType.FULL_TIME,
               ContractType.PART_TIME,
             ]),
-            hireDate: faker.date.past({ years: 3 }),
+            hireDate: faker.date.past({ years: 3 }).toISOString().split('T')[0], // example field for hire date 
             site: employeeSite,
             managerId: randomManager.id,
           },
@@ -302,6 +305,7 @@ async function main() {
     },
   });
 
+  
 
   console.log('---');
   console.log('Database seeding complete.');

@@ -8,8 +8,16 @@ import { join } from 'path';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 config();
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.useStaticAssets(join(__dirname, '..', 'public'));
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    // This is useful for development to see the full error messages.
+    logger: ['log', 'error', 'warn', 'debug', 'verbose'],
+  });
+
+  // Serve static files from the 'public' directory.
+  // This setup tries the project root first, then the dist folder.
+  const publicPath = join(__dirname, '..', '..', 'public');
+  app.useStaticAssets(publicPath, { prefix: '/public' });
+
 
   app.setGlobalPrefix('api');
 
