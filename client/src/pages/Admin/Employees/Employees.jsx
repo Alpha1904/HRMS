@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { employees } from "../../api/api";
+import { employees } from "../../../api/api";
 import {
   PlusCircle,
   Eye,
@@ -36,12 +36,12 @@ const truncateText = (text) => {
 
 function StatCard({ title, value, className, icon }) {
   return (
-    <div className={`p-3 rounded shadow text-white ${className}`}>
-      <div className="flex items-center gap-3">
-        <div className="text-3xl shadow-2xl p-3 rounded">{icon}</div>
+    <div className={`md:p-3 p-2 rounded shadow text-white ${className}`}>
+      <div className="flex items-center gap-2 md:gap-3">
+        <div className="shadow-2xl p-2 md:p-3 rounded">{icon}</div>
         <div className="">
           <p className="text-sm">{title}</p>
-          <h2 className="text-3xl font-bold fontFamily-montserrat">{value}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold">{value}</h2>
         </div>
       </div>
     </div>
@@ -477,7 +477,6 @@ export default function Employees() {
   const computeStats = useCallback((data) => {
     const total = data.length;
     const now = new Date();
-    // Utiliser String(u.isActive) pour la robustesse des stats
     const activeUsers = data.filter(
       (u) => String(u.isActive) === "true" || u.isActive === true
     ).length;
@@ -683,7 +682,7 @@ export default function Employees() {
           <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
             <Filter className="w-5 h-5" /> Options de Filtrage
           </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 md:gap-4 gap-2">
             {/* Filtre Rôle */}
             <select
               value={filters.role}
@@ -733,7 +732,7 @@ export default function Employees() {
             {/* Filtre Statut */}
             <select
               value={filters.status}
-              // Stocke 'true' ou 'false' (string) pour la cohérence avec le champ utilisateur
+              // Stocke 'true' ou 'false' (string)
               onChange={(e) =>
                 setFilters({ ...filters, status: e.target.value })
               }
@@ -792,35 +791,35 @@ export default function Employees() {
       )}
 
       {/* Cartes de statistiques */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 md:gap-4 gap-1 mb-6">
         <StatCard
-          icon={<Users className="w-8 h-8" />}
+          icon={<Users className="md:w-8 md:h-8 w-4 h-4" />}
           title="Effectif Total"
           value={stats.total}
           className="bg-gradient-to-r from-[#EB7808] to-[#a54218]"
         />
         <StatCard
-          icon={<UserCheck className="w-8 h-8" />}
+          icon={<UserCheck className="md:w-8 md:h-8 w-4 h-4" />}
           title="Employés Actifs"
           value={stats.active}
           className="bg-gradient-to-r from-[#458F4A] to-[#266712]"
         />
         <StatCard
-          icon={<UserX className="w-8 h-8" />}
+          icon={<UserX className="md:w-8 md:h-8 w-4 h-4" />}
           title="Employés Inactifs"
           value={stats.inactive}
           className="bg-gradient-to-r from-[#CC3C3C] to-[#B81C7F]"
         />
         <StatCard
-          icon={<UserPlus className="w-8 h-8" />}
-          title="Nouveaux Employés"
+          icon={<UserPlus className="md:w-8 md:h-8 w-4 h-4" />}
+          title={<p className=""><span className="md:hidden">Nouveaux Em...</span> <span className="hidden md:block">Nouveaux Employés </span></p>}
           value={stats.news}
           className="bg-gradient-to-r from-[#480dbf] to-[#2F0B82]"
         />
       </div>
 
-      <div className="bg-white rounded shadow overflow-x-auto w-full">
-        <table className="min-w-full">
+      <div className="bg-white rounded shadow w-full">
+        <table className="w-full">
           <thead>
             <tr className="text-left text-sm text-gray-700">
               <th className="p-4">ID</th>

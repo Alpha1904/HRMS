@@ -48,7 +48,7 @@ export default function LandingPage() {
   const navBarUrl = [
     { title: "acceuil", url: "#home" },
     { title: "a propos", url: "#about" },
-    { title: "faqs", url: "#" },
+    { title: "faqs", url: "#faqs" },
     { title: "politique", url: "#" },
   ];
 
@@ -73,7 +73,7 @@ export default function LandingPage() {
 
   return (
     <>
-      {/* --------- entete de la page (NON MODIFIÉ) ---------- */}
+      {/* --------- entete de la page ---------- */}
       <header className="header fixed border w-[95%] md:w-[85%] border-primary flex items-center justify-between bg-white p-2 px-3 rounded-full">
         <div className="headerCircle">
           <div className="logo w-22 h-12 overflow-hidden">
@@ -112,7 +112,7 @@ export default function LandingPage() {
       </header>
 
       {/* --------- entete de la page ---------- */}
-      <main className="overflow-x-hidden"> 
+      <main className="overflow-x-hidden">
         {/* --------- Banner de la page ---------- */}
         <section className="banner md:min-h-screen" id="home">
           <div className="bannerContainer pb-16 md:min-h-screen w-full flex flex-col pt-48 px-4 sm:px-8 md:flex-row md:items-center md:px-28 md:gap-12 md:pt-38 secPadding">
@@ -377,7 +377,10 @@ export default function LandingPage() {
         {/* --------- A propos de nous ---------- */}
 
         {/* --------- Faqs a propos de hrm global ---------- */}
-        <section className="secDefault flex justify-center items-center text-white bgGrad px-4">
+        <section
+          className="secDefault flex justify-center items-center text-white bgGrad px-4"
+          id="faqs"
+        >
           <div className="container flex flex-col items-center justify-center">
             <h2 className="text-primary text-3xl md:text-4xl mb-2 text-center">
               Faqs à propos de nous
@@ -401,8 +404,7 @@ export default function LandingPage() {
                       onClick={() => toggleFaq(index)}
                     >
                       <h3 className="text-sm flex items-center justify-between">
-                        {quest.quest}{" "}
-                        {/* ICÔNE DE ROTATION */}
+                        {quest.quest} {/* ICÔNE DE ROTATION */}
                         <span
                           className={`w-6 h-6 flex items-center justify-center bg-primary text-xs text-white/100 rounded-full transition-transform duration-300 ${
                             activeIndex === index ? "rotate-45" : ""
@@ -703,7 +705,10 @@ export default function LandingPage() {
                 dev mohamed
               </a>{" "}
               &{" "}
-              <a href="https://github.com/Hakimkicoder" className="text-primary">
+              <a
+                href="https://github.com/Hakimkicoder"
+                className="text-primary"
+              >
                 dev jumael
               </a>
             </p>

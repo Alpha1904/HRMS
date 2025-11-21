@@ -1,1 +1,0 @@
-import React from 'react'; export default function Schedules(){ return <div><h2>Plannings & Horaires</h2></div> }
