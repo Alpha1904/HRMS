@@ -9,23 +9,37 @@ export default function ProfilForm() {
           <div className="img w-36 h-36 rounded-full overflow-hidden">
             <img
               src="./img/log.png"
-              alt={fullName}
+              alt=""
               className="w-full h-full object-cover"
             />
           </div>
           <h2 className="text-xl font-bold text-gray-700 capitalize">
-            {fullName}
+            uu
           </h2>
-          <p className="text-sm text-gray-400">{role}</p>
+          <p className="text-sm text-gray-400">role</p>
         </div>
 
         <div className="infoUserForm">
-          <form action="">
+          <form action="" className="">
             <div className="input">
-              <label htmlFor="profilePicture">
-                Prenom
-              </label>
-              <input type="file" id="prenom" name="prenom" placeholder="(prenom de l'utilisateur)"/>
+              <div className="inputflex">
+                <label htmlFor="profilePicture">Prenom</label>
+                <input
+                  type="file"
+                  id="prenom"
+                  name="prenom"
+                  placeholder="(prenom de l'utilisateur)"
+                />
+              </div>
+              <div className="inputflex">
+                <label htmlFor="profilePicture">Prenom</label>
+                <input
+                  type="file"
+                  id="prenom"
+                  name="prenom"
+                  placeholder="(prenom de l'utilisateur)"
+                />
+              </div>
             </div>
           </form>
           <p className="text-sm text-gray-700">
