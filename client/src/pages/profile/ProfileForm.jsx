@@ -1,7 +1,74 @@
-import React from "react";
 import { Link } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 export default function ProfilForm() {
+
+  // --- PERSISTENCE DE L'ÉTAT DANS L'URL ---
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    // Ajouter les valeurs non vides à l'URL
+    // if (currentPage > 1) params.set("page", currentPage.toString());
+
+    // if (filters.role) params.set("role", filters.role);
+    // if (filters.department) params.set("dept", filters.department);
+    // if (filters.position) params.set("pos", filters.position);
+    // if (filters.status) params.set("status", filters.status);
+    // if (filters.dateRange) params.set("dateRange", filters.dateRange);
+    // if (filters.customDate) params.set("customDate", filters.customDate);
+
+    // Met à jour l'URL sans recharger la page
+    window.history.pushState(null, "", `?${params.toString()}`);
+  }, []);
+  // }, [filters, currentPage]);
+
+    const [loading, setLoading] = useState(false);
+  
+    // ====== STATS & FETCHING LOGIC () ======
+    const computeStats = useCallback((data) => {
+      const total = data.length;
+      const now = new Date();
+      const activeUsers = data.filter(
+        (u) => String(u.isActive) === "true" || u.isActive === true
+      ).length;
+      const inactiveUsers = total - activeUsers;
+  
+      const newUsersCount = data.filter((u) => {
+        const date = new Date(u.createdAt);
+        const diff = (now - date) / (1000 * 60 * 60 * 24);
+        return diff <= 7 && !isNaN(date);
+      }).length;
+  
+      setStats({
+        total,
+        active: activeUsers,
+        inactive: inactiveUsers,
+        news: newUsersCount,
+      });
+    }, []);
+
+    const fetchList = useCallback(async () => {
+      setLoading(true);
+      try {
+        const res = await employees.list();
+        const fetchedList = res.data || [];
+        setList(fetchedList);
+        computeStats(fetchedList);
+      } catch (err) {
+        console.error(err);
+        toast.error("Erreur chargement employés");
+      }
+      setLoading(false);
+    }, [computeStats]);
+  
+    useEffect(() => {
+      fetchList();
+    }, [fetchList]);
+
+
+
+
   return (
     <>
       <div className="rounded-md px-4 py-3 bg-white shadow-xl">
