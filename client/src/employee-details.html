@@ -5165,6 +5165,7 @@
 									<h5 class="flex items-center justify-center mb-1">Stephan Peralt <i class="ti ti-discount-check-filled text-success ms-1"></i></h5>
 
                                     <span class="inline-flex items-center py-1 px-2 text-xs font-medium rounded text-dark bg-dark-transparent mb-1">
+									<span class="inline-flex items-center py-1 px-2 text-xs font-medium rounded text-dark bg-dark-transparent mb-1" id="employee-designation">
                                         <i class="ti ti-point-filled me-1 "></i>Software Developer
                                     </span>
                                     <span class="inline-flex items-center py-1 px-2 text-xs font-medium rounded text-secondary bg-secondary-transparent">10+ years of Experience</span>
@@ -5175,6 +5176,7 @@
 											<i class="ti ti-id me-2"></i>
 												Client ID
 										</span>
+										</span>	
 										<p class="text-dark">CLT-0024</p>
 									</div>
 									<div class="flex items-center justify-between mb-2">
@@ -5186,6 +5188,7 @@
 									</div>
 									<div class="flex items-center justify-between mb-2">
 										<span class="inline-flex items-center">
+										<span class="inline-flex items-center" id = "date-of-join">
 											<i class="ti ti-calendar-check me-2"></i>
 												Date Of Join
 										</span>
@@ -5223,6 +5226,7 @@
 											Phone
 										</span>
 										<p class="text-dark">(163) 2459 315</p>
+										<p class="text-dark" id="employee-phone">(163) 2459 315</p>
 									</div>
 									<div class="flex items-center justify-between mb-2">
 										<span class="inline-flex items-center">
@@ -7165,6 +7169,34 @@
 	<script src="https://smarthr.co.in/demo/tailwind/template/src/assets/js/add-comments.js"></script>
 	<script src="assets/js/theme-colorpicker.js"></script>
 	<script src="assets/js/script.js"></script>
+
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			// Function to fetch employee data from the server
+			function fetchEmployeeData() {
+				// Replace 'YOUR_API_ENDPOINT' with the actual API endpoint
+				fetch('YOUR_API_ENDPOINT')
+					.then(response => response.json())
+					.then(data => {
+						// Update the HTML with the fetched data
+						document.getElementById('employee-designation').textContent = data.designation;
+						document.getElementById('employee-phone').textContent = data.phone;
+						document.getElementById('date-of-join').textContent = data.dateOfJoin;
+						// Update other fields as needed
+					})
+					.catch(error => {
+						console.error('Error fetching employee data:', error);
+					});
+			}
+
+			// Call the function to fetch employee data when the page loads
+			fetchEmployeeData();
+		});
+	</script>
+
+
+
+
 
 </body>
 
