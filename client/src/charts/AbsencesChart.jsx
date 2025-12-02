@@ -15,13 +15,14 @@ export default function AbsencesChart() {
             <h3 className="text-lg mb-4">Courbe des Absences</h3>
             <ResponsiveContainer width="100%" height="85%">
                 <LineChart data={MOCK_ABSENCES_DATA} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={true} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={true}/>
                     <XAxis dataKey="name" />
                     <YAxis domain={[0, 36]} tickCount={4} />
                     <Tooltip />
                     <Line 
                         type="monotone" 
                         dataKey="absences" 
+                        // stroke="#eb4c08" 
                         stroke="#3f97e1" 
                         dot={{ r: 5 }} 
                         activeDot={{ r: 8 }} 

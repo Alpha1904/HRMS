@@ -22,7 +22,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function SalaryCostsChart() {
     return (
         <div className="bg-white p-4 rounded-lg shadow-md h-80">
-            <h3 className="text-lg mb-4">Coûts Salariaux (€)</h3>
+            <h3 className="text-lg mb-4">Coûts Salariaux (XAF)</h3>
             <ResponsiveContainer width="100%" height="85%">
                 <BarChart data={MOCK_SALARY_DATA} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -35,6 +35,7 @@ export default function SalaryCostsChart() {
                     >
                         {/* Pour colorer le mois "actif" (Mai dans l'exemple de l'image) */}
                         {MOCK_SALARY_DATA.map((entry, index) => (
+                            // <Cell key={`cell-${index}`} fill={entry.active ? '#a5e4ec' : '#eb4c08'} />
                             <Cell key={`cell-${index}`} fill={entry.active ? '#a5e4ec' : '#3f97e1'} />
                         ))}
                     </Bar>
