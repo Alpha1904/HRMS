@@ -29,6 +29,11 @@ html, body {
   background: var(--primary);
   border-radius: 5rem;
 }
+.outletMain::-webkit-scrollbar {
+  /* width: 20rem; */
+  display: none;
+  overflow-y: scroll;
+}
 
 body {
   /* font-family: 'Montserrat', sans serif; */

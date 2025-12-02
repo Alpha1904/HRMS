@@ -930,7 +930,7 @@ export default function Layout() {
           userName={userName}
           avatarUrl={avatarUrl}
         />
-        <div className="p-4 lg:p-6 w-full overflow-x-hidden">
+        <div className="p-4 lg:p-6 w-full overflow-x-hidden h-[90vh] outletMain">
           <Outlet />
         </div>
       </main>

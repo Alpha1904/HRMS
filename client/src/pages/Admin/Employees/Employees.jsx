@@ -150,6 +150,7 @@ function EmployeeModal({ open, onClose, onAction, employeeToEdit }) {
         department,
         position,
         contractType,
+        avatarUrl: employeeToEdit?.profile?.avatarUrl || "",
       },
     };
 
