@@ -8429,7 +8429,7 @@
                       >
                         Total Employee
                       </p>
-                      <h4 class="text-xl font-semibold">1007</h4>
+                      <h4 id="bco" class="text-xl font-semibold">1007</h4>
                     </div>
                   </div>
                   <div>
@@ -8458,7 +8458,7 @@
                       >
                         Active
                       </p>
-                      <h4 class="text-xl font-semibold">1007</h4>
+                      <h4 id="bct" class="text-xl font-semibold">1007</h4>
                     </div>
                   </div>
                   <div>
@@ -8487,7 +8487,7 @@
                       >
                         Inactive
                       </p>
-                      <h4 class="text-xl font-semibold">1007</h4>
+                      <h4 id="bctt" class="text-xl font-semibold">1007</h4>
                     </div>
                   </div>
                   <div>
@@ -8516,7 +8516,7 @@
                       >
                         New Joiners
                       </p>
-                      <h4 class="text-xl font-semibold">67</h4>
+                      <h4 id="bcf" class="text-xl font-semibold">67</h4>
                     </div>
                   </div>
                   <div>
@@ -9044,8 +9044,9 @@
                                 Upload
                                 <input
                                   type="file"
+                                  name="avatar"
+                                  id="add-avatar-file"
                                   class="w-full h-full absolute top-0 left-0 opacity-0"
-                                  multiple=""
                                 />
                               </div>
                               <a
@@ -9060,33 +9061,27 @@
                       <div class="md:col-span-6">
                         <label
                           class="block mb-1 text-sm leading-normal font-medium text-title"
-                          >First Name <span class="text-danger">*</span></label
+                          >Full Name <span class="text-danger">*</span></label
                         >
                         <input
                           type="text"
+                          name="fullName"
+                          id="add-full-name"
                           class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400"
                         />
                       </div>
-                      <div class="md:col-span-6">
-                        <label
-                          class="block mb-1 text-sm leading-normal font-medium text-title"
-                          >Last Name</label
-                        >
-                        <input
-                          type="text"
-                          class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400"
-                        />
-                      </div>
-                      <div class="md:col-span-6">
+                      <!-- <div class="md:col-span-6">
                         <label
                           class="block mb-1 text-sm leading-normal font-medium text-title"
                           >Employee ID<span class="text-danger">*</span></label
                         >
                         <input
                           type="text"
+                          name="employeeId"
+                          id="add-emp-id"
                           class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400"
                         />
-                      </div>
+                      </div> -->
                       <div class="md:col-span-6">
                         <label
                           class="block mb-1 text-sm leading-normal font-medium text-title"
@@ -9102,7 +9097,9 @@
                             ></i>
                           </div>
                           <input
-                            type="text"
+                            type="date"
+                            name="hireDate"
+                            id="add-hire-date"
                             placeholder="dd/mm/yyyy"
                             class="flatpickr-input flat-datepickr bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400"
                           />
@@ -9111,20 +9108,12 @@
                       <div class="md:col-span-6">
                         <label
                           class="block mb-1 text-sm leading-normal font-medium text-title"
-                          >Username<span class="text-danger">*</span></label
-                        >
-                        <input
-                          type="text"
-                          class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400"
-                        />
-                      </div>
-                      <div class="md:col-span-6">
-                        <label
-                          class="block mb-1 text-sm leading-normal font-medium text-title"
                           >Email<span class="text-danger">*</span></label
                         >
                         <input
-                          type="text"
+                          type="email"
+                          name="email"
+                          id="add-email"
                           class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400"
                         />
                       </div>
@@ -9137,6 +9126,8 @@
                           <div class="pass-group relative">
                             <input
                               type="password"
+                              name="password"
+                              id="add-password"
                               class="pass-input form-control bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400"
                             />
                             <div
@@ -9150,44 +9141,14 @@
                         </div>
                       </div>
                       <div class="md:col-span-6">
-                        <div class="mb-3">
-                          <label
-                            class="block mb-1 text-sm leading-normal font-medium text-title"
-                            >Confirm Password
-                            <span class="text-danger"> *</span></label
-                          >
-                          <div class="pass-group relative">
-                            <input
-                              type="password"
-                              class="pass-inputs form-control bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400"
-                            />
-                            <div
-                              class="absolute inset-y-0 end-2 flex items-center"
-                            >
-                              <span
-                                class="ti toggle-passwords ti-eye-off text-base leading-normal"
-                              ></span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="md:col-span-6">
                         <label
                           class="block mb-1 text-sm leading-normal font-medium text-title"
                           >Phone Number<span class="text-danger">*</span></label
                         >
                         <input
                           type="text"
-                          class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400"
-                        />
-                      </div>
-                      <div class="md:col-span-6">
-                        <label
-                          class="block mb-1 text-sm leading-normal font-medium text-title"
-                          >Company<span class="text-danger">*</span></label
-                        >
-                        <input
-                          type="text"
+                          name="phone"
+                          id="add-phone"
                           class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400"
                         />
                       </div>
@@ -9196,7 +9157,7 @@
                           class="block mb-1 text-sm leading-normal font-medium text-title"
                           >Department</label
                         >
-                        <select class="select">
+                        <select name="department" id="add-department" class="select">
                           <option>Select</option>
                           <option>All Department</option>
                           <option>Finance</option>
@@ -9204,28 +9165,31 @@
                           <option>Executive</option>
                         </select>
                       </div>
+                      
                       <div class="md:col-span-6">
                         <label
                           class="block mb-1 text-sm leading-normal font-medium text-title"
-                          >Designation</label
+                          >Role</label
                         >
-                        <select class="select">
+                        <select name="Role" id="add-Role" class="select">
                           <option>Select</option>
-                          <option>Finance</option>
-                          <option>Developer</option>
-                          <option>Executive</option>
+                          <option>EMPLOYEE</option>
+                          <option>MANAGER</option>
+                          <option>RECRUITER</option>
                         </select>
                       </div>
-                      <div class="md:col-span-12">
+                      <!-- <div class="md:col-span-12">
                         <label
                           class="block mb-1 text-sm leading-normal font-medium text-title"
                           >About <span class="text-danger">*</span></label
                         >
                         <textarea
+                          name="about"
+                          id="add-about"
                           class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 placeholder:text-gray-400"
                           rows="3"
                         ></textarea>
-                      </div>
+                      </div> -->
                     </div>
                   </div>
                   <div class="hidden" id="styled-dashboard" role="tabpanel">
@@ -9971,14 +9935,15 @@
                 >
                   Cancel
                 </button>
-                <a
-                  href="employees.html#"
+                <button
+                  type="submit"
                   data-modal-hide="add_employee"
                   data-modal-target="success_modal"
                   data-modal-toggle="success_modal"
                   class="btn bg-primary border border-primary text-white text-center hover:bg-primary-900 hover:text-white font-medium"
-                  >Save</a
                 >
+                  Save
+                </button>
               </div>
             </form>
           </div>

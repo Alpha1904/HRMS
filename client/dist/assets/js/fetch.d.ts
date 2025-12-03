@@ -58,4 +58,11 @@ export declare function updateAvatar(id: number, formData: FormData): Promise<ob
  * @returns {Promise<object>} A confirmation of the deletion.
  */
 export declare function deleteProfile(id: number): Promise<object>;
+/**
+ * Creates a new profile.
+ * Corresponds to: @Post() create(@Body() createProfileDto: CreateProfileDto)
+ * @param {object} createProfileDto - The profile data to create.
+ * @returns {Promise<object>} The created profile object.
+ */
+export declare function createProfile(createProfileDto: object): Promise<object>;
 //# sourceMappingURL=fetch.d.ts.map

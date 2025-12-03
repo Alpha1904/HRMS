@@ -5159,10 +5159,10 @@
 						<div class="card mb-5 border border-borderColor rounded-[5px] shadow-xs bg-white">
 							<div class="card-body z-[1] p-0 pt-[50px] relative before:bg-[url('../src/assets/img/bg/card-bg.png')] before:top-0 before:left-0 before:right-0 before:w-full before:h-[90px] before:absolute before:block before:bg-cover before:rounded-defaultradius before:content-[''] before:z-0">
 								<span class="size-[60px] flex items-center justify-center rounded-full border-2 border-white m-auto mb-2  relative z-[1]">
-									<img src="assets/img/users/user-13.jpg" class="rounded-full" alt="Img">
+									<img id="employee-avatar" src="assets/img/users/user-13.jpg" class="rounded-full" alt="Img">
 								</span>
 								<div class="text-center px-4 pb-4 border-b border-borderColor relative z-[1]">
-									<h5 class="flex items-center justify-center mb-1">Stephan Peralt <i class="ti ti-discount-check-filled text-success ms-1"></i></h5>
+									<h5 id="employee-name" class="flex items-center justify-center mb-1">Stephan Peralt <i class="ti ti-discount-check-filled text-success ms-1"></i></h5>
 
                                     <span class="inline-flex items-center py-1 px-2 text-xs font-medium rounded text-dark bg-dark-transparent mb-1">
 									<span class="inline-flex items-center py-1 px-2 text-xs font-medium rounded text-dark bg-dark-transparent mb-1" id="employee-designation">
@@ -5188,11 +5188,10 @@
 									</div>
 									<div class="flex items-center justify-between mb-2">
 										<span class="inline-flex items-center">
-										<span class="inline-flex items-center" id = "date-of-join">
 											<i class="ti ti-calendar-check me-2"></i>
-												Date Of Join
+											Date Of Join
 										</span>
-										<p class="text-dark">1st Jan 2023</p>
+										<p id="employee-hireDate" class="text-dark">1st Jan 2023</p>
 									</div>
 									<div class="flex items-center justify-between mb-2">
 										<span class="inline-flex items-center">
@@ -5225,15 +5224,14 @@
 											<i class="ti ti-phone me-2"></i>
 											Phone
 										</span>
-										<p class="text-dark">(163) 2459 315</p>
-										<p class="text-dark" id="employee-phone">(163) 2459 315</p>
+										<p id="employee-phone" class="text-dark">(163) 2459 315</p>
 									</div>
 									<div class="flex items-center justify-between mb-2">
 										<span class="inline-flex items-center">
 											<i class="ti ti-mail-check me-2"></i>
 											Email
 										</span>
-										<a href="javascript:void(0);" class="text-info inline-flex items-center"><span class="__cf_email__" data-cfemail="6e1e0b1c1c0f021a5f5c2e0b160f031e020b400d0103">[email&#160;protected]</span><i class="ti ti-copy text-dark ms-2"></i></a>
+										<a id="employee-email" href="javascript:void(0);" class="text-info inline-flex items-center"><span class="email-value">example@email.com</span><i class="ti ti-copy text-dark ms-2"></i></a>
 									</div>
 									<div class="flex items-center justify-between mb-2">
 										<span class="inline-flex items-center">
@@ -5819,8 +5817,8 @@
 										</div>
 										<div class="md:col-span-6">
 											<div class="mb-3">
-												<label class="block mb-1 text-sm leading-normal font-medium text-title">First Name <span class="text-danger"> *</span></label>
-												<input type="text" class="bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400" value="Anthony">
+												<label class="block mb-1 text-sm leading-normal font-medium text-title">Full Name <span class="text-danger"> *</span></label>
+												<input id="form-employee-fullName" type="text" class="bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400" value="Anthony">
 											</div>									
 										</div>
 										<div class="md:col-span-6">
@@ -5855,7 +5853,7 @@
 										<div class="md:col-span-6">
 											<div class="mb-3">
 												<label class="block mb-1 text-sm leading-normal font-medium text-title">Email <span class="text-danger"> *</span></label>
-												<input type="text" class="bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400" value="anthony@example.com">
+												<input id="form-employee-email" type="text" class="bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400" value="anthony@example.com">
 											</div>									
 										</div>
 										<div class="md:col-span-6">
@@ -5884,7 +5882,7 @@
 										<div class="md:col-span-6">
 											<div class="mb-3">
 												<label class="block mb-1 text-sm leading-normal font-medium text-title">Phone Number <span class="text-danger"> *</span></label>
-												<input type="text" class="bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400" value="(123) 4567 890">
+												<input id="form-employee-phone" type="text" class="bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400" value="(123) 4567 890">
 											</div>									
 										</div>
 										<div class="md:col-span-6">
@@ -5896,7 +5894,7 @@
 										<div class="md:col-span-6">
 											<div class="mb-3">
 												<label class="block mb-1 text-sm leading-normal font-medium text-title">Department</label>
-												<select class="select">
+												<select id="form-employee-department" class="select">
 													<option>Select</option>
 													<option>All Department</option>
 													<option selected>Finance</option>
@@ -7170,33 +7168,8 @@
 	<script src="assets/js/theme-colorpicker.js"></script>
 	<script src="assets/js/script.js"></script>
 
-	<script>
-		document.addEventListener('DOMContentLoaded', function() {
-			// Function to fetch employee data from the server
-			function fetchEmployeeData() {
-				// Replace 'YOUR_API_ENDPOINT' with the actual API endpoint
-				fetch('YOUR_API_ENDPOINT')
-					.then(response => response.json())
-					.then(data => {
-						// Update the HTML with the fetched data
-						document.getElementById('employee-designation').textContent = data.designation;
-						document.getElementById('employee-phone').textContent = data.phone;
-						document.getElementById('date-of-join').textContent = data.dateOfJoin;
-						// Update other fields as needed
-					})
-					.catch(error => {
-						console.error('Error fetching employee data:', error);
-					});
-			}
-
-			// Call the function to fetch employee data when the page loads
-			fetchEmployeeData();
-		});
-	</script>
-
-
-
-
+	<!-- Profile API fetch helper and employee details loader (compiled from TypeScript) -->
+	<script type="module" src="../dist/assets/js/app.js"></script>
 
 </body>
 

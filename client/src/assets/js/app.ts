@@ -1,9 +1,11 @@
+
 import {
   fetchProfiles,
   fetchProfileById,
   updateProfile,
   deleteProfile,
   updateAvatar,
+  createProfile,
 } from "./fetch.js";
 
 // jQuery/DataTables is available globally in the app; declare for TypeScript
@@ -26,10 +28,99 @@ interface Profile {
   }
 }
 
-interface PaginatedProfiles {
-  data: Profile[];
-  // You can add other pagination properties here if needed, e.g., meta: object
+
+
+// ----- Breadcrumb ------
+async function setupBreadcrumb() {
+  const bcTotal = document.getElementById('bco');
+  const totalActive = document.getElementById('bct');
+  const totalInactive = document.getElementById('bctt');
+  const tottalNewJoiners = document.getElementById('bcf');
+  try {
+    // First, request a minimal page to learn pagination metadata (if backend returns it)
+    const head = await fetchProfiles({ page: 1, limit: 1 }) as any;
+
+    const total = head?.meta?.total ?? (Array.isArray(head?.data) ? head.data.length : 0);
+    if (bcTotal) bcTotal.textContent = String(total);
+
+    // If backend provides active/inactive counts in meta, use them directly
+    if (head?.meta && typeof head.meta.active === 'number' && typeof head.meta.inactive === 'number') {
+      if (totalActive) totalActive.textContent = String(head.meta.active);
+      if (totalInactive) totalInactive.textContent = String(head.meta.inactive);
+      // Use server-provided new-joiners if available (common keys: news, newJoiners, new)
+      const metaNew = typeof head.meta.news === 'number' ? head.meta.news :
+                      typeof head.meta.newJoiners === 'number' ? head.meta.newJoiners :
+                      typeof head.meta.new === 'number' ? head.meta.new : undefined;
+      if (typeof metaNew === 'number') {
+        if (tottalNewJoiners) tottalNewJoiners.textContent = String(metaNew);
+      } else if (tottalNewJoiners) {
+        tottalNewJoiners.textContent = '0';
+      }
+      return;
+    }
+
+    // Otherwise we need to compute active/inactive client-side.
+    // If total is reasonably small, fetch all profiles once; otherwise fetch a sample and mark as estimated.
+    if (total > 0 && total <= 2000) {
+      const all = await fetchProfiles({ page: 1, limit: total }) as any;
+      const profiles: Profile[] = all?.data ?? [];
+      const activeCount = profiles.filter((p) => p.user?.isActive).length;
+      const inactiveCount = profiles.length - activeCount;
+      if (totalActive) totalActive.textContent = String(activeCount);
+      if (totalInactive) totalInactive.textContent = String(inactiveCount);
+
+      // Compute new joiners (last 7 days) from hireDate or createdAt
+      if (tottalNewJoiners) {
+        const now = Date.now();
+        const sevenDays = 7 * 24 * 60 * 60 * 1000;
+        const newCount = profiles.filter((p) => {
+          const d = p.hireDate ? new Date(p.hireDate) : (p as any).createdAt ? new Date((p as any).createdAt) : null;
+          return d && !isNaN(d.getTime()) && (now - d.getTime()) <= sevenDays;
+        }).length;
+        tottalNewJoiners.textContent = String(newCount);
+      }
+      return;
+    }
+
+    if (total > 2000) {
+      // Large dataset: fetch a sample and show approximate counts with a '+' indicator.
+      const sampleLimit = Math.min(1000, total);
+      const sample = await fetchProfiles({ page: 1, limit: sampleLimit }) as any;
+      const profiles: Profile[] = sample?.data ?? [];
+      const activeInSample = profiles.filter((p) => p.user?.isActive).length;
+      const inactiveInSample = profiles.length - activeInSample;
+      const activeText = `${activeInSample}${total > sampleLimit ? '+' : ''}`;
+      const inactiveText = `${inactiveInSample}${total > sampleLimit ? '+' : ''}`;
+      if (totalActive) totalActive.textContent = activeText;
+      if (totalInactive) totalInactive.textContent = inactiveText;
+
+      // Estimate new joiners in sample (last 7 days)
+      if (tottalNewJoiners) {
+        const now = Date.now();
+        const sevenDays = 7 * 24 * 60 * 60 * 1000;
+        const newInSample = profiles.filter((p) => {
+          const d = p.hireDate ? new Date(p.hireDate) : (p as any).createdAt ? new Date((p as any).createdAt) : null;
+          return d && !isNaN(d.getTime()) && (now - d.getTime()) <= sevenDays;
+        }).length;
+        tottalNewJoiners.textContent = `${newInSample}${total > sampleLimit ? '+' : ''}`;
+      }
+      return;
+    }
+
+    // Fallback: no data
+    if (totalActive) totalActive.textContent = '0';
+    if (totalInactive) totalInactive.textContent = '0';
+  } catch (err) {
+    console.error('Failed to load breadcrumb total:', err);
+    if (bcTotal) bcTotal.textContent = '0';
+    const totalActive = document.getElementById('bct');
+    const totalInactive = document.getElementById('bctt');
+    if (totalActive) totalActive.textContent = '0';
+    if (totalInactive) totalInactive.textContent = '0';
+    if (tottalNewJoiners) tottalNewJoiners.textContent = '0';
+  }
 }
+
 
 // --- UI Helper Functions ---
 
@@ -402,6 +493,93 @@ function setupStaticListeners() {
         editForm.addEventListener('submit', handleEditFormSubmit);
     }
 
+    // Attach add-employee form handler if form exists inside #add_employee modal
+    const addForm = document.querySelector<HTMLFormElement>('#add_employee form');
+    if (addForm) {
+      addForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        // Attempt to build a payload from commonly used field names
+        const form = e.target as HTMLFormElement;
+
+        const get = (selector: string) => {
+          const el = form.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(selector);
+          return el ? (el.value || '').trim() : '';
+        };
+
+        const payload: any = {
+          email: get('[name="email"]') || get('input[placeholder*="Email"]'),
+          isActive: true,
+          role: get('[name="role"]') || get('select') || get('input[placeholder*="role"]'),
+          password: get('[name="password"]') || get('input[placeholder*="Password"]'),
+          profile: {
+            fullName: get('[name="fullName"]') || get('input[placeholder*="Full Name"]') || get('input[aria-label*="Full Name"]'),
+            phone: get('[name="phone"]') || get('input[placeholder*="Phone"]'),
+            hireDate: get('[name="hireDate"]') || get('input[placeholder*="dd/mm/yyyy"]') || get('input[type="date"]'),
+            department: get('[name="department"]') || get('select') || get('input[placeholder*="Department"]'),
+          },
+        };
+
+        // Clean payload by removing empty strings
+        Object.keys(payload).forEach((k) => {
+          if (payload[k] === '' || payload[k] === undefined || payload[k] === null) delete payload[k];
+        });
+
+        // Normalize and validate role: backend expects one of the enum values
+        const allowedRoles = ['EMPLOYEE', 'MANAGER', 'HR_ADMIN', 'RECRUITER', 'CANDIDATE', 'SYSTEM_ADMIN'];
+        let rawRole = '';
+        if (payload.role) rawRole = String(payload.role).trim();
+        // Try to map common UI labels to enum values (case-insensitive)
+        let normalizedRole = rawRole.toUpperCase();
+        if (!allowedRoles.includes(normalizedRole)) {
+          // If user selected a placeholder like 'Select' or provided an unknown value, default to EMPLOYEE
+          normalizedRole = 'EMPLOYEE';
+        }
+        payload.role = normalizedRole;
+
+        // Basic client-side checks to avoid sending obviously invalid requests
+        if (!payload.email) {
+          showNotification('Email is required to create a user.', true);
+          return;
+        }
+        if (!payload.password) {
+          showNotification('Password is required to create a user.', true);
+          return;
+        }
+
+       // Handle avatar file if present
+        const fileInput = form.querySelector<HTMLInputElement>('input[type="file"]');
+        let file: File | null = null;
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+          file = fileInput.files[0];
+        }
+
+        try {
+          const created = await createProfile(payload as object);
+         // If avatar was provided, upload it via updateAvatar
+          if (file && (created as any).id) {
+            const fd = new FormData();
+            fd.append('file', file);
+            await updateAvatar((created as any).id, fd);
+          }
+
+          // Close modal if possible
+          const modal = document.getElementById('add_employee');
+          if (modal) modal.classList.add('hidden');
+
+          showNotification('Employee created successfully!');
+          // Refresh DataTable and breadcrumb
+          if (typeof $ !== 'undefined' && ($ as any).fn && ($ as any).fn.DataTable) {
+            ($('.datatable').DataTable() as any).ajax.reload(null, false);
+          }
+          console.log('Employee created:', payload);
+          await setupBreadcrumb();
+        } catch (err: any) {
+          console.error('Failed to create employee:', err);
+          showNotification(err?.message || 'Failed to create employee', true);
+        }
+      });
+    }
+
     // Handle the cancel button on the edit modal
     const editModal = document.getElementById('edit_employee');
     const cancelButton = editModal?.querySelector('#cancel-btn');
@@ -412,12 +590,99 @@ function setupStaticListeners() {
     }
 }
 
+/**
+ * Loads employee details from backend and populates the employee-details page.
+ * Called on page load if the page contains employee detail elements.
+ */
+async function loadEmployeeDetails() {
+  // Get employee ID from URL query param: ?id=123
+  const params = new URLSearchParams(window.location.search);
+  const employeeId = params.get('id');
+  
+  if (!employeeId) {
+    console.warn('No employee ID in URL query param');
+    return;
+  }
+
+  try {
+    const profile = await fetchProfileById(parseInt(employeeId, 10)) as Profile & any;
+
+    // Populate profile header section
+    const avatar = document.getElementById('employee-avatar') as HTMLImageElement;
+    if (avatar && profile.avatarUrl) {
+      avatar.src = profile.avatarUrl;
+    }
+
+    const name = document.getElementById('employee-name') as HTMLElement;
+    if (name) {
+      name.textContent = profile.fullName || 'N/A';
+    }
+
+    const phone = document.getElementById('employee-phone') as HTMLElement;
+    if (phone) {
+      phone.textContent = profile.phone || 'N/A';
+    }
+
+    const email = document.getElementById('employee-email') as HTMLElement;
+    if (email) {
+      const emailSpan = email.querySelector('.email-value') as HTMLElement;
+      if (emailSpan) {
+        emailSpan.textContent = profile.user?.email || 'N/A';
+      }
+    }
+
+    const hireDate = document.getElementById('employee-hireDate') as HTMLElement;
+    if (hireDate && profile.hireDate) {
+      hireDate.textContent = new Date(profile.hireDate).toLocaleDateString();
+    }
+
+    const designation = document.getElementById('employee-designation') as HTMLElement;
+    if (designation && profile.department) {
+      designation.textContent = `Software Developer`; // You can replace this with a real designation field
+    }
+
+    // Populate form inputs
+    const formFullName = document.getElementById('form-employee-fullName') as HTMLInputElement;
+    if (formFullName) {
+      formFullName.value = profile.fullName || '';
+    }
+
+    const formEmail = document.getElementById('form-employee-email') as HTMLInputElement;
+    if (formEmail) {
+      formEmail.value = profile.user?.email || '';
+    }
+
+    const formPhone = document.getElementById('form-employee-phone') as HTMLInputElement;
+    if (formPhone) {
+      formPhone.value = profile.phone || '';
+    }
+
+    const formDepartment = document.getElementById('form-employee-department') as HTMLSelectElement;
+    if (formDepartment && profile.department) {
+      formDepartment.value = profile.department;
+    }
+
+    console.log('Employee details loaded:', profile);
+  } catch (error: any) {
+    console.error('Failed to load employee details:', error);
+    showNotification('Could not load employee details.', true);
+  }
+}
+
 // --- Main execution block ---
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize DataTable and attach all necessary event listeners
-  initProfilesDataTable();
-  setupActionListeners(); // Set up listeners for edit/delete
-  setupStaticListeners(); // Set up form submissions and other static listeners
+  // Check if we're on the employee-details page
+  if (document.getElementById('employee-name')) {
+    loadEmployeeDetails();
+  }
+
+  // Initialize DataTable and attach all necessary event listeners (only on employees list page)
+  if (document.querySelector('.datatable')) {
+    initProfilesDataTable();
+    setupActionListeners(); // Set up listeners for edit/delete
+    setupStaticListeners(); // Set up form submissions and other static listeners
+    setupBreadcrumb(); // Set up breadcrumb total employee count
+  }
 });
 
 console.log("Application script loaded.");

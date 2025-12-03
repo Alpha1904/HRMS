@@ -4,7 +4,7 @@
   "description": "HRMS Frontend Client",
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch"
+    "wa": "tsc --watch"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

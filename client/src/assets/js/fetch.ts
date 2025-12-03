@@ -39,6 +39,7 @@ function detectApiBase(): string {
 
 const API_BASE_URL = detectApiBase();
 const PROFILES_URL = `${API_BASE_URL}/profiles`;
+const USERS_URL = `${API_BASE_URL}/users`;
 
 /**
  * A helper function for handling fetch responses.
@@ -154,6 +155,23 @@ export async function updateAvatar(id: number, formData: FormData): Promise<obje
 export async function deleteProfile(id: number): Promise<object> {
   const response = await fetch(`${PROFILES_URL}/${id}`, {
     method: 'DELETE',
+  });
+  return handleResponse(response);
+}
+
+/**
+ * Creates a new profile.
+ * Corresponds to: @Post() create(@Body() createProfileDto: CreateProfileDto)
+ * @param {object} createProfileDto - The profile data to create.
+ * @returns {Promise<object>} The created profile object.
+ */
+export async function createProfile(createProfileDto: object): Promise<object> {
+  const response = await fetch(USERS_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(createProfileDto),
   });
   return handleResponse(response);
 }
