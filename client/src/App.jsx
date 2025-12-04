@@ -132,6 +132,7 @@ import Login from "./pages/Auth/Login";
 import Layout from "./layout/Layout";
 import NotFound from "./NotFound/Index";
 import PrivateRoute from "./routes/PrivateRoute";
+import Communication from "./pages/Communication/Communication";
 
 // PAGES ADMIN
 import DashboardAdmin from "./pages/Admin/Dashboard/Dashboard"; 
@@ -142,11 +143,9 @@ import Recruitment from "./pages/Admin/Recruitment/Recruitment";
 import TrainingsAdmin from "./pages/Admin/Trainings/Trainings";
 import Payroll from "./pages/Admin/Payroll/Payroll";
 import EvaluationsAdmin from "./pages/Admin/Evaluations/Evaluations";
-import CommunicationAdmin from "./pages/Admin/Communication/Communication";
 import Reports from "./pages/Admin/Reports/Reports";
 
 // PAGES UTILISATEURS
-import UserCommunication from "./pages/users/Communication/Communication";
 import UserTraining from "./pages/users/Trainings/Training";
 import UserDashboard from "./pages/users/Dashboard/Dashboard"; 
 import UserDocument from "./pages/users/Document/Documents";
@@ -186,7 +185,7 @@ export default function App() {
 
         {/* Profil accessible à tous */}
         <Route path="profile" element={<Profile />} />
-        <Route path="communication" element={<UserCommunication />} />
+        <Route path="communication" element={<Communication />} />
 
         {/* Routes Admin */}
         <Route path="employees" element={<PrivateRoute allowedRoles={GESTIONNAIRE_ROLES}><Employees /></PrivateRoute>} />
@@ -203,7 +202,7 @@ export default function App() {
         <Route path="user/leaves" element={<PrivateRoute allowedRoles={USER_ROLES}><UserLeaves /></PrivateRoute>} />
         <Route path="user/schedule" element={<PrivateRoute allowedRoles={USER_ROLES}><UserSchedule /></PrivateRoute>} />
         <Route path="user/evaluations" element={<PrivateRoute allowedRoles={USER_ROLES}><UserEvaluations /></PrivateRoute>} />
-        <Route path="user/communication" element={<PrivateRoute allowedRoles={USER_ROLES}><UserCommunication /></PrivateRoute>} />
+        {/* <Route path="user/communication" element={<PrivateRoute allowedRoles={USER_ROLES}><UserCommunication /></PrivateRoute>} /> */}
         <Route path="user/trainings" element={<PrivateRoute allowedRoles={USER_ROLES}><UserTraining /></PrivateRoute>} />
       </Route>
     </Routes>

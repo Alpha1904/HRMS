@@ -5,6 +5,7 @@ module.exports = {
     purple: '#6A1CB8',      // Violet
     white: '#FFFFFF',
     black: '#1F1F1F',
+    blue:  '#3b82f6',        // Bleu
     gray: {
       50: '#FAFAFA',
       100: '#F3F4F6',
@@ -20,6 +21,6 @@ module.exports = {
   },
   fontFamily: {
     montserrat: ['Montserrat', 'sans-serif'],
-    faculty: ['"Faculty Glyphic"', 'serif']
+    faculty: ['Faculty Glyphic', 'sans-serif']
   }
 };

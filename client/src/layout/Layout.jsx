@@ -142,7 +142,7 @@ const itemsUser = [
     title: "Mes Formations",
   },
   {
-    to: "/user/communication",
+    to: "/communication",
     label: "Communication",
     icon: Mail,
     title: "Centre de communication",

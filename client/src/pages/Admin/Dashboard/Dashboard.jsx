@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import StatCard from "../../../components/StatCard";
-import { UserCheck, UserPlus, Users, UserX } from "lucide-react";
+import { Calendar, UserCheck, UserPlus, Users, UserX } from "lucide-react";
 import { toast } from "react-toastify";
 
 // ⭐️ Ajustez les chemins d'importation
@@ -147,13 +147,13 @@ export default function AdminDashboard() {
       {/* Cartes de statistiques */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 md:gap-4 gap-1 mb-6">
         <StatCard
-          icon={<Users className="md:w-8 md:h-8 w-4 h-4" />}
+          icon={<Users className="w-4 h-4" />}
           title="Effectif Total"
           value={stats.total}
           className="bg-gradient-to-r from-[#3f97e1] to-[#2879cd]"
         />
         <StatCard
-          icon={<UserCheck className="md:w-8 md:h-8 w-4 h-4" />}
+          icon={<Calendar className="w-4 h-4" />}
           // title="Congés en attente"
           title={
             <p className="">
@@ -165,13 +165,13 @@ export default function AdminDashboard() {
           className="bg-gradient-to-r from-[#0add2a] to-[#05901b]"
         />
         <StatCard
-          icon={<UserX className="md:w-8 md:h-8 w-4 h-4" />}
+          icon={<UserX className="w-4 h-4" />}
           title="Absences actives"
           value={stats.active}
           className="bg-gradient-to-r from-[#febb01] to-[#dc7303]"
         />
         <StatCard
-          icon={<UserPlus className="md:w-8 md:h-8 w-4 h-4" />}
+          icon={<UserPlus className="w-4 h-4" />}
           title={
             <p className="">
               <span className="md:hidden">Nouveaux Em...</span>{" "}

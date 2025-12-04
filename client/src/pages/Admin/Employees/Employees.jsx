@@ -781,25 +781,25 @@ export default function Employees() {
       {/* Cartes de statistiques */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 md:gap-4 gap-1 mb-6">
         <StatCard
-          icon={<Users className="md:w-8 md:h-8 w-4 h-4" />}
+          icon={<Users className="w-4 h-4" />}
           title="Effectif Total"
           value={stats.total}
           className="bg-gradient-to-r from-[#EB7808] to-[#a54218]"
         />
         <StatCard
-          icon={<UserCheck className="md:w-8 md:h-8 w-4 h-4" />}
+          icon={<UserCheck className="w-4 h-4" />}
           title="Employés Actifs"
           value={stats.active}
           className="bg-gradient-to-r from-[#458F4A] to-[#266712]"
         />
         <StatCard
-          icon={<UserX className="md:w-8 md:h-8 w-4 h-4" />}
+          icon={<UserX className="w-4 h-4" />}
           title="Employés Inactifs"
           value={stats.inactive}
           className="bg-gradient-to-r from-[#CC3C3C] to-[#B81C7F]"
         />
         <StatCard
-          icon={<UserPlus className="md:w-8 md:h-8 w-4 h-4" />}
+          icon={<UserPlus className="w-4 h-4" />}
           title={<p className=""><span className="md:hidden">Nouveaux Em...</span> <span className="hidden md:block">Nouveaux Employés </span></p>}
           value={stats.news}
           className="bg-gradient-to-r from-[#480dbf] to-[#2F0B82]"
