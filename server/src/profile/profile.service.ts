@@ -108,7 +108,8 @@ async findAll(
   async findOne(id: number): Promise<Profile> {
     const profile = await this.prisma.profile.findUnique({
       where: { id },
-       include: { user: { select: { email: true, role: true } } 
+       include: { user: { select: { email: true, role: true }, },
+       manager: { select: { id: true, fullName: true }, }
     }});
 
     if (!profile) {
