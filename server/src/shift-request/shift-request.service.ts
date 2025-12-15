@@ -43,13 +43,17 @@ export class ShiftRequestService {
     } = dto;
 
     // 1. Find the original shift
-    const shift = await this.prisma.shift.findUnique({ where: { id: shiftId } });
+    const shift = await this.prisma.shift.findUnique({
+      where: { id: shiftId },
+      include: { profile: true }
+    });
     if (!shift) {
       throw new NotFoundException(`Shift with ID ${shiftId} not found.`);
     }
 
     // 2. Validate ownership
-    if (shift.profileId !== requesterId) {
+    const isAssigned = shift.profile.some((p) => p.id === requesterId);
+    if (!isAssigned) {
       throw new UnauthorizedException('You can only request changes for your own shifts.');
     }
 

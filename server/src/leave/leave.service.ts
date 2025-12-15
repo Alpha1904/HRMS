@@ -107,6 +107,23 @@ export class LeaveService {
     return newLeave;
   }
 
+  // GET all leaves 
+  async getAllLeaves(): Promise<Leave[]> {
+    return this.prisma.leave.findMany();
+  } 
+
+  // get leave by profile id
+  async getLeaveById(profileId: number): Promise<Leave[]> {
+    const leave = await this.prisma.leave.findMany({
+      where: { profileId },
+    });
+    if (!leave) {
+      throw new NotFoundException(`Leave request not found for profile ID ${profileId}.`);
+    }
+    return leave;
+  }
+
+
   /**
    * ### NEW HELPER METHOD: findOrCreateBalance
    * This is the "smart" logic that uses the LeavePolicy.
@@ -310,5 +327,38 @@ export class LeaveService {
 
       return updatedLeave;
     });
+  }
+
+  // getall leaves by manager id
+  async getLeavesByManagerId(managerId: number): Promise<Leave[]> {
+    return this.prisma.leave.findMany({
+      where: { managerId : managerId },
+    });
+  } 
+
+  // delete leave request by id
+  async deleteLeave(leaveId: number): Promise<Leave> {
+    // 1. Find the existing leave request
+    const leave = await this.prisma.leave.findUnique({
+      where: { id: leaveId },
+    });
+    if (!leave) {
+      throw new NotFoundException(
+        `Leave request with ID ${leaveId} not found.`,
+      );
+    }
+    // 2. Delete the leave request
+    return this.prisma.leave.delete({
+      where: { id: leaveId },
+    });
+  }
+
+
+  // delete many leaves by profile id
+  async deleteLeavesByProfileId(profileId: number): Promise<number> {
+    const result = await this.prisma.leave.deleteMany({
+      where: { profileId },
+    });
+    return result.count;
   }
 }

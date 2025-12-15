@@ -13,11 +13,27 @@ async function bootstrap() {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });
 
+  // Enable CORS to allow requests from different origins (e.g., your frontend)
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Allow any origin, or specify allowed origins
+      callback(null, true);
+    },
+      credentials: true, // CRITICAL: Allow cookies/credentials
+      optionsSuccessStatus: 200, // For legacy browsers
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  });
+
+  // Register cookie parser middleware BEFORE global pipes
+  app.use(cookieParser());
+
+  app.useGlobalPipes(new ValidationPipe({transform: true, whitelist: true }));
+
   // Serve static files from the 'public' directory.
   // This setup tries the project root first, then the dist folder.
   const publicPath = join(__dirname, '..', '..', 'public');
   app.useStaticAssets(publicPath, { prefix: '/public' });
-
 
   app.setGlobalPrefix('api');
 
@@ -30,15 +46,6 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
-
-  // Enable CORS to allow requests from different origins (e.g., your frontend)
-  app.enableCors({
-    origin: true, // Reflect the request origin
-    credentials: true, // Allow cookies to be sent
-  });
-
-  app.useGlobalPipes(new ValidationPipe({transform: true, whitelist: true }));
-  app.use(cookieParser());
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

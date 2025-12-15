@@ -54,4 +54,22 @@ export class CreateShiftDto {
   @IsOptional()
   @IsInt()
   templateId?: number;
+
+  @ApiProperty({
+    description: 'Optional title for the shift.',
+    example: 'softech project ',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiProperty({
+    description: 'Optional description for the shift.',
+    example: 'Regular morning working in the softech project.',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  description?: string;
 }

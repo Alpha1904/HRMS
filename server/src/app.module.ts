@@ -20,6 +20,7 @@ import { EvaluationModule } from './evaluation/evaluation.module';
 import { MessageModule } from './message/message.module';
 import { AnnouncementModule } from './announcement/announcement.module';
 import { ForumModule } from './forum/forum.module';
+import { TestService } from './test/test.service';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -48,6 +49,6 @@ import { ForumModule } from './forum/forum.module';
     ForumModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, TestService],
 })
 export class AppModule {}

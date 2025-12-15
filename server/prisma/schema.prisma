@@ -193,13 +193,15 @@ model Profile {
   manager         Profile?  @relation("ManagerProfiles", fields: [managerId], references: [id])
   managerId       Int?
 
+  shiftId Int?
+
   // Common relationships
   documents            Document[]           @relation("ProfileDocuments")
   leaves               Leave[]              @relation("ProfileLeaves")
   leaveBalances        LeaveBalance[]       @relation("ProfileLeaveBalances")
   managedLeaves        Leave[]              @relation("ManagerLeaveApprovals")
   hrAdminLeaves        Leave[]              @relation("HRAdminLeaveOverrides")
-  shifts               Shift[]              @relation("ProfileShifts")
+  shifts               Shift?              @relation("ProfileShifts", fields: [shiftId], references: [id], onDelete: Cascade)
   shiftChangeRequests  ShiftChangeRequest[] @relation("ProfileShiftRequests")
   evaluations          Evaluation[]         @relation("ProfileEvaluations")
   goals                Goal[]               @relation("ProfileGoals")
@@ -491,8 +493,10 @@ model WorkScheduleTemplate {
 // This is a *single assigned shift* for one person
 model Shift {
   id        Int     @id @default(autoincrement())
-  profileId Int
-  profile   Profile @relation("ProfileShifts", fields: [profileId], references: [id], onDelete: Cascade)
+  profile   Profile[] @relation("ProfileShifts")
+
+  title     String? // e.g., "Morning Shift", "Evening Shift"
+  description String?
 
   date      DateTime @db.Date // The specific day of the shift
   startTime DateTime @db.Time // The start time (e.g., 09:00:00)
@@ -508,7 +512,7 @@ model Shift {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([profileId, date])
+  @@index([date])
   @@index([templateId])
 }
 

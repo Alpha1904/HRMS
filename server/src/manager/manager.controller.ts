@@ -42,7 +42,7 @@ export class ManagerController {
   /**
    * Get all employees (profiles) managed by this manager
    */
-  @Get(':managerProfileId/team')
+  @Get(':managerProfileId')
   @ApiOperation({ summary: "Get a manager's team" })
   @ApiResponse({ status: 200, description: 'Returns a list of employee profiles.' })
   @ApiResponse({ status: 404, description: 'Manager profile not found.' })
@@ -53,7 +53,7 @@ export class ManagerController {
   /**
    * Add one or more employees to a manager's team
    */
-  @Post(':managerProfileId/team')
+  @Post(':managerProfileId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Add employees to a manager's team" })
   @ApiResponse({ status: 200, description: 'Employees successfully added.' })
@@ -72,7 +72,7 @@ export class ManagerController {
    * Remove one or more employees from a manager's team
    * (Sets their managerId to null)
    */
-  @Delete(':managerProfileId/team')
+  @Delete(':managerProfileId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Remove employees from a manager's team" })
   @ApiResponse({ status: 200, description: 'Employees successfully removed.' })
