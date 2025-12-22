@@ -1,14 +1,35 @@
-import { fetchProfiles } from './fetch.js';
+import { fetchProfiles, fetchProfileById } from './fetch.js';
 
 
 // --- Employees ---
+
+
+
 
 /**
  * Loads recent employees from backend and populates the dashboard employees table.
  * Fetches the first 5 employees and renders them in the employee section.
  */
+const id = 354; // Manager ID
 async function loadDashboardEmployees() {
   try {
+
+    const profile = (await fetchProfileById(id)) as any;
+
+     const headerImg = document.querySelector('#me-img') as HTMLImageElement | null;
+    if (headerImg) {
+      const avatar = profile.avatarUrl
+        ? (String(profile.avatarUrl).startsWith('http') ? profile.avatarUrl : `${window.location.origin}${profile.avatarUrl}`)
+        : headerImg.src; // keep existing
+      headerImg.src = avatar;
+      headerImg.alt = profile.fullName || headerImg.alt || '';
+    }
+
+    const nameEl = document.getElementById('me-name');
+    if (nameEl) {
+      nameEl.textContent = `Welcome Back, ${profile.fullName || ''}`;
+    }
+
     // Fetch employees from backend (limit to 5 for dashboard preview)
     const response = await fetchProfiles({ page: 1, limit: 5 });
     const employees = response?.data || [];

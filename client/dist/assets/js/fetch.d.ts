@@ -8,6 +8,11 @@ declare global {
         __API_BASE__?: string;
     }
 }
+export declare function detectApiBase(): string;
+/**
+ * A helper function for handling fetch responses.
+ */
+export declare function handleResponse(response: Response): Promise<any>;
 /**
  * Finds all profiles with pagination and filtering.
  * Corresponds to: @Get() findAll(@Query() query: QueryProfileDto)
@@ -24,6 +29,7 @@ export declare function fetchProfiles(queryParams?: Record<string, any>): Promis
  * @returns {Promise<object>} The profile object.
  */
 export declare function fetchProfileById(id: number): Promise<object>;
+export declare function fetchManagerById(id: number): Promise<object>;
 /**
  * Finds a single profile by its associated *User ID*.
  * Corresponds to: @Get('/user/:userId') findOneByUserId(@Param('userId') userId: number)
@@ -65,4 +71,14 @@ export declare function deleteProfile(id: number): Promise<object>;
  * @returns {Promise<object>} The created profile object.
  */
 export declare function createProfile(createProfileDto: object): Promise<object>;
+/**
+ * Fetche leaves by profile id
+ */
+export declare function fetchLeavesByProfileId(profileId: number): Promise<any>;
+/**
+ * Submit a new leave request
+ */
+export declare function submitLeaveRequest(createLeaveDto: object): Promise<any>;
+export declare function fetchLeavesByManagerId(managerId: number): Promise<any>;
+export declare function fetchAllSchedules(): Promise<any>;
 //# sourceMappingURL=fetch.d.ts.map

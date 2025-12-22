@@ -2,7 +2,7 @@
 function normalizeBase(b) {
     return b.replace(/\/$/, '');
 }
-function detectApiBase() {
+export function detectApiBase() {
     if (typeof window !== 'undefined' && window.__API_BASE__) {
         return normalizeBase(window.__API_BASE__);
     }
@@ -19,10 +19,12 @@ function detectApiBase() {
 const API_BASE_URL = detectApiBase();
 const PROFILES_URL = `${API_BASE_URL}/profiles`;
 const USERS_URL = `${API_BASE_URL}/users`;
+const MANAGERS_URL = `${API_BASE_URL}/manager`;
+const SCHEDULES_URL = `${API_BASE_URL}/schedules`;
 /**
  * A helper function for handling fetch responses.
  */
-async function handleResponse(response) {
+export async function handleResponse(response) {
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
@@ -69,6 +71,11 @@ export async function fetchProfiles(queryParams = {}) {
  */
 export async function fetchProfileById(id) {
     const response = await fetch(`${PROFILES_URL}/${id}`);
+    return handleResponse(response);
+}
+// Find manager by id
+export async function fetchManagerById(id) {
+    const response = await fetch(`${MANAGERS_URL}/${id}`);
     return handleResponse(response);
 }
 /**
@@ -145,6 +152,36 @@ export async function createProfile(createProfileDto) {
         },
         body: JSON.stringify(createProfileDto),
     });
+    return handleResponse(response);
+}
+/**
+ * Fetche leaves by profile id
+ */
+export async function fetchLeavesByProfileId(profileId) {
+    const response = await fetch(`${API_BASE_URL}/leaves/${profileId}`);
+    return handleResponse(response);
+}
+/**
+ * Submit a new leave request
+ */
+export async function submitLeaveRequest(createLeaveDto) {
+    const response = await fetch(`${API_BASE_URL}/leaves`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(createLeaveDto),
+    });
+    return handleResponse(response);
+}
+// getall leaves by manager id
+export async function fetchLeavesByManagerId(managerId) {
+    const response = await fetch(`${API_BASE_URL}/leaves/manager/${managerId}`);
+    return handleResponse(response);
+}
+// Fetch all schedules
+export async function fetchAllSchedules() {
+    const response = await fetch(`${SCHEDULES_URL}`);
     return handleResponse(response);
 }
 //# sourceMappingURL=fetch.js.map

@@ -55,6 +55,9 @@
 	<link rel="stylesheet" href="assets/plugins/flatpickr/flatpickr.min.css">
 	<link rel="stylesheet" href="assets/plugins/@simonwep/pickr/themes/nano.min.css">
 
+	<!-- Toastify CSS -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
 	<!-- Main CSS -->
 	<link rel="stylesheet" href="../dist/style.css">
 
@@ -74,15 +77,15 @@
 			<div class="main-header h-[50px]">
 
 				<div class="header-left hidden relative float-left text-center h-[50px] z-[1] media-max-md:flex">
-					<a href="index.html" class="logo">
+					<a href="dashboard.admin.html" class="logo">
 						<img src="assets/img/logo.svg" alt="Logo">
 					</a>
-					<a href="index.html" class="dark-logo">
+					<a href="dashboard.admin.html" class="dark-logo">
 						<img src="assets/img/logo-white.svg" alt="Logo">
 					</a>
 				</div>
 
-				<a id="mobile_btn" class="mobile_btn" href="employee-dashboard.html#sidebar">
+				<a id="mobile_btn" class="mobile_btn" href="dashboard.employee.html#sidebar">
 					<span class="bar-icon">
 						<span></span>
 						<span></span>
@@ -169,19 +172,19 @@
 											<span>Main</span>
 										</li>
 										<li class="submenu">
-											<a href="employee-dashboard.html#" class="active">
+											<a href="dashboard.employee.html#" class="active">
 												<i class="ti ti-smart-home"></i><span>Dashboard</span>
 												<span class="menu-arrow"></span>
 											</a>
 											<ul>
-												<li><a href="index.html">Admin Dashboard</a></li>
-												<li><a href="employee-dashboard.html" class="active">Employee Dashboard</a></li>
+												<li><a href="dashboard.admin.html">Admin Dashboard</a></li>
+												<li><a href="dashboard.employee.html" class="active">Employee Dashboard</a></li>
 												<li><a href="deals-dashboard.html">Deals Dashboard</a></li>
-												<li><a href="leads-dashboard.html">Leads Dashboard</a></li>
+												<li><a href="dashboard.manager.html">Manager Dashboard</a></li>
 											</ul>
 										</li>
 										<li class="submenu">
-											<a href="employee-dashboard.html#">
+											<a href="dashboard.employee.html#">
 												<i class="ti ti-user-star"></i><span>Super Admin</span>
 												<span class="menu-arrow"></span>
 											</a>
@@ -195,7 +198,7 @@
 											</ul>
 										</li>
 										<li class="submenu">
-											<a href="employee-dashboard.html#">
+											<a href="dashboard.employee.html#">
 												<i class="ti ti-layout-grid-add"></i><span>Applications</span>
 												<span class="menu-arrow"></span>
 											</a>
@@ -222,7 +225,7 @@
 											</ul>
 										</li>
 										<li class="submenu">
-											<a href="employee-dashboard.html#">
+											<a href="dashboard.employee.html#">
 												<i class="ti ti-layout-board-split"></i><span>Layouts</span>
 												<span class="menu-arrow"></span>
 											</a>
@@ -300,7 +303,7 @@
 											</ul>
 										</li>
 										<li class="submenu">
-											<a href="employee-dashboard.html#">
+											<a href="dashboard.employee.html#">
 												<i class="ti ti-user-star"></i><span>Projects</span>
 												<span class="menu-arrow"></span>
 											</a>
@@ -402,7 +405,7 @@
 											</ul>
 										</li>
 										<li class="submenu">
-											<a href="employee-dashboard.html#">
+											<a href="dashboard.employee.html#">
 												<i class="ti ti-user-star"></i><span>Administration</span>
 												<span class="menu-arrow"></span>
 											</a>
@@ -561,7 +564,7 @@
 											</ul>
 										</li>
 										<li class="submenu">
-											<a href="employee-dashboard.html#">
+											<a href="dashboard.employee.html#">
 												<i class="ti ti-page-break"></i><span>Pages</span>
 												<span class="menu-arrow"></span>
 											</a>
@@ -579,7 +582,7 @@
 												<li><a href="privacy-policy.html"><span>Privacy Policy</span></a></li>
 												<li><a href="terms-condition.html"><span>Terms & Conditions</span></a></li>
 												<li class="submenu">
-													<a href="employee-dashboard.html#"><span>Content</span> <span class="menu-arrow"></span></a>
+													<a href="dashboard.employee.html#"><span>Content</span> <span class="menu-arrow"></span></a>
 													<ul>
 														<li><a href="pages.html">Pages</a></li>
 														<li class="submenu">
@@ -604,7 +607,7 @@
 													</ul>
 												</li>
 												<li class="submenu">
-													<a href="employee-dashboard.html#">
+													<a href="dashboard.employee.html#">
 														<span>Authentication</span>
 														<span class="menu-arrow"></span>
 													</a>
@@ -662,7 +665,7 @@
 													</ul>
 												</li>
 												<li class="submenu">
-													<a href="employee-dashboard.html#">
+													<a href="dashboard.employee.html#">
 														<span>UI Interface</span>
 														<span class="menu-arrow"></span>
 													</a>
@@ -971,8 +974,8 @@
 														</li>
 													</ul>
 												</li>
-												<li><a href="employee-dashboard.html#">Documentation</a></li>
-												<li><a href="employee-dashboard.html#">Change Log</a></li>
+												<li><a href="dashboard.employee.html#">Documentation</a></li>
+												<li><a href="dashboard.employee.html#">Change Log</a></li>
 												<li class="submenu">
 													<a href="javascript:void(0);"><span>Multi Level</span><span class="menu-arrow"></span></a>
 													<ul>
@@ -1003,7 +1006,7 @@
 
 						<div class="flex items-center">
 							<div class="me-1">
-								<a href="employee-dashboard.html#" class="btn btn-menubar size-[30px] flex items-center justify-center text-gray-500 rounded-[5px] hover:text-gray-900 hover:bg-dark-transparent btnFullscreen">
+								<a href="dashboard.employee.html#" class="btn btn-menubar size-[30px] flex items-center justify-center text-gray-500 rounded-[5px] hover:text-gray-900 hover:bg-dark-transparent btnFullscreen">
 									<i class="ti ti-maximize"></i>
 								</a>
 							</div>
@@ -1057,7 +1060,7 @@
 									<div class="flex items-center justify-between border-b border-borderColor p-0 pb-4 mb-4">
 										<h4 class="notification-title">Notifications (2)</h4>
 										<div class="flex items-center">
-											<a href="employee-dashboard.html#" class="text-primary text-nowrap text-[15px] me-3 lh-1">Mark all as read</a>
+											<a href="dashboard.employee.html#" class="text-primary text-nowrap text-[15px] me-3 lh-1">Mark all as read</a>
 											<button id="doubleDropdownButton" data-dropdown-toggle="doubleDropdown" data-dropdown-placement="right-start" type="button" class="flex items-center w-full text-gray-900 hover:text-primary"><i class="ti ti-calendar-due me-1"></i>Today</button>
 											<div id="doubleDropdown" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44">
 												<ul class="p-2 text-sm text-gray-900" aria-labelledby="doubleDropdownButton">
@@ -1131,7 +1134,7 @@
 										</div>
 									</div>
 									<div class="flex p-0 gap-2">
-										<a href="employee-dashboard.html#" class="btn bg-light border border-light text-gray-900 text-center hover:bg-light-900 hover:text-gray-900 w-full">Cancel</a>
+										<a href="dashboard.employee.html#" class="btn bg-light border border-light text-gray-900 text-center hover:bg-light-900 hover:text-gray-900 w-full">Cancel</a>
 										<a href="activity.html" class="btn bg-primary border border-primary text-white text-center hover:bg-primary-900 hover:text-white w-full">View All</a>
 									</div>
 								</div>
@@ -1213,13 +1216,13 @@
 		<div class="sidebar fixed top-0 left-0 bottom-0 w-sidebar bg-white border-r border-borderColor" id="sidebar">
 			<!-- Logo -->
 			<div class="sidebar-logo fixed h-[50px] w-sidebar pt-3 px-3">
-				<a href="index.html" class="logo logo-normal">
+				<a href="dashboard.admin.html" class="logo logo-normal">
 					<img src="assets/img/logo.svg" alt="Logo">
 				</a>
-				<a href="index.html" class="logo-small hidden">
+				<a href="dashboard.admin.html" class="logo-small hidden">
 					<img src="assets/img/logo-small.svg" alt="Logo">
 				</a>
-				<a href="index.html" class="dark-logo hidden">
+				<a href="dashboard.admin.html" class="dark-logo hidden">
 					<img src="assets/img/logo-white.svg" alt="Logo">
 				</a>
 			</div>
@@ -1235,7 +1238,7 @@
 				</div>
 				<div class="sidebar-nav mb-3">
 					<ul class="nav nav-tabs nav-tabs-solid nav-tabs-rounded nav-justified bg-light p-3 rounded-[65px] flex justify-center items-center gap-3" role="tablist">
-						<li class="nav-item py-2 px-3 bg-primary rounded-[65px]"><a class="nav-link active border-0 text-white" href="employee-dashboard.html#">Menu</a></li>
+						<li class="nav-item py-2 px-3 bg-primary rounded-[65px]"><a class="nav-link active border-0 text-white" href="dashboard.employee.html#">Menu</a></li>
 						<li class="nav-item py-2 px-3 rounded-[65px]"><a class="nav-link border-0 text-gray-700" href="chat.html">Chats</a></li>
 						<li class="nav-item py-2 px-3 rounded-[65px]"><a class="nav-link border-0 text-gray-700" href="email.html">Inbox</a></li>
 					</ul>
@@ -1298,10 +1301,10 @@
 										<span class="menu-arrow absolute top-1/2 -translate-y-1/2 right-2.5 flex items-center w-4 h-4 transition-all duration-200 ease-in-out before:absolute before:top-[5px] before:left-[5px] before:w-1.5 before:h-1.5 before:border-r-2 before:border-b-2 before:border-gray-900 before:rotate-45"></span>
 									</a>
 									<ul class="relative mt-2 before:absolute before:top-0 before:left-3.5 before:w-[1.5px] before:h-full before:bg-gray-100">
-										<li><a href="index.html" class="relative flex items-center w-full text-xs leading-normal p-2 ps-8 text-gray-500 hover:text-primary before:absolute before:left-[13px] before:top-1/2 before:-translate-y-1/2 before:w-0.5 before:h-[18px] before:bg-primary before:opacity-0">Admin Dashboard</a></li>
-										<li><a href="employee-dashboard.html" class="active relative flex items-center w-full text-xs leading-normal p-2 ps-8 text-gray-500 hover:text-primary before:absolute before:left-[13px] before:top-1/2 before:-translate-y-1/2 before:w-0.5 before:h-[18px] before:bg-primary before:opacity-0">Employee Dashboard</a></li>
+										<li><a href="dashboard.admin.html" class="relative flex items-center w-full text-xs leading-normal p-2 ps-8 text-gray-500 hover:text-primary before:absolute before:left-[13px] before:top-1/2 before:-translate-y-1/2 before:w-0.5 before:h-[18px] before:bg-primary before:opacity-0">Admin Dashboard</a></li>
+										<li><a href="dashboard.employee.html" class="active relative flex items-center w-full text-xs leading-normal p-2 ps-8 text-gray-500 hover:text-primary before:absolute before:left-[13px] before:top-1/2 before:-translate-y-1/2 before:w-0.5 before:h-[18px] before:bg-primary before:opacity-0">Employee Dashboard</a></li>
 										<li><a href="deals-dashboard.html" class="relative flex items-center w-full text-xs leading-normal p-2 ps-8 text-gray-500 hover:text-primary before:absolute before:left-[13px] before:top-1/2 before:-translate-y-1/2 before:w-0.5 before:h-[18px] before:bg-primary before:opacity-0">Deals Dashboard</a></li>
-										<li><a href="leads-dashboard.html" class="relative flex items-center w-full text-xs leading-normal p-2 ps-8 text-gray-500 hover:text-primary before:absolute before:left-[13px] before:top-1/2 before:-translate-y-1/2 before:w-0.5 before:h-[18px] before:bg-primary before:opacity-0">Leads Dashboard</a></li>
+										<li><a href="dashboard.manager.html" class="relative flex items-center w-full text-xs leading-normal p-2 ps-8 text-gray-500 hover:text-primary before:absolute before:left-[13px] before:top-1/2 before:-translate-y-1/2 before:w-0.5 before:h-[18px] before:bg-primary before:opacity-0">Manager Dashboard</a></li>
 									</ul>
 								</li>
 								<li class="submenu mb-[5px]">
@@ -2316,19 +2319,19 @@
 							<span>Main</span>
 						</li>
 						<li class="submenu">
-							<a href="employee-dashboard.html#"   class="subdrop">
+							<a href="dashboard.employee.html#"   class="subdrop">
 								<i class="ti ti-smart-home"></i><span>Dashboard</span>
 								<span class="menu-arrow"></span>
 							</a>
 							<ul>
-								<li><a href="index.html">Admin Dashboard</a></li>
-								<li><a href="employee-dashboard.html" class="active">Employee Dashboard</a></li>
+								<li><a href="dashboard.admin.html">Admin Dashboard</a></li>
+								<li><a href="dashboard.employee.html" class="active">Employee Dashboard</a></li>
 								<li><a href="deals-dashboard.html">Deals Dashboard</a></li>
-								<li><a href="leads-dashboard.html">Leads Dashboard</a></li>
+								<li><a href="dashboard.manager.html">Manager Dashboard</a></li>
 							</ul>
 						</li>
 						<li class="submenu">
-							<a href="employee-dashboard.html#">
+							<a href="dashboard.employee.html#">
 								<i class="ti ti-user-star"></i><span>Super Admin</span>
 								<span class="menu-arrow"></span>
 							</a>
@@ -2342,7 +2345,7 @@
 							</ul>
 						</li>
 						<li class="submenu">
-							<a href="employee-dashboard.html#">
+							<a href="dashboard.employee.html#">
 								<i class="ti ti-layout-grid-add"></i><span>Applications</span>
 								<span class="menu-arrow"></span>
 							</a>
@@ -2368,7 +2371,7 @@
 							</ul>
 						</li>
 						<li class="submenu">
-							<a href="employee-dashboard.html#">
+							<a href="dashboard.employee.html#">
 								<i class="ti ti-layout-board-split"></i><span>Layouts</span>
 								<span class="menu-arrow"></span>
 							</a>
@@ -2446,7 +2449,7 @@
 							</ul>
 						</li>
 						<li class="submenu">
-							<a href="employee-dashboard.html#">
+							<a href="dashboard.employee.html#">
 								<i class="ti ti-user-star"></i><span>Projects</span>
 								<span class="menu-arrow"></span>
 							</a>
@@ -2548,7 +2551,7 @@
 							</ul>
 						</li>
 						<li class="submenu">
-							<a href="employee-dashboard.html#">
+							<a href="dashboard.employee.html#">
 								<i class="ti ti-user-star"></i><span>Administration</span>
 								<span class="menu-arrow"></span>
 							</a>
@@ -2707,7 +2710,7 @@
 							</ul>
 						</li>
 						<li class="submenu">
-							<a href="employee-dashboard.html#">
+							<a href="dashboard.employee.html#">
 								<i class="ti ti-page-break"></i><span>Pages</span>
 								<span class="menu-arrow"></span>
 							</a>
@@ -2725,7 +2728,7 @@
 								<li><a href="privacy-policy.html"><span>Privacy Policy</span></a></li>
 								<li><a href="terms-condition.html"><span>Terms & Conditions</span></a></li>
 								<li class="submenu">
-									<a href="employee-dashboard.html#"><span>Content</span> <span class="menu-arrow"></span></a>
+									<a href="dashboard.employee.html#"><span>Content</span> <span class="menu-arrow"></span></a>
 									<ul>
 										<li><a href="pages.html">Pages</a></li>
 										<li class="submenu">
@@ -2750,7 +2753,7 @@
 									</ul>
 								</li>
 								<li class="submenu">
-									<a href="employee-dashboard.html#">
+									<a href="dashboard.employee.html#">
 										<span>Authentication</span>
 										<span class="menu-arrow"></span>
 									</a>
@@ -2808,7 +2811,7 @@
 									</ul>
 								</li>
 								<li class="submenu">
-									<a href="employee-dashboard.html#">
+									<a href="dashboard.employee.html#">
 										<span>UI Interface</span>
 										<span class="menu-arrow"></span>
 									</a>
@@ -3114,8 +3117,8 @@
 										</li>
 									</ul>
 								</li>
-								<li><a href="employee-dashboard.html#">Documentation</a></li>
-								<li><a href="employee-dashboard.html#">Change Log</a></li>
+								<li><a href="dashboard.employee.html#">Documentation</a></li>
+								<li><a href="dashboard.employee.html#">Change Log</a></li>
 								<li class="submenu">
 									<a href="javascript:void(0);"><span>Multi Level</span><span class="menu-arrow"></span></a>
 									<ul>
@@ -3140,10 +3143,10 @@
 						</li>
 					</ul>
 					<div class="xl:flex items-center d-none">
-						<a href="employee-dashboard.html#" class="me-3 flex items-center justify-center avatar-sm">
+						<a href="dashboard.employee.html#" class="me-3 flex items-center justify-center avatar-sm">
 							<img src="assets/img/profiles/avatar-07.jpg" alt="profile" class="rounded-full">
 						</a>
-						<a href="employee-dashboard.html#" class="btn btn-icon btn-sm rounded-full mode-toggle">
+						<a href="dashboard.employee.html#" class="btn btn-icon btn-sm rounded-full mode-toggle">
 							<i class="ti ti-sun"></i>
 						</a>
 					</div>
@@ -3156,51 +3159,51 @@
 		<div class="two-col-sidebar" id="two-col-sidebar">
 			<div class="sidebar sidebar-twocol">
 				<div class="twocol-mini">
-					<a href="index.html" class="logo-small">
+					<a href="dashboard.admin.html" class="logo-small">
 						<img src="assets/img/logo-small.svg" alt="Logo">
 					</a>
 					<div class="sidebar-left slimscroll">
 						<div class="nav flex flex-col items-center nav-pills" id="sidebar-tabs" data-tabs-toggle="#two-col-tabs" data-tabs-active-classes="bg-light text-default"  role="tablist" >
-							<a href="employee-dashboard.html#" class="nav-link" title="Dashboard" role="tab" data-tabs-target="#dashboard" aria-selected="true">
+							<a href="dashboard.employee.html#" class="nav-link" title="Dashboard" role="tab" data-tabs-target="#dashboard" aria-selected="true">
 								<i class="ti ti-smart-home"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Apps" role="tab" data-tabs-target="#application" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Apps" role="tab" data-tabs-target="#application" aria-selected="false">
 								<i class="ti ti-layout-grid-add"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Super Admin" role="tab" data-tabs-target="#super-admin" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Super Admin" role="tab" data-tabs-target="#super-admin" aria-selected="false">
 								<i class="ti ti-user-star"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Layout" role="tab" data-tabs-target="#layout" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Layout" role="tab" data-tabs-target="#layout" aria-selected="false">
 								<i class="ti ti-layout-board-split"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Projects" role="tab" data-tabs-target="#projects" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Projects" role="tab" data-tabs-target="#projects" aria-selected="false">
 								<i class="ti ti-users-group"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Crm" role="tab" data-tabs-target="#crm" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Crm" role="tab" data-tabs-target="#crm" aria-selected="false">
 								<i class="ti ti-user-shield"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Hrm" role="tab" data-tabs-target="#hrm" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Hrm" role="tab" data-tabs-target="#hrm" aria-selected="false">
 								<i class="ti ti-user"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Finance" role="tab" data-tabs-target="#finance" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Finance" role="tab" data-tabs-target="#finance" aria-selected="false">
 								<i class="ti ti-shopping-cart-dollar"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Administration" role="tab" data-tabs-target="#administration" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Administration" role="tab" data-tabs-target="#administration" aria-selected="false">
 								<i class="ti ti-cash"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Content" role="tab" data-tabs-target="#content" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Content" role="tab" data-tabs-target="#content" aria-selected="false">
 								<i class="ti ti-license"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Pages" role="tab" data-tabs-target="#pages" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Pages" role="tab" data-tabs-target="#pages" aria-selected="false">
 								<i class="ti ti-page-break"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Authentication" role="tab" data-tabs-target="#authentication" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Authentication" role="tab" data-tabs-target="#authentication" aria-selected="false">
 								<i class="ti ti-lock-check"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link " title="UI Elements" role="tab" data-tabs-target="#ui-elements" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link " title="UI Elements" role="tab" data-tabs-target="#ui-elements" aria-selected="false">
 								<i class="ti ti-ux-circle"></i>
 							</a>
-							<a href="employee-dashboard.html#" class="nav-link" title="Extras" role="tab" data-tabs-target="#extras" aria-selected="false">
+							<a href="dashboard.employee.html#" class="nav-link" title="Extras" role="tab" data-tabs-target="#extras" aria-selected="false">
 								<i class="ti ti-vector-triangle"></i>
 							</a>
 						</div>
@@ -3208,10 +3211,10 @@
 				</div>
 				<div class="sidebar-right">
 					<div class="sidebar-logo mb-4">
-						<a href="index.html" class="logo logo-normal">
+						<a href="dashboard.admin.html" class="logo logo-normal">
 							<img src="assets/img/logo.svg" alt="Logo">
 						</a>
-						<a href="index.html" class="dark-logo">
+						<a href="dashboard.admin.html" class="dark-logo">
 							<img src="assets/img/logo-white.svg" alt="Logo">
 						</a>
 					</div>
@@ -3228,10 +3231,10 @@
 							<div class="hidden" id="dashboard">
 								<ul>
 									<li class="menu-title"><span>MAIN MENU</span></li>
-									<li><a href="index.html">Admin Dashboard</a></li>
-									<li><a href="employee-dashboard.html" class="active">Employee Dashboard</a></li>
+									<li><a href="dashboard.admin.html">Admin Dashboard</a></li>
+									<li><a href="dashboard.employee.html" class="active">Employee Dashboard</a></li>
 									<li><a href="deals-dashboard.html">Deals Dashboard</a></li>
-									<li><a href="leads-dashboard.html">Leads Dashboard</a></li>
+									<li><a href="dashboard.manager.html">Manager Dashboard</a></li>
 								</ul>
 							</div>
 							<div class="hidden" id="application">
@@ -3804,8 +3807,8 @@
 							<div class="hidden" id="extras">
 								<ul>
 									<li class="menu-title"><span>EXTRAS</span></li>
-									<li><a href="employee-dashboard.html#">Documentation</a></li>
-									<li><a href="employee-dashboard.html#">Change Log</a></li>
+									<li><a href="dashboard.employee.html#">Documentation</a></li>
+									<li><a href="dashboard.employee.html#">Change Log</a></li>
 									<li class="submenu">
 										<a href="javascript:void(0);"><span>Multi Level</span><span class="menu-arrow"></span></a>
 										<ul>
@@ -3839,19 +3842,19 @@
 		<div class="stacked-sidebar" id="stacked-sidebar">
 			<div class="sidebar sidebar-stacked flex">
 				<div class="stacked-mini">
-					<a href="index.html" class="logo-small flex items-center justify-center mb-5">
+					<a href="dashboard.admin.html" class="logo-small flex items-center justify-center mb-5">
 						<img src="assets/img/logo-small.svg" alt="Logo">
 					</a>
 					<div class="sidebar-left slimscroll">
 						<div class="flex items-center flex-col">
 							<div class="mb-1 notification-item">
-								<a href="employee-dashboard.html#" class="btn border btn-menubar size-[30px] flex items-center justify-center text-gray-500 rounded-[5px] hover:text-gray-900 hover:bg-dark-transparent relative">
+								<a href="dashboard.employee.html#" class="btn border btn-menubar size-[30px] flex items-center justify-center text-gray-500 rounded-[5px] hover:text-gray-900 hover:bg-dark-transparent relative">
 									<i class="ti ti-bell"></i>
 									<span class="notification-status-dot"></span>
 								</a>
 							</div>
 							<div class="mb-1">
-								<a href="employee-dashboard.html#" class="btn border after:btn-menubar size-[30px] flex items-center justify-center text-gray-500 rounded-[5px] hover:text-gray-900 hover:bg-dark-transparent btnFullscreen">
+								<a href="dashboard.employee.html#" class="btn border after:btn-menubar size-[30px] flex items-center justify-center text-gray-500 rounded-[5px] hover:text-gray-900 hover:bg-dark-transparent btnFullscreen">
 									<i class="ti ti-maximize"></i>
 								</a>
 							</div>
@@ -3888,79 +3891,79 @@
 							<div class="nav flex-column items-center nav-pills" role="tablist" id="default-stack-styled-tab" data-tabs-toggle="#menu-stacked-bar" data-tabs-active-classes="bg-light text-default">
 								<div class="grid grid-cols-12 gap-2">
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-dashboard" class="nav-link" title="Dashboard" role="tab" data-tabs-target="#menu-dashboard" aria-selected="true">
+										<a href="dashboard.employee.html#menu-dashboard" class="nav-link" title="Dashboard" role="tab" data-tabs-target="#menu-dashboard" aria-selected="true">
 											<span><i class="ti ti-smart-home"></i></span>
 											<p>Dashboard</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-application" class="nav-link" title="Apps" role="tab" data-tabs-target="#menu-application" aria-selected="false">
+										<a href="dashboard.employee.html#menu-application" class="nav-link" title="Apps" role="tab" data-tabs-target="#menu-application" aria-selected="false">
 											<span><i class="ti ti-layout-grid-add"></i></span>
 											<p>Applications</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-superadmin" class="nav-link" title="Apps" role="tab" data-tabs-target="#menu-superadmin" aria-selected="false">
+										<a href="dashboard.employee.html#menu-superadmin" class="nav-link" title="Apps" role="tab" data-tabs-target="#menu-superadmin" aria-selected="false">
 											<span><i class="ti ti-user-star"></i></span>
 											<p>Super Admin</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-layout" class="nav-link" title="Layout" role="tab" data-tabs-target="#menu-layout" aria-selected="false">
+										<a href="dashboard.employee.html#menu-layout" class="nav-link" title="Layout" role="tab" data-tabs-target="#menu-layout" aria-selected="false">
 											<span><i class="ti ti-layout-board-split"></i></span>
 											<p>Layouts</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-project" class="nav-link" title="Projects" role="tab" data-tabs-target="#menu-project" aria-selected="false">
+										<a href="dashboard.employee.html#menu-project" class="nav-link" title="Projects" role="tab" data-tabs-target="#menu-project" aria-selected="false">
 											<span><i class="ti ti-folder"></i></span>
 											<p>Projects</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-crm" class="nav-link" title="CRM" role="tab" data-tabs-target="#menu-crm" aria-selected="false">
+										<a href="dashboard.employee.html#menu-crm" class="nav-link" title="CRM" role="tab" data-tabs-target="#menu-crm" aria-selected="false">
 											<span><i class="ti ti-user-shield"></i></span>
 											<p>Crm</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-hrm" class="nav-link" title="HRM" role="tab" data-tabs-target="#menu-hrm" aria-selected="false">
+										<a href="dashboard.employee.html#menu-hrm" class="nav-link" title="HRM" role="tab" data-tabs-target="#menu-hrm" aria-selected="false">
 											<span><i class="ti ti-users"></i></span>
 											<p>Hrm</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-finance" class="nav-link" title="Finance & Accounts" role="tab" data-tabs-target="#menu-finance" aria-selected="false">
+										<a href="dashboard.employee.html#menu-finance" class="nav-link" title="Finance & Accounts" role="tab" data-tabs-target="#menu-finance" aria-selected="false">
 											<span><i class="ti ti-shopping-cart-dollar"></i></span>
 											<p>Finance & Accounts</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-administration" class="nav-link" title="Administration" role="tab" data-tabs-target="#menu-administration" aria-selected="false">
+										<a href="dashboard.employee.html#menu-administration" class="nav-link" title="Administration" role="tab" data-tabs-target="#menu-administration" aria-selected="false">
 											<span><i class="ti ti-cash"></i></span>
 											<p>Administration</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-content" class="nav-link" title="Content" role="tab" data-tabs-target="#menu-content" aria-selected="false">
+										<a href="dashboard.employee.html#menu-content" class="nav-link" title="Content" role="tab" data-tabs-target="#menu-content" aria-selected="false">
 											<span><i class="ti ti-license"></i></span>
 											<p>Contents</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-pages" class="nav-link" title="Pages" role="tab" data-tabs-target="#menu-pages" aria-selected="false">
+										<a href="dashboard.employee.html#menu-pages" class="nav-link" title="Pages" role="tab" data-tabs-target="#menu-pages" aria-selected="false">
 											<span><i class="ti ti-page-break"></i></span>
 											<p>Pages</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-authentication" class="nav-link" title="Authentication" role="tab" data-tabs-target="#menu-authentication" aria-selected="false">
+										<a href="dashboard.employee.html#menu-authentication" class="nav-link" title="Authentication" role="tab" data-tabs-target="#menu-authentication" aria-selected="false">
 											<span><i class="ti ti-lock-check"></i></span>
 											<p>Authentication</p>
 										</a>
 									</div>
 									<div class="col-span-6">
-										<a href="employee-dashboard.html#menu-ui-elements" class="nav-link" title="UI Elements" role="tab" data-tabs-target="#menu-ui-elements" aria-selected="false">
+										<a href="dashboard.employee.html#menu-ui-elements" class="nav-link" title="UI Elements" role="tab" data-tabs-target="#menu-ui-elements" aria-selected="false">
 											<span><i class="ti ti-ux-circle"></i></span>
 											<p>Basic UI</p>
 										</a>
@@ -3970,10 +3973,10 @@
 							<div class="tab-content" id="menu-stacked-bar">
 								<div class="hidden" id="menu-dashboard">
 									<ul class="stack-submenu">
-										<li><a href="index.html">Admin Dashboard</a></li>
-										<li><a href="employee-dashboard.html" class="active">Employee Dashboard</a></li>
+										<li><a href="dashboard.admin.html">Admin Dashboard</a></li>
+										<li><a href="dashboard.employee.html" class="active">Employee Dashboard</a></li>
 										<li><a href="deals-dashboard.html">Deals Dashboard</a></li>
-										<li><a href="leads-dashboard.html">Leads Dashboard</a></li>
+										<li><a href="dashboard.manager.html">Manager Dashboard</a></li>
 									</ul>
 								</div>
 								<div class="hidden" id="menu-superadmin">
@@ -4534,7 +4537,7 @@
 						<nav class="flex" aria-label="Breadcrumb">
 							<ol class="inline-flex items-center space-x-1 md:space-x-2">
 								<li class="inline-flex items-center">
-									<a href="index.html" class="inline-flex items-center text-xs text-gray-500 hover:text-primary">
+									<a href="dashboard.admin.html" class="inline-flex items-center text-xs text-gray-500 hover:text-primary">
 										<i class="ti ti-smart-home"></i>
 									</a>
 								</li>
@@ -4605,11 +4608,11 @@
 										<div class="flex items-center">
 										<p id="emp-position" class="text-white text-sm leading-normal mb-0">Senior Product Designer</p>
 										<span class="mx-1"><i class="ti ti-point-filled text-primary"></i></span>
-										<p id="emp-department" class="text-sm leading-normal">UI/UX Design</p>
+										<p id="emp-departmnt" class="text-sm leading-normal">UI/UX Design</p>
 									</div>
 									</div>
 								</div>
-								<a href="employee-dashboard.html#" class="size-7 inline-flex items-center justify-center bg-gray-700 text-white rounded-full absolute top-2.5 end-2.5 hover:bg-dark-transparent hover:text-dark"><i class="ti ti-edit"></i></a>
+								<a href="dashboard.employee.html#" class="size-7 inline-flex items-center justify-center bg-gray-700 text-white rounded-full absolute top-2.5 end-2.5 hover:bg-dark-transparent hover:text-dark"><i class="ti ti-edit"></i></a>
 							</div>
 							<div class="card-body p-5">
 								<div class="mb-4">
@@ -4631,7 +4634,7 @@
 							</div>
 						</div>
 					</div>
-					<div class="xl:col-span-5 flex">
+					<div class="xl:col-span-4 flex">
 						<div class="card border border-borderColor rounded-[5px] shadow-xs bg-white flex-1">
 							<div class="card-header py-4 px-5 flex items-center justify-between flex-wrap border-b border-borderColor">
 								<h5>Leave Details</h5>
@@ -4703,74 +4706,42 @@
 							</div>
 						</div>
 					</div>
-					<div class="xl:col-span-3 flex">
+				<!-- Leaves -->
+				 <div id="leave" class="xl:col-span-4 flex">
 						<div class="card border border-borderColor rounded-[5px] shadow-xs bg-white flex-1">
 							<div class="card-header py-4 px-5 flex items-center justify-between flex-wrap border-b border-borderColor gap-2">
-								<h5>Leave Details</h5>
-								<div>
-									<a href="javascript:void(0);" class="border rounded py-1 px-2 text-xs font-medium bg-white inline-flex items-center focus:bg-primary focus:border-primary focus:text-white text-gray-900"  data-dropdown-toggle="week-dropdown1">
-										<i class="ti ti-calendar me-1"></i>2024
-									</a>
-									<ul id="week-dropdown1" class="hidden p-4 border rounded bg-white shadow-lg w-40 z-[1]">
-										<li>
-											<a href="javascript:void(0);" class="rounded p-2 flex items-center hover:bg-primary-transparent hover:text-primary text-gray-900">2024</a>
-										</li>
-										<li>
-											<a href="javascript:void(0);" class="rounded p-2 flex items-center hover:bg-primary-transparent hover:text-primary text-gray-900">2023</a>
-										</li>
-										<li>
-											<a href="javascript:void(0);" class="rounded p-2 flex items-center hover:bg-primary-transparent hover:text-primary text-gray-900">2022</a>
-										</li>
-									</ul>
+								<h5 class="mb-2">Leaves</h5>
+								<div class="flex items-center">	
+									<button type="button" class="btn btn-primary font-medium me-2 mt-2" data-modal-toggle="add_leaves" data-modal-target="add_leaves">Apply Leave</button>	
 								</div>
 							</div>
-							<div class="card-body p-5">
-								<div class="grid grid-cols-1 sm:grid-cols-12 gap-x-4">
-									<div class="sm:col-span-6">
-										<div class="mb-6">
-											<span class="block mb-1">Total Leaves</span>
-											<h4>16</h4>
-										</div>
-									</div>
-									<div class="sm:col-span-6">
-										<div class="mb-6">
-											<span class="block mb-1">Taken</span>
-											<h4>10</h4>
-										</div>
-									</div>
-									<div class="sm:col-span-6">
-										<div class="mb-6">
-											<span class="block mb-1">Absent</span>
-											<h4>2</h4>
-										</div>
-									</div>
-									<div class="sm:col-span-6">
-										<div class="mb-6">
-											<span class="block mb-1">Request</span>
-											<h4>0</h4>
-										</div>
-									</div>
-									<div class="sm:col-span-6">
-										<div class="mb-6">
-											<span class="block mb-1">Worked Days</span>
-											<h4>240</h4>
-										</div>
-									</div>
-									<div class="sm:col-span-6">
-										<div class="mb-6">
-											<span class="block mb-1">Loss of Pay</span>
-											<h4>2</h4>
-										</div>
-									</div>
-									<div class="sm:col-span-12">
-										<div>
-											<a href="employee-dashboard.html#" class="flex items-center justify-center bg-dark text-sm font-medium py-2 rounded text-white px-3" data-modal-toggle="add_leaves" data-modal-target="add_leaves">Apply New Leave</a>
-										</div>
-									</div>
+							<div class="card-body p-0">
+								<div class="overflow-x-auto table-responsive">	
+									<table class="table w-full text-default bg-white mb-0">
+										<thead class="bg-light-900 text-gray-900 text-left">
+											<tr>
+												<th class="font-semibold py-2 px-5">Type</th>
+												<th class="font-semibold py-2 px-5">Dates</th>
+												<th class="font-semibold py-2 px-5">Status</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr class="border-b border-borderColor">
+												<td class="py-2 px-5 text-nowrap"><h6 class="font-medium"><a href="project-details.html">Vacation</a></h6></td>
+												<td class="py-2 px-5 text-nowrap">12/09/2024</td>
+												<td class="py-2 px-5 text-nowrap">
+													<span class="bg-danger text-white inline-flex items-center text-[10px] font-medium px-[5px] leading-4 rounded">
+														<i class="ti ti-point-filled me-1"></i>PENDING
+													</span>
+												</td>
+											</tr>
+										</tbody>
+									</table>
 								</div>
 							</div>
 						</div>
 					</div>
+				<!-- /Leaves -->
 				</div>
 				<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 pb-5">
 					<div class="col-span-4 flex">
@@ -4958,6 +4929,7 @@
 						</div>
 					</div>
 				</div>
+				 
 				<div class="grid grid-cols-1 xl:grid-cols-12 gap-x-6 gap-y-4 pb-5">
 					<div class="xl:col-span-6 flex">
 						<div class="card border border-borderColor rounded-[5px] shadow-xs bg-white flex-1">
@@ -5491,7 +5463,7 @@
 											<h6 class="text-white font-medium mb-1">Andrew Jermia</h6>
 											<p>IOS Developer</p>
 										</div>
-										<a href="employee-dashboard.html#" class="btn btn-sm btn-primary">Send Wishes</a>
+										<a href="dashboard.employee.html#" class="btn btn-sm btn-primary">Send Wishes</a>
 									</div>
 								</div>
 							</div>
@@ -5501,7 +5473,7 @@
 										<h5 class="text-white mb-1">Leave Policy</h5>
 										<p class="text-white">Last Updated : Today</p>
 									</div>
-									<a href="employee-dashboard.html#" class="btn bg-white btn-sm px-3">View All</a>
+									<a href="dashboard.employee.html#" class="btn bg-white btn-sm px-3">View All</a>
 								</div>
 							</div>
 							<div class="card bg-warning border border-borderColor rounded">
@@ -5523,7 +5495,7 @@
 								<div class="flex items-center justify-between flex-wrap">
 									<h5>Team Members</h5>
 									<div>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-sm">View All</a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-sm">View All</a>
 									</div>
 								</div>
 							</div>
@@ -5534,14 +5506,14 @@
 											<img src="assets/img/users/user-27.jpg" class="rounded-full" alt="img">
 										</a>
 										<div class="ms-2">
-											<h6 class="text-14 font-medium truncate mb-1"><a href="employee-dashboard.html#">Alexander Jermai</a></h6>
+											<h6 class="text-14 font-medium truncate mb-1"><a href="dashboard.employee.html#">Alexander Jermai</a></h6>
 											<p class="text-[13px]">UI/UX Designer</p>
 										</div>
 									</div>
 									<div class="flex items-center">
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
 									</div>
 								</div>
 								<div class="flex items-center justify-between mb-4">
@@ -5550,14 +5522,14 @@
 											<img src="assets/img/users/user-42.jpg" class="rounded-full" alt="img">
 										</a>
 										<div class="ms-2">
-											<h6 class="text-14 font-medium truncate mb-1"><a href="employee-dashboard.html#">Doglas Martini</a></h6>
+											<h6 class="text-14 font-medium truncate mb-1"><a href="dashboard.employee.html#">Doglas Martini</a></h6>
 											<p class="text-[13px]">Product Designer</p>
 										</div>
 									</div>
 									<div class="flex items-center">
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
 									</div>
 								</div>
 								<div class="flex items-center justify-between mb-4">
@@ -5566,14 +5538,14 @@
 											<img src="assets/img/users/user-43.jpg" class="rounded-full" alt="img">
 										</a>
 										<div class="ms-2">
-											<h6 class="text-14 font-medium truncate mb-1"><a href="employee-dashboard.html#">Daniel Esbella</a></h6>
+											<h6 class="text-14 font-medium truncate mb-1"><a href="dashboard.employee.html#">Daniel Esbella</a></h6>
 											<p class="text-[13px]">Project Manager</p>
 										</div>
 									</div>
 									<div class="flex items-center">
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
 									</div>
 								</div>
 								<div class="flex items-center justify-between mb-4">
@@ -5582,14 +5554,14 @@
 											<img src="assets/img/users/user-11.jpg" class="rounded-full" alt="img">
 										</a>
 										<div class="ms-2">
-											<h6 class="text-14 font-medium truncate mb-1"><a href="employee-dashboard.html#">Daniel Esbella</a></h6>
+											<h6 class="text-14 font-medium truncate mb-1"><a href="dashboard.employee.html#">Daniel Esbella</a></h6>
 											<p class="text-[13px]">Team Lead</p>
 										</div>
 									</div>
 									<div class="flex items-center">
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
 									</div>
 								</div>
 								<div class="flex items-center justify-between mb-4">
@@ -5598,14 +5570,14 @@
 											<img src="assets/img/users/user-44.jpg" class="rounded-full" alt="img">
 										</a>
 										<div class="ms-2">
-											<h6 class="text-14 font-medium truncate mb-1"><a href="employee-dashboard.html#">Stephan Peralt</a></h6>
+											<h6 class="text-14 font-medium truncate mb-1"><a href="dashboard.employee.html#">Stephan Peralt</a></h6>
 											<p class="text-[13px]">Team Lead</p>
 										</div>
 									</div>
 									<div class="flex items-center">
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
 									</div>
 								</div>
 								<div class="flex items-center justify-between">
@@ -5614,14 +5586,14 @@
 											<img src="assets/img/users/user-54.jpg" class="rounded-full" alt="img">
 										</a>
 										<div class="ms-2">
-											<h6 class="text-14 font-medium truncate mb-1"><a href="employee-dashboard.html#">Andrew Jermia</a></h6>
+											<h6 class="text-14 font-medium truncate mb-1"><a href="dashboard.employee.html#">Andrew Jermia</a></h6>
 											<p class="text-[13px]">Project  Lead</p>
 										</div>
 									</div>
 									<div class="flex items-center">
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-phone text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm me-2"><i class="ti ti-mail-bolt text-16"></i></a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-icon btn-sm"><i class="ti ti-brand-hipchat text-16"></i></a>
 									</div>
 								</div>
 							</div>
@@ -5633,7 +5605,7 @@
 								<div class="flex items-center justify-between flex-wrap">
 									<h5>Notifications</h5>
 									<div>
-										<a href="employee-dashboard.html#" class="btn btn-light btn-sm">View All</a>
+										<a href="dashboard.employee.html#" class="btn btn-light btn-sm">View All</a>
 									</div>
 								</div>
 							</div>
@@ -5646,8 +5618,8 @@
 										<h6 class="text-14 font-medium truncate mb-1">Lex Murphy requested access to UNIX </h6>
 										<p class="text-[13px] mb-2">Today at 9:42 AM</p>
 										<div class="flex items-center">
-											<a href="employee-dashboard.html#" class="flex items-center justify-center avatar-sm border shrink-0 me-2"><img src="assets/img/social/pdf-icon.svg" class="w-auto h-auto" alt="Img"></a>
-											<h6 class="fw-normal"><a href="employee-dashboard.html#">EY_review.pdf</a></h6>
+											<a href="dashboard.employee.html#" class="flex items-center justify-center avatar-sm border shrink-0 me-2"><img src="assets/img/social/pdf-icon.svg" class="w-auto h-auto" alt="Img"></a>
+											<h6 class="fw-normal"><a href="dashboard.employee.html#">EY_review.pdf</a></h6>
 										</div>
 									</div>
 								</div>
@@ -5668,8 +5640,8 @@
 										<h6 class="text-14 font-medium truncate mb-1">Lex Murphy requested access to UNIX </h6>
 										<p class="text-[13px] mb-2">Today at 10:50 AM</p>
 										<div class="flex items-center">
-											<a href="employee-dashboard.html#" class="btn btn-primary btn-sm me-2">Approve</a>
-											<a href="employee-dashboard.html#" class="btn btn-outline-primary btn-sm">Decline</a>
+											<a href="dashboard.employee.html#" class="btn btn-primary btn-sm me-2">Approve</a>
+											<a href="dashboard.employee.html#" class="btn btn-outline-primary btn-sm">Decline</a>
 										</div>
 									</div>
 								</div>
@@ -5791,29 +5763,13 @@
 							<span class="sr-only">Close modal</span>
 						</button>
 					</div>
-					<form action="employee-dashboard.html">
+					<form id="leave_request_form" action="dashboard.employee.html">
 						<div class="p-4">
 							<div class="grid grid-cols-1 md:grid-cols-12 gap-y-4 gap-x-6">
 								<div class="md:col-span-12">
 									<div class="mb-3">
-										<label class="block mb-1 text-sm leading-normal font-medium text-title">Employee Name</label>
-										<select class="select">
-											<option>Select</option>
-											<option>Anthony Lewis</option>
-											<option>Brian Villalobos</option>
-											<option>Harvey Smith</option>
-										</select>
-									</div>	
-								</div>
-								<div class="md:col-span-12">
-									<div class="mb-3">
 										<label class="block mb-1 text-sm leading-normal font-medium text-title">Leave Type</label>
-										<select class="select">
-											<option>Select</option>
-											<option>Medical Leave</option>
-											<option>Casual Leave</option>
-											<option>Annual Leave</option>
-										</select>
+										<input name="leave_type" type="text" class="bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400">
 									</div>	
 								</div>
                                 <div class="md:col-span-6">
@@ -5823,7 +5779,7 @@
 											<div class="absolute inset-y-0 end-2 flex items-center pointer-events-none">
 												<i class="ti ti-calendar text-gray-600 text-base leading-normal"></i>
 											</div>
-											<input type="text" class="flatpickr-input flat-datepickr bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400" placeholder="dd/mm/yyyy">
+											<input name="start_date" type="text" class="flatpickr-input flat-datepickr bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400" placeholder="dd/mm/yyyy">
 										</div>
                                     </div>
                                 </div>
@@ -5834,26 +5790,14 @@
 											<div class="absolute inset-y-0 end-2 flex items-center pointer-events-none">
 												<i class="ti ti-calendar text-gray-600 text-base leading-normal"></i>
 											</div>
-											<input type="text" class="flatpickr-input flat-datepickr bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400" placeholder="dd/mm/yyyy">
+											<input name="end_date" type="text" class="flatpickr-input flat-datepickr bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400" placeholder="dd/mm/yyyy">
 										</div>
                                     </div>
                                 </div>   
-								<div class="md:col-span-6">
-									<div class="mb-3">
-										<label class="block mb-1 text-sm leading-normal font-medium text-title">No of Days</label>
-										<input type="text" class="bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400">
-									</div>
-								</div>
-								<div class="md:col-span-6">
-									<div class="mb-3">
-										<label class="block mb-1 text-sm leading-normal font-medium text-title">Remaining Days</label>
-										<input type="text" class="bg-white border-borderColor text-gray-900 text-sm rounded-input  block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400">
-									</div>
-								</div>
 								<div class="md:col-span-12">
 									<div class="mb-3">
 										<label class="block mb-1 text-sm leading-normal font-medium text-title">Reason</label>
-										<textarea id="message" rows="3" class="block p-2.5 w-full text-sm text-gray-900 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"></textarea>
+										<textarea name="reason" id="message" rows="3" class="block p-2.5 w-full text-sm text-gray-900 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"></textarea>
 									</div>
 								</div>
 							</div>
@@ -5881,7 +5825,7 @@
 							<span class="sr-only">Close modal</span>
 						</button>
 					</div>
-					<form action="employee-dashboard.html">
+					<form action="dashboard.employee.html">
 						<div class="p-4">
 							<div class="grid grid-cols-1 md:grid-cols-12 gap-y-4 gap-x-6">
 								<div class="md:col-span-12">
@@ -5996,7 +5940,7 @@
 												<h6 class="text-xs font-medium mr-1">Logo.zip</h6>
 												<span class="badge bg-blue-100 text-blue-700 px-2 py-1 text-xs rounded">21MB</span>
 											</div>
-											<a href="employee-dashboard.html#" class="btn btn-sm p-1 text-gray-500 hover:text-red-500">
+											<a href="dashboard.employee.html#" class="btn btn-sm p-1 text-gray-500 hover:text-red-500">
 												<i class="ti ti-trash"></i>
 											</a>
 										</div>
@@ -6005,7 +5949,7 @@
 												<h6 class="text-xs font-medium mr-1">Files.zip</h6>
 												<span class="badge bg-blue-100 text-blue-700 px-2 py-1 text-xs rounded">25MB</span>
 											</div>
-											<a href="employee-dashboard.html#" class="btn btn-sm p-1 text-gray-500 hover:text-red-500">
+											<a href="dashboard.employee.html#" class="btn btn-sm p-1 text-gray-500 hover:text-red-500">
 												<i class="ti ti-trash"></i>
 											</a>
 										</div>
@@ -6037,7 +5981,7 @@
 						<p class="mb-4">You want to delete all the marked items, this cant be undone once you delete.</p>
 						<div class="flex justify-center">
 							<a href="javascript:void(0);" class="btn bg-light border border-light text-gray-900 text-center hover:bg-light-900 hover:text-gray-900 me-4" data-modal-hide="delete_modal">Cancel</a>
-							<a href="employee-dashboard.html" class="btn bg-danger border border-danger text-white text-center hover:bg-danger-900 hover:text-white">Yes, Delete</a>
+							<a href="dashboard.employee.html" class="btn bg-danger border border-danger text-white text-center hover:bg-danger-900 hover:text-white">Yes, Delete</a>
 						</div>
 				  	</div>
 				</div>
@@ -6047,6 +5991,12 @@
 
 	</div>
 	<!-- /Main Wrapper -->
+
+	
+    <script type="module">
+  import { enforceAuthenticatedRoute } from '../dist/assets/js/auth-login.js';
+  enforceAuthenticatedRoute();
+</script>
 
 	<!-- jQuery -->
 	<script data-cfasync="false" src="../../../../cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="assets/js/jquery-3.7.1.min.js"></script>
@@ -6086,6 +6036,9 @@
 
 	<!-- Color Picker JS -->
 	<script src="assets/plugins/@simonwep/pickr/pickr.es5.min.js"></script>
+
+	<!-- Toastify JS -->
+	<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
 	<!-- Custom JS -->
 	<script src="assets/js/todo.js"></script>
