@@ -214,6 +214,30 @@ export async function fetchLeavesByManagerId(managerId: number): Promise<any> {
 
 // Fetch all schedules
 export async function fetchAllSchedules(): Promise<any> {
-  const response = await fetch(`${SCHEDULES_URL}`);
+  const response = await fetch(SCHEDULES_URL);
+  return handleResponse(response);
+}
+
+// create a new schedule
+export async function newShift(createScheduleDto: object): Promise<any> {
+  const response = await fetch(SCHEDULES_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(createScheduleDto),
+  });
+  return handleResponse(response);
+}
+
+// update an existing schedule
+export async function updateShift(shiftId: number, updateScheduleDto: object): Promise<any> {
+  const response = await fetch(`${SCHEDULES_URL}/${shiftId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updateScheduleDto),
+  });
   return handleResponse(response);
 }

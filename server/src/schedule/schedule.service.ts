@@ -260,7 +260,7 @@ export class ScheduleService {
 
   /**
    * ### Feature: Update Shift
-   * Updates shift times or template for a specific shift.
+   * Updates shift times, template, or completion status for a specific shift.
    */
   async updateShift(
     id: number,
@@ -271,6 +271,7 @@ export class ScheduleService {
       title?: string;
       description?: string;
       templateId?: number | null;
+      isCompleted?: boolean;
     },
   ): Promise<any> {
     const shift = await this.findShiftById(id);
@@ -344,7 +345,9 @@ export class ScheduleService {
     if (updateData.description !== undefined) {
       dataToUpdate.description = updateData.description;
     }
-
+    if (updateData.isCompleted !== undefined) {
+      dataToUpdate.isCompleted = updateData.isCompleted;
+    }
 
     return this.prisma.shift.update({
       where: { id },

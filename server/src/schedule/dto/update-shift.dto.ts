@@ -4,6 +4,7 @@ import {
   Matches,
   IsInt,
   IsDateString,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -50,4 +51,13 @@ export class UpdateShiftDto {
   @IsOptional()
   @IsInt()
   templateId?: number | null;
+
+  @ApiProperty({
+    description: 'Mark the shift as completed or incomplete.',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isCompleted?: boolean;
 }

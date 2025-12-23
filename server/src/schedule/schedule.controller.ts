@@ -82,10 +82,10 @@ export class ScheduleController {
 
   /**
    * ### Feature: Update Shift
-   * PUT /schedules/:id
+   * Patch /schedules/:id
    * Updates shift times, date, or template.
    */
-  @Put(':id')
+  @Patch(':id')
   @ApiTags('Schedule')
   @ApiOperation({ summary: 'Update an existing shift' })
   @ApiParam({ name: 'id', description: 'The ID of the shift to update', type: Number })

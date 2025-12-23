@@ -8712,13 +8712,13 @@
                 <span class="sr-only">Close modal</span>
               </button>
             </div>
-            <form action="calendar.html">
+            <form id="add-event-form">
               <div class="p-4">
                 <div class="grid grid-cols-12 gap-6">
                   <div class="col-span-12">
                     <div class="mb-3">
                       <label class="form-label">Title</label>
-                      <input name="env-name" type="text" class="form-control" />
+                      <input id="event-title" name="env-name" type="text" class="form-control" required />
                     </div>
                   </div>
                   <div class="col-span-12">
@@ -8733,10 +8733,12 @@
                           ></i>
                         </div>
                         <input
+						id="event-date"
 						name="env-date"
                           type="text"
                           class="flatpickr-input flat-datepickr bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400 active"
                           readonly="readonly"
+                          required
                         />
                       </div>
                     </div>
@@ -8753,10 +8755,12 @@
                           ></i>
                         </div>
                         <input
+						id="event-start-time"
 						name="env-start-time"
                           type="text"
                           class="flatpickr-input flat-timepickr bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400 active"
                           readonly="readonly"
+                          required
                         />
                       </div>
                     </div>
@@ -8773,10 +8777,12 @@
                           ></i>
                         </div>
                         <input
+						id="event-end-time"
 						name="env-end-time"
                           type="text"
                           class="flatpickr-input flat-timepickr bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px] placeholder:text-gray-400 active"
                           readonly="readonly"
+                          required
                         />
                       </div>
                     </div>
@@ -8784,11 +8790,11 @@
                   <div class="col-span-12">
                     <div class="mb-3">
                       <label class="form-label">Select Employees</label>
-                      <select id="select-emp" class="form-control"></select>
+                      <select id="select-emp" class="form-control" required></select>
                     </div>
                     <div class="mb-0">
                       <label class="form-label">Descriptions</label>
-                      <textarea name="env-desc" class="form-control" rows="3"></textarea>
+                      <textarea id="event-description" name="env-desc" class="form-control" rows="3"></textarea>
                     </div>
                   </div>
                 </div>
@@ -8799,11 +8805,11 @@
                 <button
                   type="button"
                   class="btn btn-light me-2"
-                  data-bs-dismiss="modal"
+                  data-modal-hide="add_event"
                 >
                   Cancel
                 </button>
-                <button type="submit" class="btn btn-primary">Add Event</button>
+                <button type="submit" class="btn btn-primary" id="submit-event-btn">Add Event</button>
               </div>
             </form>
           </div>
@@ -8811,51 +8817,123 @@
       </div>
       <!-- /Add New Event -->
 
-      <!-- Event -->
+      <!-- Event Modal - Right Sidebar Style -->
       <div
-        class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-[1055] justify-center items-center flex-wrap w-full md:inset-0 h-[calc(100%-1rem)] max-h-full transition-all duration-300 ease-in-out modal p-4"
+        class="hidden fixed top-0 right-0 z-[1055] h-screen w-[600px] md:w-[420px] bg-white shadow-lg transition-all duration-1000 ease-in-out overflow-y-auto"
         id="event_modal"
       >
-        <div class="relative p-4 w-full max-w-[500px] max-h-full">
-          <div class="relative bg-white rounded-defaultradius">
-            <div
-              class="flex items-center justify-between p-4 bg-dark rounded-t"
-            >
-              <div class="modal-title text-white">
-                <span id="eventTitle" class="text-lg font-semibold"></span>
+        <!-- Modal Header -->
+        <div class="sticky top-0 bg-gradient-to-r from-primary to-orange-500 text-white p-6 shadow-md flex items-center justify-between">
+          <div class="flex-1">
+            <h3 id="eventTitle" class="text-2xl font-bold mb-1">Event Details</h3>
+            <p class="text-orange-100 text-sm">Shift Information</p>
+          </div>
+          <button
+            type="button"
+            class="text-white hover:bg-white hover:bg-opacity-20 rounded-full text-xl leading-normal size-9 inline-flex justify-center items-center transition"
+            data-modal-hide="event_modal"
+          >
+            <i class="ti ti-x"></i>
+            <span class="sr-only">Close modal</span>
+          </button>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="p-6">
+          <!-- Date Section -->
+          <div class="mb-6 pb-6 border-b border-gray-200">
+            <div class="flex items-start">
+              <div class="flex-shrink-0 mr-5">
+                <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-blue-100">
+                  <i class="ti ti-calendar-check text-blue-600 text-xl"></i>
+                </div>
               </div>
-              <button
-                type="button"
-                class="end-2.5 text-white bg-gray-500 hover:bg-danger hover:text-white rounded-full text-xs leading-normal size-5 ms-auto inline-flex justify-center items-center"
-                data-modal-hide="event_modal"
-              >
-                <i class="ti ti-x"></i>
-                <span class="sr-only">Close modal</span>
-              </button>
+              <div class="ml-4 flex-1">
+                <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Date</p>
+                <p id="eventDate" class="text-lg font-semibold text-gray-900 mt-1">Loading...</p>
+              </div>
             </div>
-            <div class="p-4">
-              <p class="flex items-center font-medium text-black mb-3">
-                <i class="ti ti-calendar-check text-default me-2"></i>26
-                Jul,2024 to 31 Jul,2024
-              </p>
-              <p class="flex items-center font-medium text-black mb-3">
-                <i class="ti ti-calendar-check text-default me-2"></i>11:00 AM
-                to 12:15 PM
-              </p>
-              <p class="flex items-center font-medium text-black mb-3">
-                <i class="ti ti-map-pin-bolt text-default me-2"></i>Las Vegas,
-                US
-              </p>
-              <p class="flex items-center font-medium text-black mb-0">
-                <i class="ti ti-calendar-check text-default me-2"></i>A
-                recurring or repeating event is simply any event that you will
-                occur more than once on your calendar.
-              </p>
+          </div>
+
+          <!-- Time Section -->
+          <div class="mb-6 pb-6 border-b border-gray-200">
+            <div class="flex items-start">
+              <div class="flex-shrink-0 mr-5">
+                <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-purple-100">
+                  <i class="ti ti-clock text-purple-600 text-xl"></i>
+                </div>
+              </div>
+              <div class="ml-4 flex-1">
+                <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Time</p>
+                <p id="eventTime" class="text-lg font-semibold text-gray-900 mt-1">Loading...</p>
+              </div>
             </div>
+          </div>
+
+          <!-- Employee Section -->
+          <div class="mb-6 pb-6 border-b border-gray-200">
+            <div class="flex items-start">
+              <div class="flex-shrink-0 mr-5">
+                <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-green-100">
+                  <i class="ti ti-user text-green-600 text-xl"></i>
+                </div>
+              </div>
+              <div class="ml-4 flex-1">
+                <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">Assigned To</p>
+                <p id="eventEmployee" class="text-lg font-semibold text-gray-900 mt-1">Loading...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description Section -->
+          <div class="mb-6">
+            <div class="flex items-start mr-5">
+              <div class="flex-shrink-0">
+                <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-amber-100">
+                  <i class="ti ti-file-text text-amber-600 text-xl"></i>
+                </div>
+              </div>
+              <div class="ml-4 flex-1">
+                <p class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">Description</p>
+                <p id="eventDesc" class="text-gray-700 leading-relaxed">No description provided</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Completed Task Checkbox Section -->
+          <div class="mb-6 pb-6 border-b border-gray-200">
+            <label class="flex items-center cursor-pointer group">
+              <input 
+                type="checkbox" 
+                id="eventCompleted"
+                class="w-5 h-5 rounded border-gray-300 text-green-600 shadow-sm focus:border-green-500 focus:ring-green-500 cursor-pointer transition"
+              />
+              <span class="ml-3 text-base font-medium text-gray-700 group-hover:text-gray-900 transition">
+                <i class="ti ti-check-circle mr-2 text-green-600"></i>Completed Task
+              </span>
+            </label>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="mt-8 pt-6 border-t border-gray-200 flex items-center gap-2">
+            <button
+              type="button"
+              class="flex-1 bg-gray-200 text-gray-800 font-medium py-3 rounded-lg hover:bg-gray-300 transition"
+              data-modal-hide="event_modal"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              id="editEventBtn"
+              class="flex-1 bg-green-200 text-gray-800 font-medium py-3 rounded-lg hover:bg-gray-300 transition"
+            >
+              <i class="ti ti-edit me-2"></i>Edit
+            </button>
           </div>
         </div>
       </div>
-      <!-- /Event -->
+      <!-- /Event Modal -->
     </div>
     <!-- /Main Wrapper -->
 

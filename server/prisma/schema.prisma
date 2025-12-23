@@ -509,6 +509,9 @@ model Shift {
   // This shift can have change requests
   changeRequests ShiftChangeRequest[] @relation("ShiftChangeRequests")
 
+  // Completion status tracking
+  isCompleted Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

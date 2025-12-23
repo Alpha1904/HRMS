@@ -81,4 +81,6 @@ export declare function fetchLeavesByProfileId(profileId: number): Promise<any>;
 export declare function submitLeaveRequest(createLeaveDto: object): Promise<any>;
 export declare function fetchLeavesByManagerId(managerId: number): Promise<any>;
 export declare function fetchAllSchedules(): Promise<any>;
+export declare function newShift(createScheduleDto: object): Promise<any>;
+export declare function updateShift(shiftId: number, updateScheduleDto: object): Promise<any>;
 //# sourceMappingURL=fetch.d.ts.map
