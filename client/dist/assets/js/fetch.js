@@ -206,4 +206,15 @@ export async function updateShift(shiftId, updateScheduleDto) {
     });
     return handleResponse(response);
 }
+// reassign a shift to a different employee
+export async function reassignShift(shiftId, profileId) {
+    const response = await fetch(`${SCHEDULES_URL}/${shiftId}/reassign`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ profileId }),
+    });
+    return handleResponse(response);
+}
 //# sourceMappingURL=fetch.js.map

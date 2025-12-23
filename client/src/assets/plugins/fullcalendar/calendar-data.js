@@ -1,4 +1,4 @@
-import { fetchAllSchedules, detectApiBase, fetchManagerById, newShift, updateShift } from '../../../../dist/assets/js/fetch.js';
+import { fetchAllSchedules, detectApiBase, fetchManagerById, newShift, updateShift, reassignShift } from '../../../../dist/assets/js/fetch.js';
 
 // --- CONSTANTS ---
 const employeeData = [
@@ -482,6 +482,90 @@ document.addEventListener('DOMContentLoaded', async function () {
                   const modal = document.getElementById('event_modal');
                   if (modal) {
                     modal.classList.remove('hidden');
+                  }
+                },
+                eventDrop: async function (info) {
+                  // Handle drag and drop - can be to new resource, new date, or both
+                  const event = info.event;
+                  const oldEvent = info.oldEvent;
+                  const newResourceId = event.getResources()[0]?.id; // Get the new resource (employee)
+                  const oldResourceId = oldEvent.getResources()[0]?.id; // Get the old resource
+                  
+                  if (!event.id) {
+                    console.error('Event ID is missing');
+                    info.revert(); // Revert the change
+                    alert('Error: Event ID is missing');
+                    return;
+                  }
+
+                  try {
+                    const resourceChanged = newResourceId !== oldResourceId;
+                    const dateChanged = oldEvent.start.getTime() !== event.start.getTime() || 
+                                       oldEvent.end.getTime() !== event.end.getTime();
+                    
+                    console.log('Event dropped:', {
+                      shiftId: event.id,
+                      resourceChanged,
+                      dateChanged,
+                      oldDate: oldEvent.start,
+                      newDate: event.start,
+                      oldResourceId,
+                      newResourceId
+                    });
+
+                    // Update date/time if changed
+                    if (dateChanged) {
+                      const eventDate = event.start ? event.start.toISOString().split('T')[0] : null;
+                      const startTime = event.start ? event.start.getHours().toString().padStart(2, '0') + ':' + event.start.getMinutes().toString().padStart(2, '0') : null;
+                      const endTime = event.end ? event.end.getHours().toString().padStart(2, '0') + ':' + event.end.getMinutes().toString().padStart(2, '0') : null;
+
+                      console.log('Updating shift date/time:', {
+                        shiftId: event.id,
+                        date: eventDate,
+                        startTime,
+                        endTime
+                      });
+
+                      await updateShift(parseInt(event.id), {
+                        date: eventDate,
+                        startTime: startTime,
+                        endTime: endTime
+                      });
+                    }
+
+                    // Update resource if changed
+                    if (resourceChanged) {
+                      console.log('Reassigning shift:', {
+                        shiftId: event.id,
+                        fromResourceId: oldResourceId,
+                        toResourceId: newResourceId
+                      });
+
+                      await reassignShift(parseInt(event.id), parseInt(newResourceId));
+                    }
+
+                    // Show success message
+                    if (resourceChanged || dateChanged) {
+                      let message = 'Shift updated: ';
+                      if (resourceChanged && dateChanged) {
+                        const newEmployeeName = info.event.getResources()[0]?.title || 'Unknown';
+                        const newDate = event.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        message += `reassigned to ${newEmployeeName} on ${newDate}`;
+                      } else if (resourceChanged) {
+                        const newEmployeeName = info.event.getResources()[0]?.title || 'Unknown';
+                        message += `reassigned to ${newEmployeeName}`;
+                      } else if (dateChanged) {
+                        const newDate = event.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        message += `moved to ${newDate}`;
+                      }
+                      console.log(message);
+                      alert(message);
+                    }
+                    
+                  } catch (error) {
+                    console.error('Error updating shift:', error);
+                    info.revert(); // Revert the change if API call fails
+                    alert('Error updating shift: ' + (error.message || 'Unknown error'));
                   }
                 },
                 events: processDynamicEvents(schedule),

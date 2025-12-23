@@ -403,6 +403,85 @@ export class ScheduleService {
   }
 
   /**
+   * ### Feature: Reassign Shift to Different Employee
+   * Reassigns a shift from the current employee to a new employee.
+   * Handles validation for overlapping shifts with the new employee.
+   */
+  async reassignShift(shiftId: number, newProfileId: number): Promise<any> {
+    const shift = await this.findShiftById(shiftId);
+
+    // Verify the new profile exists
+    const newProfile = await this.prisma.profile.findUnique({
+      where: { id: newProfileId },
+      select: { id: true, fullName: true },
+    });
+
+    if (!newProfile) {
+      throw new BadRequestException(
+        `Profile with ID ${newProfileId} does not exist.`,
+      );
+    }
+
+    // Check if the new profile already has this shift
+    const alreadyAssigned = shift.profile.some((p) => p.id === newProfileId);
+    if (alreadyAssigned) {
+      throw new BadRequestException(
+        `Shift is already assigned to ${newProfile.fullName}.`,
+      );
+    }
+
+    // Check for overlapping shifts with the new profile
+    const overlappingShifts = await this.prisma.shift.findMany({
+      where: {
+        id: { not: shiftId },
+        profile: {
+          some: {
+            id: newProfileId,
+          },
+        },
+        date: shift.date,
+        startTime: { lt: shift.endTime },
+        endTime: { gt: shift.startTime },
+      },
+      include: {
+        profile: {
+          select: { id: true, fullName: true },
+        },
+      },
+    });
+
+    if (overlappingShifts.length > 0) {
+      throw new BadRequestException(
+        `Cannot reassign shift. ${newProfile.fullName} already has an overlapping shift at this time.`,
+      );
+    }
+
+    // Update the shift: remove old profiles and add the new one
+    return this.prisma.shift.update({
+      where: { id: shiftId },
+      data: {
+        profile: {
+          set: [{ id: newProfileId }], // Replace all with the new profile
+        },
+      },
+      include: {
+        profile: {
+          select: {
+            id: true,
+            fullName: true,
+            avatarUrl: true,
+            position: true,
+          },
+        },
+        template: true,
+        changeRequests: {
+          where: { status: 'PENDING' },
+        },
+      },
+    });
+  }
+
+  /**
    * ### Feature: Shift Change Requests
    * Creates a change request for a shift (employee can request changes).
    */

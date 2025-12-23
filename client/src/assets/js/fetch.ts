@@ -241,3 +241,15 @@ export async function updateShift(shiftId: number, updateScheduleDto: object): P
   });
   return handleResponse(response);
 }
+
+// reassign a shift to a different employee
+export async function reassignShift(shiftId: number, profileId: number): Promise<any> {
+  const response = await fetch(`${SCHEDULES_URL}/${shiftId}/reassign`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ profileId }),
+  });
+  return handleResponse(response);
+}

@@ -116,6 +116,26 @@ export class ScheduleController {
     return this.scheduleService.deleteShift(id);
   }
 
+  /**
+   * ### Feature: Reassign Shift to Different Employee
+   * PATCH /schedules/:id/reassign
+   * Reassigns a shift from one employee to another.
+   */
+  @Patch(':id/reassign')
+  @ApiTags('Schedule')
+  @ApiOperation({ summary: 'Reassign a shift to a different employee' })
+  @ApiParam({ name: 'id', description: 'The ID of the shift to reassign', type: Number })
+  @ApiBody({ description: 'New profile ID to assign the shift to', schema: { example: { profileId: 123 } } })
+  @ApiResponse({ status: 200, description: 'Shift successfully reassigned.', type: ShiftDto })
+  @ApiResponse({ status: 404, description: 'Shift or Profile not found.' })
+  @ApiResponse({ status: 400, description: 'Bad Request. e.g., overlap detected or invalid data.' })
+  reassignShift(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { profileId: number },
+  ) {
+    return this.scheduleService.reassignShift(id, body.profileId);
+  }
+
   // ========================================
   // SHIFT CHANGE REQUESTS
   // ========================================
