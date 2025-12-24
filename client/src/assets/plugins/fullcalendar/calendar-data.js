@@ -8,6 +8,28 @@ const employeeData = [
 
 const API_BASE_URL = detectApiBase();
 
+// Toast helper (falls back to alert if Toastify isn't available)
+const showToast = (message, type = 'info') => {
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        info: '#3b82f6',
+    };
+    if (typeof window !== 'undefined' && window.Toastify) {
+        window.Toastify({
+            text: message,
+            duration: 4000,
+            gravity: 'top',
+            position: 'right',
+            backgroundColor: colors[type],
+            stopOnFocus: true,
+        }).showToast();
+    } else {
+        alert(message);
+    }
+};
+
 /**
  * Helper: Fetch Current User
  */
@@ -187,13 +209,13 @@ function initializeAddEventForm() {
         
         // Validation
         if (!title || !date || !startTime || !endTime || selectedEmployees.length === 0) {
-            alert('Please fill in all required fields and select at least one employee');
+            showToast('Please fill in all required fields and select at least one employee', 'warning');
             return;
         }
         
         // Additional validation for employee IDs
         if (selectedEmployees.some(id => typeof id !== 'number')) {
-            alert('Invalid employee selection. Please try again.');
+            showToast('Invalid employee selection. Please try again.', 'warning');
             console.error('Invalid employee IDs:', selectedEmployees);
             return;
         }
@@ -230,7 +252,7 @@ function initializeAddEventForm() {
                 const response = await updateShift(currentEventData.id, updatePayload);
                 
                 console.log('Event updated successfully:', response);
-                alert('Event updated successfully!');
+                showToast('Event updated successfully!', 'success');
             } else {
                 // CREATE MODE - Support multiple employees
                 console.log('Raw selected employee IDs before parsing:', Array.from(employeeSelectEl.selectedOptions).map(opt => ({ value: opt.value, type: typeof opt.value })));
@@ -248,7 +270,7 @@ function initializeAddEventForm() {
                 const response = await newShift(payload);
                 
                 console.log('Event(s) created successfully:', response);
-                alert(`Event created successfully for ${selectedEmployees.length} employee(s)!`);
+                showToast(`Event created successfully for ${selectedEmployees.length} employee(s)!`, 'success');
             }
             
             // Reset form and state
@@ -281,7 +303,7 @@ function initializeAddEventForm() {
             
         } catch (error) {
             console.error('Error processing event:', error);
-            alert('Error: ' + (error.message || 'Unknown error'));
+            showToast('Error: ' + (error.message || 'Unknown error'), 'error');
         } finally {
             // Restore submit button
             const submitBtn = document.getElementById('submit-event-btn');
@@ -299,6 +321,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // Only run if the calendar element exists on this page
     if (calendarEl) {
+        // Block access for users with role EMPLOYEE and redirect them to the employee calendar
+        try {
+            const user = await getCurrentUser();
+            const role = String(user?.role || '').toUpperCase();
+            if (role === 'EMPLOYEE') {
+                // Use replace so the restricted page isn't kept in history
+                window.location.replace('calendar-emp.html');
+                return; // stop initialization
+            }
+        } catch (err) {
+            console.error('Error checking user role for redirect:', err);
+            // If the role check fails unexpectedly we won't block by default to avoid locking out users.
+        }
         
         // 1. Fetch Data
         let schedule = [];
@@ -529,7 +564,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                   if (!event.id) {
                     console.error('Event ID is missing');
                     info.revert(); // Revert the change
-                    alert('Error: Event ID is missing');
+                    showToast('Error: Event ID is missing', 'error');
                     return;
                   }
 
@@ -594,13 +629,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                         message += `moved to ${newDate}`;
                       }
                       console.log(message);
-                      alert(message);
+                      showToast(message, 'success');
                     }
                     
                   } catch (error) {
                     console.error('Error updating shift:', error);
                     info.revert(); // Revert the change if API call fails
-                    alert('Error updating shift: ' + (error.message || 'Unknown error'));
+                    showToast('Error updating shift: ' + (error.message || 'Unknown error'), 'error');
                   }
                 },
                 events: processDynamicEvents(schedule),
@@ -666,7 +701,7 @@ function setupEventModalCloseHandlers() {
     if (completedCheckbox) {
         completedCheckbox.addEventListener('change', async function() {
             if (!currentEventData || !currentEventData.id) {
-                alert('No event data available');
+                showToast('No event data available', 'warning');
                 this.checked = !this.checked; // Revert the change
                 return;
             }
@@ -694,7 +729,7 @@ function setupEventModalCloseHandlers() {
             } catch (error) {
                 console.error('Error updating completed status:', error);
                 this.checked = !this.checked; // Revert the change on error
-                alert('Error updating task status: ' + (error.message || 'Unknown error'));
+                showToast('Error updating task status: ' + (error.message || 'Unknown error'), 'error');
             }
         });
     }
@@ -704,7 +739,7 @@ function setupEventModalCloseHandlers() {
     if (editBtn) {
         editBtn.addEventListener('click', function() {
             if (!currentEventData) {
-                alert('No event data available');
+                showToast('No event data available', 'warning');
                 return;
             }
             
