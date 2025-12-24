@@ -17,6 +17,49 @@
     />
     <meta name="robots" content="noindex, nofollow" />
     <title>Smarthr Admin Template</title>
+    <style>
+      /* Custom multi-select styling */
+      .custom-multiselect {
+        background: linear-gradient(180deg, rgba(236,253,245,1) 0%, rgba(255,255,255,1) 60%);
+        border: 1px solid rgba(34,197,94,0.15);
+        box-shadow: 0 6px 18px rgba(34,197,94,0.06);
+        border-radius: 12px;
+        padding-left: 2.5rem; /* for icon spacing */
+      }
+
+      /* Make options slightly larger and with better spacing */
+      .custom-multiselect option {
+        padding: 8px 10px;
+        background: transparent;
+      }
+
+      /* Custom scrollbar for the multi-select dropdown list (WebKit) */
+      .custom-multiselect::-webkit-scrollbar {
+        width: 10px;
+      }
+      .custom-multiselect::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, rgba(34,197,94,0.25), rgba(16,185,129,0.6));
+        border-radius: 8px;
+      }
+
+      /* Focus styles */
+      .custom-multiselect:focus {
+        outline: none;
+        box-shadow: 0 6px 30px rgba(34,197,94,0.12);
+        border-color: rgba(34,197,94,0.5);
+      }
+
+      /* Disabled placeholder styling */
+      .custom-multiselect option[disabled] {
+        color: #9ca3af; /* gray-400 */
+        font-style: italic;
+      }
+
+      /* Small icon inside select */
+      .select-icon {
+        color: #10b981; /* green-500 */
+      }
+    </style>
 
     <!-- Favicon -->
     <link
@@ -8789,8 +8832,16 @@
                   </div>
                   <div class="col-span-12">
                     <div class="mb-3">
-                      <label class="form-label">Select Employees</label>
-                      <select id="select-emp" class="form-control" required></select>
+                      <label class="form-label flex items-center justify-between">
+                        <span>Select Employees</span>
+                        <span class="text-xs text-green-700 font-medium">Available: <span id="employee-count">0</span></span>
+                      </label>
+                      <div class="relative">
+                        <select id="select-emp" class="custom-multiselect block w-full pl-12 pr-3 py-3 text-sm rounded-lg h-44 bg-gradient-to-b" multiple size="6" required>
+                          <option value="" disabled>Select employees...</option>
+                        </select>
+                      </div>
+                      <small class="text-gray-500 mt-1 block">Hold Ctrl/Cmd to select multiple employees</small>
                     </div>
                     <div class="mb-0">
                       <label class="form-label">Descriptions</label>

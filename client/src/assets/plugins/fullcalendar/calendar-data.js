@@ -176,12 +176,25 @@ function initializeAddEventForm() {
         const date = document.getElementById('event-date').value.trim();
         const startTime = document.getElementById('event-start-time').value.trim();
         const endTime = document.getElementById('event-end-time').value.trim();
-        const employeeId = document.getElementById('select-emp').value;
+        const employeeSelectEl = document.getElementById('select-emp');
+        const selectedEmployees = Array.from(employeeSelectEl.selectedOptions)
+            .map(option => {
+                const val = parseInt(option.value, 10);
+                return !isNaN(val) ? val : null;
+            })
+            .filter(val => val !== null);
         const description = document.getElementById('event-description').value.trim();
         
         // Validation
-        if (!title || !date || !startTime || !endTime || !employeeId) {
-            alert('Please fill in all required fields');
+        if (!title || !date || !startTime || !endTime || selectedEmployees.length === 0) {
+            alert('Please fill in all required fields and select at least one employee');
+            return;
+        }
+        
+        // Additional validation for employee IDs
+        if (selectedEmployees.some(id => typeof id !== 'number')) {
+            alert('Invalid employee selection. Please try again.');
+            console.error('Invalid employee IDs:', selectedEmployees);
             return;
         }
         
@@ -219,9 +232,11 @@ function initializeAddEventForm() {
                 console.log('Event updated successfully:', response);
                 alert('Event updated successfully!');
             } else {
-                // CREATE MODE
+                // CREATE MODE - Support multiple employees
+                console.log('Raw selected employee IDs before parsing:', Array.from(employeeSelectEl.selectedOptions).map(opt => ({ value: opt.value, type: typeof opt.value })));
+                
                 const payload = {
-                    profileIds: [parseInt(employeeId)],
+                    profileIds: selectedEmployees,
                     date: formattedDate,
                     startTime: startTime.substring(0, 5),
                     endTime: endTime.substring(0, 5),
@@ -229,11 +244,11 @@ function initializeAddEventForm() {
                     description: description
                 };
                 
-                console.log('Creating new event, Payload:', payload);
+                console.log('Creating new event(s), Payload:', payload, 'ProfileIds types:', selectedEmployees.map(id => typeof id));
                 const response = await newShift(payload);
                 
-                console.log('Event created successfully:', response);
-                alert('Event created successfully!');
+                console.log('Event(s) created successfully:', response);
+                alert(`Event created successfully for ${selectedEmployees.length} employee(s)!`);
             }
             
             // Reset form and state
@@ -244,7 +259,11 @@ function initializeAddEventForm() {
             document.getElementById('event-start-time').value = '';
             document.getElementById('event-end-time').value = '';
             document.getElementById('event-description').value = '';
-            document.getElementById('select-emp').value = '';
+            // Clear multi-select selections properly
+            const selectEl = document.getElementById('select-emp');
+            if (selectEl) {
+                Array.from(selectEl.options).forEach(opt => opt.selected = false);
+            }
             
             // Reset submit button text
             submitBtn.textContent = 'Add Event';
@@ -307,14 +326,24 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         // 2. Populate Employee Select Dropdown
         const select = document.getElementById('select-emp');
+        const employeeCountEl = document.getElementById('employee-count');
+
+        // Helper to update the employee count badge
+        function updateEmployeeCount() {
+            if (employeeCountEl) {
+                employeeCountEl.textContent = String((employeesProfiles && employeesProfiles.length) || 0);
+            }
+        }
+
         if (select) {
-            // CRITICAL FIX: Clear static HTML options first, keeping only the default placeholder
-            select.innerHTML = '<option value="">Select Employee</option>';
+            // CRITICAL FIX: Clear static HTML options first and add a disabled placeholder for multiple select
+            select.innerHTML = '<option value="" disabled>Select employees...</option>';
 
             if (employeesProfiles.length > 0) {
                 employeesProfiles.forEach(emp => {
                     const option = document.createElement('option');
-                    option.value = emp.id; // Ensure this matches your backend ID format
+                    option.value = String(emp.id); // Store as string (HTML standard), will be parsed to int during form submission
+                    option.dataset.employeeId = emp.id; // Also store as data attribute for reference
                     
                     // robust check for different name properties (backend often sends 'fullName')
                     option.text = emp.fullName || emp.name || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Unknown Employee'; 
@@ -328,6 +357,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 option.disabled = true;
                 select.appendChild(option);
             }
+
+            // Update employee count after populating the select
+            updateEmployeeCount();
+        } else {
+            // If select isn't present for some reason, still update the count badge
+            updateEmployeeCount();
         }
 
         // 3. Initialize Draggable (if exists)
@@ -694,6 +729,16 @@ function setupEventModalCloseHandlers() {
             // Populate the form with event data
             document.getElementById('event-title').value = currentEventData.title || '';
             document.getElementById('event-date').value = formattedDate;
+
+            // Preselect the assigned employee (or employees) in the multi-select
+            const select = document.getElementById('select-emp');
+            if (select) {
+                // If currentEventData.resourceId is a single id, select it. If an array of ids, select all.
+                const assigned = Array.isArray(currentEventData.resourceId) ? currentEventData.resourceId.map(String) : [String(currentEventData.resourceId)];
+                Array.from(select.options).forEach(opt => {
+                    opt.selected = assigned.includes(opt.value);
+                });
+            }
             document.getElementById('event-start-time').value = startTimeStr;
             document.getElementById('event-end-time').value = endTimeStr;
             document.getElementById('event-description').value = currentEventData.description || '';
