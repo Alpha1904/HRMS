@@ -36,6 +36,7 @@ export class WsJwtGuard implements CanActivate {
         throw new WsException('User is no longer active in HRMS');
       }
 
+      //klkhbklb
       // 3. Attach user to socket for global access
       client.user = user;
       return true;
