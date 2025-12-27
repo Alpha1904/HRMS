@@ -54,7 +54,7 @@ export class MessageService {
     }
 
     // 3. Create the message
-    const newMessage = await this.prisma.message.create({
+    const newMessage = await this.prisma.userMessage.create({
       data: {
         senderId,
         receiverId,
@@ -80,7 +80,7 @@ export class MessageService {
    * Gets all messages received by a user.
    */
   async getInbox(userId: number) {
-    return this.prisma.message.findMany({
+    return this.prisma.userMessage.findMany({
       where: { receiverId: userId },
       include: {
         sender: {
@@ -96,7 +96,7 @@ export class MessageService {
    * Gets all messages sent by a user.
    */
   async getSent(userId: number) {
-    return this.prisma.message.findMany({
+    return this.prisma.userMessage.findMany({
       where: { senderId: userId },
       include: {
         receiver: {
@@ -112,7 +112,7 @@ export class MessageService {
    * Marks a specific message as read.
    */
   async markAsRead(messageId: number, userId: number) {
-    const message = await this.prisma.message.findUnique({
+    const message = await this.prisma.userMessage.findUnique({
       where: { id: messageId },
     });
 
@@ -125,7 +125,7 @@ export class MessageService {
       );
     }
 
-    return this.prisma.message.update({
+    return this.prisma.userMessage.update({
       where: { id: messageId },
       data: { isRead: true },
     });

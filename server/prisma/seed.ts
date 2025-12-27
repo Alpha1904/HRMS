@@ -39,7 +39,7 @@ async function main() {
   await prisma.topic.deleteMany();
   await prisma.forum.deleteMany();
   await prisma.announcement.deleteMany();
-  await prisma.message.deleteMany();
+  await prisma.userMessage.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.goal.deleteMany();
   await prisma.evaluation.deleteMany();

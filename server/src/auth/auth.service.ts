@@ -160,7 +160,7 @@ export class AuthService {
 
     return this.jwtService.sign(payload, {
       secret: 'jwt_secret',
-      expiresIn: '15m',
+      expiresIn: '1d',
     });
   }
 

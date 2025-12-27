@@ -138,8 +138,9 @@ model User {
   notifications Notification[] @relation("UserNotifications")
 
   // Messaging (internal communication)
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
+  sentMessages     UserMessage[] @relation("SentMessages")
+  receivedMessages UserMessage[] @relation("ReceivedMessages")
+
 
   // Job Postings created by user
   jobPostingsCreated JobPosting[] @relation("JobPostingsCreated")
@@ -218,6 +219,10 @@ model Profile {
   announcements Announcement[] @relation("ProfileAnnouncements")
   topics        Topic[]        @relation("ProfileTopics")
   replies       Reply[]        @relation("ProfileReplies")
+
+  // Chat Rooms
+  memberships   ChatMember[]
+  messages      ChatMessage[]
 
   // Reports (HR only)
   reports Report[] @relation("ProfileReports")
@@ -509,9 +514,6 @@ model Shift {
   // This shift can have change requests
   changeRequests ShiftChangeRequest[] @relation("ShiftChangeRequests")
 
-  // Completion status tracking
-  isCompleted Boolean @default(false)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -657,7 +659,7 @@ model Payment {
 // ========================================
 // COMMUNICATION & ENGAGEMENT
 // ========================================
-model Message {
+model UserMessage {
   id         Int  @id @default(autoincrement())
   senderId   Int
   sender     User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
@@ -676,7 +678,9 @@ model Message {
 
   @@index([senderId, receiverId])
   @@index([createdAt, isRead])
+  @@map("Message")
 }
+
 
 model Announcement {
   id          Int       @id @default(autoincrement())
@@ -756,6 +760,65 @@ model Reply {
   @@index([topicId])
   @@index([authorId])
 }
+
+// ========================================
+// chat 
+//=========================================
+
+enum EmployeeStatus {
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+}
+enum ChatType {
+  DIRECT
+  GROUP
+  ANNOUNCEMENT
+}
+
+model ChatRoom {
+  id          String       @id @default(uuid())
+  name        String?      // Null for 1:1 chats
+  type        ChatType     @default(DIRECT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  members     ChatMember[]
+  messages    ChatMessage[]
+  @@index([updatedAt])
+}
+
+model ChatMember {
+  id        String   @id @default(uuid())
+  userId    Int
+  roomId    String
+  role      String   @default("MEMBER") // 'OWNER', 'ADMIN', 'MEMBER'
+  
+  user      Profile @relation(fields: [userId], references: [id])
+  room      ChatRoom @relation(fields: [roomId], references: [id])
+
+  @@unique([userId, roomId]) // Prevents duplicate membership
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  content    String
+  senderId   Int
+  roomId     String
+  createdAt  DateTime @default(now())
+  isEdited   Boolean  @default(false)
+
+  sender     Profile @relation(fields: [senderId], references: [id])
+  room       ChatRoom @relation(fields: [roomId], references: [id])
+
+  @@map("ChatMessage")
+}
+
+
+
+
+
+
 
 //This is the "Alert System" for in-app notifications
 model Notification {

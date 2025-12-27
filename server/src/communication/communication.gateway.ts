@@ -9,10 +9,10 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { OnEvent } from '@nestjs/event-emitter';
-import { Announcement, Message, Reply } from '@prisma/client';
+import { Announcement, UserMessage, Reply } from '@prisma/client';
 
 // A type for our message payload from the service
-type MessageWithSender = Message & {
+type MessageWithSender = UserMessage & {
   sender: {
     profile: {
       fullName: string | null;
