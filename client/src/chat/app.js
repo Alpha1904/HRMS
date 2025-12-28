@@ -2,6 +2,30 @@
 const API_URL = 'http://localhost:3000/api';
 const SOCKET_URL = 'http://localhost:3000';
 const TOKEN = typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null;
+
+// --- TOAST HELPER ---
+function showToast(message, type = 'info') {
+    const backgroundColors = {
+        success: 'linear-gradient(to right, #00b09b, #96c93d)',
+        error: 'linear-gradient(to right, #ff5f6d, #ffc371)',
+        warning: 'linear-gradient(to right, #f093fb, #f5576c)',
+        info: 'linear-gradient(to right, #4facfe, #00f2fe)'
+    };
+    
+    Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        stopOnFocus: true,
+        style: {
+            background: backgroundColors[type] || backgroundColors.info,
+            borderRadius: "8px",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
+        }
+    }).showToast();
+}
+
 // --- STATE ---
 let socket = null;
 let currentRoomId = null;
@@ -58,6 +82,7 @@ const el = {
     headerName: document.getElementById('active-room-name'),
     headerStatus: document.getElementById('active-room-status'),
     myNameDisplay: document.getElementById('my-name-display'),
+    myAvatarContainer: document.getElementById('my-avatar-container'),
     
     // Modal
     modal: document.getElementById('search-modal'),
@@ -74,7 +99,20 @@ const el = {
     groupMemberSearchInput: document.getElementById('group-member-search-input'),
     groupMemberResults: document.getElementById('group-member-results-list'),
     selectedMembersList: document.getElementById('selected-members-list'),
-    createGroupSubmitBtn: document.getElementById('create-group-submit-btn')
+    createGroupSubmitBtn: document.getElementById('create-group-submit-btn'),
+    addMembersBtn: document.getElementById('add-members-btn'),
+    addMembersSubmitBtn: document.getElementById('add-members-submit-btn'),
+    manageMembersBtn: document.getElementById('manage-members-btn'),
+    manageMembersModal: document.getElementById('manage-members-modal'),
+    manageMembersModalContent: document.getElementById('manage-members-modal-content'),
+    currentMembersList: document.getElementById('current-members-list'),
+    removeMembersBtn: document.getElementById('remove-members-btn'),
+    
+    // Confirmation Modal
+    confirmationModal: document.getElementById('confirmation-modal'),
+    confirmationModalContent: document.getElementById('confirmation-modal-content'),
+    confirmationMessage: document.getElementById('confirmation-message'),
+    confirmationConfirmBtn: document.getElementById('confirmation-confirm-btn')
 };
 
 const getCurrentUser = async () => {
@@ -130,10 +168,21 @@ async function init() {
         loadUnreadCounts();
         // Optional: If token has name, display it
         el.myNameDisplay.innerText = user.profile.fullName;
+        // Update avatar to use profile image if available
+        const avatarUrl = user.profile.avatarUrl;
+        if (avatarUrl) {
+            el.myAvatarContainer.innerHTML = `<img src="${avatarUrl}" alt="avatar" class="w-full h-full rounded-full object-cover" />`;
+            el.myAvatarContainer.className = 'w-10 h-10 rounded-full overflow-hidden shrink-0';
+        } else {
+            const initials = user.profile.fullName.substring(0, 2).toUpperCase();
+            el.myAvatarContainer.innerHTML = initials;
+            el.myAvatarContainer.className = 'w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold';
+        }
         // Show Create Group button only for MANAGER or HR_ADMIN role
         if (payload?.role === 'MANAGER' || payload?.role === 'HR_ADMIN') {
             el.createGroupBtn.classList.remove('hidden');
         }
+        // Add Members button will be shown only when a room is open and user has permission
     } catch (e) {
         console.error("Invalid Token", e);
         return;
@@ -325,7 +374,7 @@ async function startDirectChat(targetUserId) {
         
         openRoom(room.id, displayName, "Direct Message");
     } catch (err) {
-        alert("Error creating chat: " + err.message);
+        showToast("Error creating chat: " + err.message, 'error');
     }
 }
 
@@ -359,12 +408,21 @@ function renderSidebar(rooms) {
         div.className = `p-3 rounded-lg cursor-pointer transition flex items-center gap-3 mb-1 ${isActive ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-gray-50 border border-transparent'}`;
         div.onclick = () => openRoom(room.id, displayName, room.type === 'GROUP' ? `${(room.members || []).length} members` : room.type === 'ANNOUNCEMENT' ? 'Announcement' : 'Direct Message', room.type);
         
-        // Avatar (Initials)
-        const initials = displayName.substring(0, 2).toUpperCase();
+        // Avatar: use profile avatar if available, otherwise initials
+        let avatarContent = displayName.substring(0, 2).toUpperCase();
+        let avatarClass = 'w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs shrink-0';
+        if (room.type === 'DIRECT') {
+            const otherMember = (room.members || []).find(m => m.userId !== (myProfileId ?? myId));
+            const avatarUrl = otherMember?.user?.profile?.avatarUrl || otherMember?.user?.avatarUrl;
+            if (avatarUrl) {
+                avatarContent = `<img src="${avatarUrl}" alt="avatar" class="w-full h-full rounded-full object-cover" />`;
+                avatarClass = 'w-10 h-10 rounded-full overflow-hidden shrink-0';
+            }
+        }
         
         div.innerHTML = `
-            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs shrink-0">
-                ${room.type === 'GROUP' ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031M12 12.75a3 3 0 110-6 3 3 0 010 6zm0-3a.75.75 0 100-1.5.75.75 0 000 1.5zm-6.562 8.438A9.033 9.033 0 016.857 3a9.001 9.001 0 019.962 3.438 9 9 0 11-9.962 12.312z" /></svg>' : room.type === 'ANNOUNCEMENT' ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>' : initials}
+            <div class="${avatarClass}">
+                ${room.type === 'GROUP' ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031M12 12.75a3 3 0 110-6 3 3 0 010 6zm0-3a.75.75 0 100-1.5.75.75 0 000 1.5zm-6.562 8.438A9.033 9.033 0 016.857 3a9.001 9.001 0 019.962 3.438 9 9 0 11-9.962 12.312z" /></svg>' : room.type === 'ANNOUNCEMENT' ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>' : avatarContent}
             </div>
             <div class="overflow-hidden flex-1">
                 <div class="flex justify-between items-center" onclick="clearUnread(${room.id})">
@@ -399,6 +457,19 @@ function openRoom(roomId, name, status, roomType = 'DIRECT') {
     } else {
         el.input.placeholder = 'Type your message...';
         el.input.focus();
+    }
+    
+    // Show Add Members button for managers/HR in GROUP and ANNOUNCEMENT rooms
+    const canAddMembers = isManagerOrHr && (roomType === 'GROUP' || roomType === 'ANNOUNCEMENT');
+    console.log('Add Members Debug:', { myRole, isManagerOrHr, roomType, canAddMembers });
+    if (canAddMembers) {
+        el.addMembersBtn.classList.remove('hidden');
+        el.manageMembersBtn.classList.remove('hidden');
+        console.log('Showing Add Members and Manage Members buttons');
+    } else {
+        el.addMembersBtn.classList.add('hidden');
+        el.manageMembersBtn.classList.add('hidden');
+        console.log('Hiding Add Members and Manage Members buttons');
     }
     
     // Highlight sidebar logic (re-render or manual class toggle)
@@ -540,6 +611,82 @@ function toggleCreateGroupModal(show) {
     }
 }
 
+async function handleAddMembers() {
+    if (!currentRoomId) {
+        showToast('No room selected', 'warning');
+        return;
+    }
+    if (selectedMembersForGroup.size === 0) {
+        showToast('Please select at least one member to add', 'warning');
+        return;
+    }
+    
+    const memberUserIds = Array.from(selectedMembersForGroup);
+    try {
+        const res = await fetch(`${API_URL}/chat/rooms/${currentRoomId}/members`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ memberUserIds })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            showToast(err.message || 'Failed to add members', 'error');
+            return;
+        }
+        const updatedRoom = await res.json();
+        toggleAddMembersModal(false);
+        await fetchMyRooms();
+        // Update room status to reflect new member count
+        if (updatedRoom.type === 'GROUP') {
+            el.headerStatus.innerText = `${updatedRoom.members.length} members`;
+        }
+        showToast('Members added successfully', 'success');
+    } catch (err) {
+        console.error('Add members error', err);
+        showToast('Error adding members', 'error');
+    }
+}
+
+function toggleAddMembersModal(show) {
+    if (show) {
+        el.createGroupModal.classList.remove('hidden');
+        setTimeout(() => {
+            el.createGroupModal.classList.remove('opacity-0');
+            el.createGroupModalContent.classList.remove('scale-95');
+            el.createGroupModalContent.classList.add('scale-100');
+        }, 10);
+        el.groupMemberSearchInput.focus();
+        selectedMembersForGroup.clear();
+        updateSelectedMembersUI();
+        el.groupMemberSearchInput.value = '';
+        el.groupMemberResults.innerHTML = '<p class="text-center text-gray-400 text-sm py-4">Type to find colleagues...</p>';
+        // Hide create group specific elements
+        el.groupNameInput.parentElement.style.display = 'none';
+        el.groupTypeSelect.parentElement.style.display = 'none';
+        el.createGroupSubmitBtn.style.display = 'none';
+        el.addMembersSubmitBtn.classList.remove('hidden');
+        // Update modal title
+        el.createGroupModal.querySelector('h3').innerText = 'Add Members';
+    } else {
+        el.createGroupModal.classList.add('opacity-0');
+        el.createGroupModalContent.classList.remove('scale-100');
+        el.createGroupModalContent.classList.add('scale-95');
+        setTimeout(() => {
+            el.createGroupModal.classList.add('hidden');
+        }, 200);
+        // Reset to create group mode
+        el.groupNameInput.parentElement.style.display = 'block';
+        el.groupTypeSelect.parentElement.style.display = 'block';
+        el.createGroupSubmitBtn.style.display = 'block';
+        el.addMembersSubmitBtn.classList.add('hidden');
+        el.createGroupModal.querySelector('h3').innerText = 'Create Group';
+        el.addMembersBtn.onclick = null;
+    }
+}
+
 function mmBtn (){
     toggleCreateGroupModal(true);
     fetchMember({ target: { value: '' } });
@@ -610,12 +757,12 @@ async function handleCreateGroup() {
     const name = el.groupNameInput.value.trim();
     const type = el.groupTypeSelect.value;
     if (!name) {
-        alert('Please enter a group name');
+        showToast('Please enter a group name', 'warning');
         return;
     }
     const minMembers = type === 'ANNOUNCEMENT' ? 1 : 2;
     if (selectedMembersForGroup.size < minMembers) {
-        alert(type === 'ANNOUNCEMENT' ? 'Please select at least one member' : 'Please select at least two members');
+        showToast(type === 'ANNOUNCEMENT' ? 'Please select at least one member' : 'Please select at least two members', 'warning');
         return;
     }
     const memberUserIds = [myId, ...Array.from(selectedMembersForGroup)];
@@ -631,16 +778,17 @@ async function handleCreateGroup() {
         });
         if (!res.ok) {
             const err = await res.json();
-            alert(err.message || 'Failed to create group');
+            showToast(err.message || 'Failed to create group', 'error');
             return;
         }
         const groupRoom = await res.json();
         toggleCreateGroupModal(false);
         await fetchMyRooms();
         openRoom(groupRoom.id, groupRoom.name, type === 'ANNOUNCEMENT' ? 'Announcement' : `${groupRoom.members.length} members`, type);
+        showToast(type === 'ANNOUNCEMENT' ? 'Announcement created successfully' : 'Group created successfully', 'success');
     } catch (err) {
         console.error('Create group error', err);
-        alert('Error creating group');
+        showToast('Error creating group', 'error');
     }
 }
 
@@ -734,6 +882,196 @@ el.chatForm.addEventListener('submit', (e) => {
 
     el.input.value = '';
     el.input.focus();
+});
+
+// --- CONFIRMATION MODAL ---
+
+let confirmationCallback = null;
+
+function showConfirmationModal(message, callback) {
+    confirmationCallback = callback;
+    el.confirmationMessage.innerText = message;
+    el.confirmationModal.classList.remove('hidden');
+    setTimeout(() => {
+        el.confirmationModal.classList.remove('opacity-0');
+        el.confirmationModalContent.classList.remove('scale-95');
+        el.confirmationModalContent.classList.add('scale-100');
+    }, 10);
+}
+
+function closeConfirmationModal() {
+    el.confirmationModal.classList.add('opacity-0');
+    el.confirmationModalContent.classList.remove('scale-100');
+    el.confirmationModalContent.classList.add('scale-95');
+    setTimeout(() => {
+        el.confirmationModal.classList.add('hidden');
+    }, 200);
+    confirmationCallback = null;
+}
+
+el.confirmationConfirmBtn.addEventListener('click', () => {
+    if (confirmationCallback) {
+        confirmationCallback();
+    }
+    closeConfirmationModal();
+});
+
+// Close on background click
+el.confirmationModal.addEventListener('click', (e) => {
+    if (e.target === el.confirmationModal) closeConfirmationModal();
+});
+
+// --- MANAGE MEMBERS MODAL & LOGIC ---
+
+let selectedMembersToRemove = new Set();
+let currentRoomMembers = [];
+
+function toggleManageMembersModal(show) {
+    if (show) {
+        el.manageMembersModal.classList.remove('hidden');
+        setTimeout(() => {
+            el.manageMembersModal.classList.remove('opacity-0');
+            el.manageMembersModalContent.classList.remove('scale-95');
+            el.manageMembersModalContent.classList.add('scale-100');
+        }, 10);
+        loadCurrentMembers();
+        selectedMembersToRemove.clear();
+        updateRemoveButtonState();
+    } else {
+        el.manageMembersModal.classList.add('opacity-0');
+        el.manageMembersModalContent.classList.remove('scale-100');
+        el.manageMembersModalContent.classList.add('scale-95');
+        setTimeout(() => {
+            el.manageMembersModal.classList.add('hidden');
+        }, 200);
+    }
+}
+
+async function loadCurrentMembers() {
+    if (!currentRoomId) return;
+    
+    try {
+        // Get room details with members
+        const rooms = await fetch(`${API_URL}/chat/rooms`, {
+            headers: { 'Authorization': `Bearer ${TOKEN}` }
+        });
+        const allRooms = await rooms.json();
+        const currentRoom = allRooms.find(r => r.id === currentRoomId);
+        
+        if (currentRoom && currentRoom.members) {
+            currentRoomMembers = currentRoom.members;
+            renderCurrentMembers();
+        }
+    } catch (err) {
+        console.error('Failed to load current members:', err);
+        el.currentMembersList.innerHTML = '<p class="text-center text-red-400 text-sm py-4">Failed to load members</p>';
+    }
+}
+
+function renderCurrentMembers() {
+    el.currentMembersList.innerHTML = '';
+    
+    if (!Array.isArray(currentRoomMembers) || currentRoomMembers.length === 0) {
+        el.currentMembersList.innerHTML = '<p class="text-center text-gray-400 text-sm py-4">No members found</p>';
+        return;
+    }
+    
+    currentRoomMembers.forEach(member => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition';
+        
+        const displayName = member.user?.fullName || member.user?.profile?.fullName || 'Unknown';
+        const initials = displayName.substring(0, 2).toUpperCase();
+        const isMe = (member.user?.userId || member.userId) === (myProfileId ?? myId);
+        
+        div.innerHTML = `
+            <div class="flex items-center flex-1">
+                <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-sm mr-3">
+                    ${initials}
+                </div>
+                <div class="flex-1">
+                    <p class="font-medium text-gray-800 text-sm">${displayName} ${isMe ? '(You)' : ''}</p>
+                    <p class="text-xs text-gray-500">${member.user?.role || 'Member'}</p>
+                </div>
+            </div>
+            ${!isMe ? `
+                <input type="checkbox" 
+                       class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500" 
+                       onchange="toggleMemberSelection(${member.user?.userId || member.userId}, this.checked)"
+                       ${selectedMembersToRemove.has(member.user?.userId || member.userId) ? 'checked' : ''}>
+            ` : '<span class="text-xs text-gray-400">Cannot remove</span>'}
+        `;
+        
+        el.currentMembersList.appendChild(div);
+    });
+}
+
+function toggleMemberSelection(userId, isSelected) {
+    if (isSelected) {
+        selectedMembersToRemove.add(userId);
+    } else {
+        selectedMembersToRemove.delete(userId);
+    }
+    updateRemoveButtonState();
+}
+
+function updateRemoveButtonState() {
+    el.removeMembersBtn.disabled = selectedMembersToRemove.size === 0;
+}
+
+async function handleRemoveMembers() {
+    if (!currentRoomId) {
+        showToast('No room selected', 'warning');
+        return;
+    }
+    if (selectedMembersToRemove.size === 0) {
+        showToast('Please select at least one member to remove', 'warning');
+        return;
+    }
+    
+    showConfirmationModal(
+        `Are you sure you want to remove ${selectedMembersToRemove.size} member(s) from this room?`,
+        async () => {
+            const memberUserIds = Array.from(selectedMembersToRemove);
+            try {
+                const res = await fetch(`${API_URL}/chat/rooms/${currentRoomId}/members`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ memberUserIds })
+                });
+                
+                if (!res.ok) {
+                    const err = await res.json();
+                    showToast(err.message || 'Failed to remove members', 'error');
+                    return;
+                }
+                
+                const updatedRoom = await res.json();
+                toggleManageMembersModal(false);
+                await fetchMyRooms();
+                
+                // Update room status to reflect new member count
+                if (updatedRoom.type === 'GROUP') {
+                    el.headerStatus.innerText = `${updatedRoom.members.length} members`;
+                } else if (updatedRoom.type === 'ANNOUNCEMENT') {
+                    el.headerStatus.innerText = 'Announcement';
+                }
+                
+                showToast('Members removed successfully', 'success');
+            } catch (err) {
+                console.error('Remove members error', err);
+                showToast('Error removing members', 'error');
+            }
+        }
+    );
+}
+
+// Close on background click
+el.manageMembersModal.addEventListener('click', (e) => {
+    if (e.target === el.manageMembersModal) toggleManageMembersModal(false);
 });
 
 // Start App

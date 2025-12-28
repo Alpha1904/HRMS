@@ -102,6 +102,68 @@ export class ChatService {
     return newChat;
   }
 
+  async addMembersToRoom(roomId: string, memberUserIds: number[]) {
+    // Resolve all member profile ids
+    const memberProfileIds = await Promise.all(
+      memberUserIds.map(uid => this.resolveProfileIdByUserId(uid))
+    );
+
+    const updatedRoom = await this.prisma.chatRoom.update({
+      where: { id: roomId },
+      data: {
+        members: {
+          create: memberProfileIds.map(pid => ({
+            userId: pid,
+            role: 'MEMBER'
+          }))
+        }
+      },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { id: true, fullName: true, avatarUrl: true }
+            }
+          }
+        }
+      }
+    });
+    return updatedRoom;
+  }
+
+  async removeMembersFromRoom(roomId: string, memberUserIds: number[]) {
+    // Resolve all member profile ids
+    const memberProfileIds = await Promise.all(
+      memberUserIds.map(uid => this.resolveProfileIdByUserId(uid))
+    );
+
+    // Delete the chat members
+    await this.prisma.chatMember.deleteMany({
+      where: {
+        roomId: roomId,
+        userId: {
+          in: memberProfileIds
+        }
+      }
+    });
+
+    // Return the updated room
+    const updatedRoom = await this.prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { id: true, fullName: true, avatarUrl: true }
+            }
+          }
+        }
+      }
+    });
+    
+    return updatedRoom;
+  }
+
   async getMyRooms(userId: number) {
     try {
       const profileId = await this.resolveProfileIdByUserId(userId);

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -221,6 +222,64 @@ export class ChatController {
    * POST /chat/announcements
    * Body: { name: string, memberUserIds: number[] }
    */
+  @Post('rooms/:roomId/members')
+  @UseGuards(JwtAuthGuard)
+  async addMembersToRoom(
+    @Request() req: any,
+    @Param('roomId') roomId: string,
+    @Body() body: { memberUserIds: number[] }
+  ) {
+    try {
+      // Verify user is MANAGER or HR_ADMIN (or room admin)
+      const userRole = req.user?.role;
+      if (!['MANAGER', 'HR_ADMIN'].includes(userRole)) {
+        throw new HttpException('Only managers and HR admins can add members', HttpStatus.FORBIDDEN);
+      }
+
+      if (!body.memberUserIds || body.memberUserIds.length === 0) {
+        throw new HttpException('Member user IDs are required', HttpStatus.BAD_REQUEST);
+      }
+
+      const updatedRoom = await this.chatService.addMembersToRoom(roomId, body.memberUserIds);
+      return updatedRoom;
+    } catch (error) {
+      console.error('Error adding members to room:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to add members to room', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Delete('rooms/:roomId/members')
+  @UseGuards(JwtAuthGuard)
+  async removeMembersFromRoom(
+    @Request() req: any,
+    @Param('roomId') roomId: string,
+    @Body() body: { memberUserIds: number[] }
+  ) {
+    try {
+      // Verify user is MANAGER or HR_ADMIN (or room admin)
+      const userRole = req.user?.role;
+      if (!['MANAGER', 'HR_ADMIN'].includes(userRole)) {
+        throw new HttpException('Only managers and HR admins can remove members', HttpStatus.FORBIDDEN);
+      }
+
+      if (!body.memberUserIds || body.memberUserIds.length === 0) {
+        throw new HttpException('Member user IDs are required', HttpStatus.BAD_REQUEST);
+      }
+
+      const updatedRoom = await this.chatService.removeMembersFromRoom(roomId, body.memberUserIds);
+      return updatedRoom;
+    } catch (error) {
+      console.error('Error removing members from room:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to remove members from room', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   @Post('announcements')
   @ApiOperation({ summary: 'Create an announcement chat (manager or hr admin only)' })
   @ApiBody({
