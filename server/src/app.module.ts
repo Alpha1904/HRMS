@@ -22,6 +22,8 @@ import { AnnouncementModule } from './announcement/announcement.module';
 import { ForumModule } from './forum/forum.module';
 import { TestService } from './test/test.service';
 import { ChatModule } from './chat/chat.module';
+import { HiringModule } from './hiring/hiring.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -49,6 +51,8 @@ import { ChatModule } from './chat/chat.module';
     AnnouncementModule,
     ForumModule,
     ChatModule,
+    HiringModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService, TestService],

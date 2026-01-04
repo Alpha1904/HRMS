@@ -8,6 +8,8 @@ import {
   GoalStatus,
   EvalPeriod,
   Prisma,
+  PostingStatus,
+  ApplicationStatus,
 } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
@@ -49,6 +51,11 @@ async function main() {
   await prisma.leave.deleteMany();
   await prisma.leaveBalance.deleteMany();
   await prisma.leavePolicy.deleteMany();
+  await prisma.document.deleteMany();
+  await prisma.interaction.deleteMany();
+  await prisma.application.deleteMany();
+  await prisma.candidate.deleteMany();
+  await prisma.jobPosting.deleteMany();
   await prisma.profile.deleteMany();
   await prisma.user.deleteMany();
 
@@ -58,7 +65,7 @@ async function main() {
   // A. Create HR Admin User (for Announcements, top-level management)
   const hrUser = await prisma.user.create({
     data: {
-      email: `hr_admin@test.local`,
+      email: `hr_admin@hrms.com`,
       password: salt,
       tenantId: faker.string.uuid(),
       role: Role.HR_ADMIN,
@@ -92,7 +99,7 @@ async function main() {
     const department = departments[i % departments.length];
     const user = await prisma.user.create({
       data: {
-        email: `manager${i}@test.local`,
+        email: `manager${i}@hrms.com`,
         password: salt,
         tenantId: faker.string.uuid(),
         role: Role.MANAGER,
@@ -145,7 +152,7 @@ async function main() {
 
     const user = await prisma.user.create({
       data: {
-        email: `employee${i}@test.local`,
+        email: `employee${i}@hrms.com`,
         password: salt,
         tenantId: faker.string.uuid(),
         role: Role.EMPLOYEE,
@@ -216,12 +223,12 @@ async function main() {
 
   // Find the specific users we created for reliable testing
   const testUser = await prisma.user.findUnique({
-    where: { email: 'employee9@test.local' },
+    where: { email: 'employee9@hrms.com' },
   });
   const targetEmployee = employees.find(e => e.userId === testUser?.id);
 
   if (!targetEmployee) {
-    throw new Error("Target Employee (employee9@test.local) not found. Check creation loop.");
+    throw new Error("Target Employee (employee9@hrms.com) not found. Check creation loop.");
   }
 
   // A. Initial Topic/Reply in Forum
@@ -304,6 +311,259 @@ async function main() {
       createdInEvaluationId: historicalEvaluation.id,
     },
   });
+
+  // --- 4. CREATE HIRING DATA ---
+  console.log('Creating hiring data...');
+
+  // Create Recruiter User
+  const recruiterUser = await prisma.user.create({
+    data: {
+      email: 'recruiter@hrms.com',
+      password: salt,
+      tenantId: faker.string.uuid(),
+      role: Role.RECRUITER,
+      isActive: true,
+      isEmailVerified: true,
+      profile: {
+        create: {
+          fullName: 'John Recruiter',
+          avatarUrl: faker.image.avatar(),
+          phone: faker.phone.number(),
+          department: 'HR',
+          position: 'Technical Recruiter',
+          contractType: ContractType.FULL_TIME,
+          hireDate: faker.date.past({ years: 3 }).toISOString().split('T')[0],
+          site: 'New York',
+        },
+      },
+    },
+    include: { profile: true },
+  });
+
+  if (!recruiterUser.profile) {
+    throw new Error('Recruiter profile could not be created.');
+  }
+  const recruiterProfile = recruiterUser.profile;
+
+  // Get a test employee for internal applications
+  const employeeProfile = await prisma.profile.findFirst({
+    where: { user: { role: Role.EMPLOYEE } },
+    include: { user: true },
+  });
+
+  if (!employeeProfile) {
+    throw new Error('Employee profile not found for internal applications.');
+  }
+
+  // Create Job Postings
+  const seniorEngPosting = await prisma.jobPosting.create({
+    data: {
+      title: 'Senior Software Engineer',
+      description: 'We are looking for an experienced software engineer to join our team...',
+      department: 'Engineering',
+      site: 'New York Office',
+      salaryRange: {
+        min: 120000,
+        max: 180000,
+        currency: 'USD',
+      },
+      requirements: '5+ years of experience in backend development, Node.js, TypeScript, PostgreSQL',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+  });
+
+  console.log('Created job posting:', seniorEngPosting.title);
+
+  const productManagerPosting = await prisma.jobPosting.create({
+    data: {
+      title: 'Product Manager',
+      description: 'Lead product development and strategy...',
+      department: 'Product',
+      site: 'San Francisco Office',
+      salaryRange: {
+        min: 130000,
+        max: 200000,
+        currency: 'USD',
+      },
+      requirements: '3+ years of product management experience, technical background preferred',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+  });
+
+  console.log('Created job posting:', productManagerPosting.title);
+
+  const draftPosting = await prisma.jobPosting.create({
+    data: {
+      title: 'Data Scientist',
+      description: 'Work on machine learning models and data analysis...',
+      department: 'Data Science',
+      site: 'Remote',
+      status: PostingStatus.DRAFT,
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+  });
+
+  console.log('Created draft job posting:', draftPosting.title);
+
+  // Create External Candidates
+  const candidate1 = await prisma.candidate.create({
+    data: {
+      email: 'alice.smith@example.com',
+      fullName: 'Alice Smith',
+      phone: '+1555000001',
+      linkedinUrl: 'https://linkedin.com/in/alicesmith',
+      status: 'ACTIVE',
+    },
+  });
+
+  const candidate2 = await prisma.candidate.create({
+    data: {
+      email: 'bob.johnson@example.com',
+      fullName: 'Bob Johnson',
+      phone: '+1555000002',
+      linkedinUrl: 'https://linkedin.com/in/bobjohnson',
+      status: 'ACTIVE',
+    },
+  });
+
+  const candidate3 = await prisma.candidate.create({
+    data: {
+      email: 'carol.williams@example.com',
+      fullName: 'Carol Williams',
+      phone: '+1555000003',
+      status: 'ACTIVE',
+    },
+  });
+
+  console.log('Created 3 candidates');
+
+  // Create Applications
+  const app1 = await prisma.application.create({
+    data: {
+      candidateId: candidate1.id,
+      postingId: seniorEngPosting.id,
+      status: ApplicationStatus.SCREENING,
+      boardPosition: 1,
+      feedback: 'Strong technical background, good communication skills',
+      score: 85,
+    },
+  });
+
+  const app2 = await prisma.application.create({
+    data: {
+      candidateId: candidate2.id,
+      postingId: seniorEngPosting.id,
+      status: ApplicationStatus.INTERVIEW,
+      boardPosition: 2,
+      interviewedAt: new Date(),
+      feedback: 'Excellent problem-solving skills',
+      score: 90,
+    },
+  });
+
+  const app3 = await prisma.application.create({
+    data: {
+      candidateId: candidate3.id,
+      postingId: productManagerPosting.id,
+      status: ApplicationStatus.PENDING,
+      boardPosition: 1,
+    },
+  });
+
+  // Internal application
+  const app4 = await prisma.application.create({
+    data: {
+      profileId: employeeProfile.id,
+      postingId: productManagerPosting.id,
+      status: ApplicationStatus.SCREENING,
+      boardPosition: 2,
+      feedback: 'Internal candidate, familiar with company processes',
+      score: 80,
+    },
+  });
+
+  console.log('Created 4 applications');
+
+  // Create Interactions
+  await prisma.interaction.create({
+    data: {
+      type: 'NOTE',
+      content: 'Initial screening completed. Candidate has relevant experience.',
+      applicationId: app1.id,
+    },
+  });
+
+  await prisma.interaction.create({
+    data: {
+      type: 'EMAIL',
+      content: 'Thank you for your application. We will review and get back to you soon.',
+      applicationId: app1.id,
+    },
+  });
+
+  await prisma.interaction.create({
+    data: {
+      type: 'INTERVIEW_INVITE',
+      content: 'Interview scheduled for Tuesday, 2pm EST via Zoom. Meeting link will be sent separately.',
+      applicationId: app2.id,
+    },
+  });
+
+  await prisma.interaction.create({
+    data: {
+      type: 'NOTE',
+      content: 'Candidate performed well in technical interview. Recommend moving to final round.',
+      applicationId: app2.id,
+    },
+  });
+
+  console.log('Created interactions');
+
+  // Create Documents (mock - actual files would be uploaded via API)
+  await prisma.document.create({
+    data: {
+      fileName: 'alice_smith_resume.pdf',
+      type: 'RESUME',
+      mimeType: 'application/pdf',
+      size: 245678,
+      uploadUrl: '/uploads/mock-resume-1.pdf',
+      applicationId: app1.id,
+    },
+  });
+
+  await prisma.document.create({
+    data: {
+      fileName: 'bob_johnson_resume.pdf',
+      type: 'RESUME',
+      mimeType: 'application/pdf',
+      size: 198432,
+      uploadUrl: '/uploads/mock-resume-2.pdf',
+      applicationId: app2.id,
+    },
+  });
+
+  await prisma.document.create({
+    data: {
+      fileName: 'bob_johnson_portfolio.pdf',
+      type: 'PORTFOLIO',
+      mimeType: 'application/pdf',
+      size: 3456789,
+      uploadUrl: '/uploads/mock-portfolio.pdf',
+      candidateId: candidate2.id,
+    },
+  });
+
+  console.log('Created documents');
+
 
   
 

@@ -1,11 +1,51 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { Prisma } from '@prisma/client';
+import { createTransport, SendMailOptions, Transporter } from 'nodemailer';
+import { ConfigService } from '@nestjs/config';
+
 
 @Injectable()
 export class NotificationService {
-  constructor(private prisma: PrismaService) {}
+  private prisma: PrismaService;
+  private mailTransport: Transporter;
+  private readonly logger = new Logger(NotificationService.name);
+  constructor(private configService: ConfigService) {
+    this.mailTransport = createTransport({
+      host: this.configService.get('SMTP_HOST'),
+      port: Number(this.configService.get('SMTP_PORT')),
+      auth: {
+        user: this.configService.get('SMTP_USER'),
+        pass: this.configService.get('SMTP_PASS'),
+      },
+    });
+  }
+
+  async createInternal(userId: number, message: string): Promise<void> {
+    await this.prisma.notification.create({
+      data: {
+        recipientId: userId,
+        message,
+      },
+    });
+    this.logger.log(`Internal notification created for user ${userId}`);
+  }
+
+  async sendEmail(to: string, subject: string, body: string, from?: string): Promise<void> {
+    try {
+      await this.mailTransport.sendMail({
+        from: from || this.configService.get('SENDER_EMAIL'),
+        to,
+        subject,
+        html: body,
+      });
+      this.logger.log(`Email sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send email to ${to}: ${error.message}`);
+    }
+  }
+
 
   /**
    * ### Internal Method: Create Notification

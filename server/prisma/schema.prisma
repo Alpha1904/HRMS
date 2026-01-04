@@ -60,11 +60,10 @@ enum PostingStatus {
 
 enum ApplicationStatus {
   PENDING
-  REVIEWED
+  SCREENING
   INTERVIEW
-  SELECTED
+  EXAMINATION
   REJECTED
-  OFFERED
   HIRED
 }
 
@@ -259,8 +258,9 @@ model Permissions {
   @@index([role, resource])
 }
 
+
 // ========================================
-// CANDIDATE: Simplified external applicants
+// HIRING
 // ========================================
 model Candidate {
   id          Int      @id @default(autoincrement())
@@ -278,10 +278,6 @@ model Candidate {
 
   @@index([email])
 }
-
-// ========================================
-// RECRUITING
-// ========================================
 model JobPosting {
   id           Int           @id @default(autoincrement())
   title        String
@@ -329,11 +325,16 @@ model Application {
   offerSentAt   DateTime?
   hiredAt       DateTime?
 
+  // Optional: For drag-and-drop ordering within a column. 
+  // We use Float to easily insert between two items (e.g., 1.0 and 2.0 -> 1.5)
+  boardPosition Float?            @default(0)
+
   // Notes/feedback
   feedback String?
   score    Float? // AI or manual score (0-100)
 
   document Document? @relation("ApplicationDocument")
+  interactions Interaction[] @relation("ApplicationInteractions")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -342,6 +343,16 @@ model Application {
   @@index([postingId])
   @@index([status])
   @@index([profileId])
+}
+
+model Interaction {
+  id            Int        @id @default(autoincrement())
+  type          String      // NOTE, EMAIL, INTERVIEW_INVITE
+  content       String
+  createdAt     DateTime    @default(now())
+
+  applicationId Int
+  application   Application @relation("ApplicationInteractions", fields: [applicationId], references: [id])
 }
 
 // ========================================
