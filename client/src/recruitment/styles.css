@@ -1,0 +1,28 @@
+:root {
+  color-scheme: light dark;
+}
+
+/* Better drag feedback */
+.kanban-ghost {
+  opacity: 0.35;
+}
+
+.kanban-chosen {
+  cursor: grabbing;
+}
+
+/* Keep columns scrollable on shorter screens */
+.kanban-column-body {
+  max-height: calc(100vh - 230px);
+  overflow: auto;
+  min-height: 96px;
+  touch-action: none;
+}
+
+/* Small utility for truncation in older browsers */
+.truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

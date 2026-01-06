@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en" class="h-full">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HRMS • Recruitment</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body class="h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100" data-page="jobs">
+  <div id="global-loading" class="hidden fixed inset-0 z-[90] bg-black/20 dark:bg-black/40">
+    <div class="absolute inset-0 flex items-center justify-center">
+      <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg px-5 py-4 flex items-center gap-3">
+        <div class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600"></div>
+        <div id="global-loading-text" class="text-sm text-slate-700 dark:text-slate-200">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="min-h-full flex">
+    <aside class="hidden md:flex md:w-64 md:flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+      <div class="px-4 py-4 border-b border-slate-200 dark:border-slate-800">
+        <div class="text-sm font-semibold">Recruitment</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">Recruiter dashboard</div>
+      </div>
+
+      <nav class="p-3 flex flex-col gap-1">
+        <a data-nav="jobs" href="./index.html" class="px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Jobs & Kanban</a>
+        <a data-nav="candidates" href="./candidates.html" class="px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Candidates</a>
+        <a data-nav="documents" href="./documents.html" class="px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Documents</a>
+        <a data-nav="careers" href="./career.html" class="px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Careers (Public)</a>
+        <a data-nav="apply" href="./apply.html" class="px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Public Apply Form</a>
+      </nav>
+
+      <div class="mt-auto p-3 border-t border-slate-200 dark:border-slate-800">
+        <button id="logout-btn" class="w-full px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm">Logout</button>
+      </div>
+    </aside>
+
+    <main class="flex-1 min-w-0">
+      <header class="sticky top-0 z-10 bg-white/90 dark:bg-slate-950/80 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+        <div class="px-4 py-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div class="flex items-center gap-3">
+            <div class="md:hidden text-sm font-semibold">Recruitment</div>
+            <div id="me-badge" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">Checking…</div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <input id="token-input" class="w-full sm:w-[420px] px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" placeholder="Paste JWT token here (Bearer token)" />
+            <div class="flex gap-2">
+              <button id="token-save-btn" class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm">Save</button>
+              <button id="token-check-btn" class="px-3 py-2 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 text-sm">Check</button>
+              <button id="token-clear-btn" class="px-3 py-2 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 text-sm">Clear</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="p-4 space-y-6">
+        <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+          <div class="px-4 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div class="text-base font-semibold">Job postings</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400">Create, publish, pause, close and manage pipelines.</div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
+              <select id="jobs-filter-status" class="px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm">
+                <option value="">All statuses</option>
+                <option value="DRAFT">DRAFT</option>
+                <option value="OPEN">OPEN</option>
+                <option value="PAUSED">PAUSED</option>
+                <option value="CLOSED">CLOSED</option>
+              </select>
+              <button id="job-create-btn" class="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-sm">New job</button>
+            </div>
+          </div>
+
+          <div class="overflow-auto">
+            <table class="min-w-full">
+              <thead>
+                <tr class="text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <th class="px-4 py-3">Title</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Applications</th>
+                  <th class="px-4 py-3">Published</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-tbody" class="text-sm"></tbody>
+            </table>
+          </div>
+
+          <div id="jobs-pagination" class="px-4 py-3"></div>
+        </section>
+
+        <section id="kanban-section" class="hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+          <div class="px-4 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-base font-semibold">Kanban board</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400" id="kanban-job-title">—</div>
+            </div>
+            <button id="kanban-close-btn" class="px-3 py-2 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm">Close</button>
+          </div>
+
+          <div class="p-4">
+            <div id="kanban-empty" class="hidden text-sm text-slate-500 dark:text-slate-400">No applications found for this posting.</div>
+            <div id="kanban-columns" class="flex gap-3 overflow-auto pb-2"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="job-modal" class="hidden fixed inset-0 z-[80]" aria-hidden="true" data-modal>
+    <div class="absolute inset-0 bg-black/40" data-modal-overlay></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-2xl rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl">
+        <div class="px-4 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div id="job-modal-title" class="text-base font-semibold">Create job posting</div>
+          <button id="job-modal-cancel" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" type="button" data-modal-close>✕</button>
+        </div>
+
+        <form id="job-modal-form" class="p-4 grid grid-cols-1 gap-3">
+          <input id="job-id" type="hidden" />
+
+          <div>
+            <label class="block text-xs text-slate-600 dark:text-slate-300">Title *</label>
+            <input id="job-title" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" required />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-600 dark:text-slate-300">Department</label>
+              <input id="job-department" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-600 dark:text-slate-300">Site</label>
+              <input id="job-site" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-600 dark:text-slate-300">Description</label>
+            <textarea id="job-description" class="w-full min-h-[110px] px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-600 dark:text-slate-300">Requirements</label>
+            <textarea id="job-requirements" class="w-full min-h-[110px] px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs text-slate-600 dark:text-slate-300">Salary min</label>
+              <input id="job-salary-min" type="number" min="0" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-600 dark:text-slate-300">Salary max</label>
+              <input id="job-salary-max" type="number" min="0" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-600 dark:text-slate-300">Currency</label>
+              <input id="job-salary-currency" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" placeholder="USD" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-600 dark:text-slate-300">Expires at</label>
+            <input id="job-expiresAt" type="date" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" />
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button type="button" class="px-3 py-2 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm" data-modal-close>Cancel</button>
+            <button type="submit" class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="application-modal" class="hidden fixed inset-0 z-[85]" aria-hidden="true" data-modal>
+    <div class="absolute inset-0 bg-black/40" data-modal-overlay></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-4xl rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl">
+        <div class="px-4 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div class="text-base font-semibold">Application details</div>
+          <button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" type="button" data-modal-close>✕</button>
+        </div>
+        <div id="application-modal-body" class="p-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <script src="./scripts/core.js"></script>
+  <script src="./scripts/ui.js"></script>
+  <script src="./scripts/api.js"></script>
+  <script src="./scripts/app.js"></script>
+  <script src="./scripts/kanban.js"></script>
+  <script src="./scripts/jobs.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.HRMSRecruitment && window.HRMSRecruitment.jobs) {
+        window.HRMSRecruitment.jobs.init();
+      }
+    });
+  </script>
+</body>
+
+</html>

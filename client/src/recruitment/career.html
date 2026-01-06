@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en" class="h-full">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HRMS • Careers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body class="h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100" data-page="careers">
+  <div id="global-loading" class="hidden fixed inset-0 z-[90] bg-black/20 dark:bg-black/40">
+    <div class="absolute inset-0 flex items-center justify-center">
+      <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg px-5 py-4 flex items-center gap-3">
+        <div class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600"></div>
+        <div id="global-loading-text" class="text-sm text-slate-700 dark:text-slate-200">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <header class="sticky top-0 z-10 bg-white/90 dark:bg-slate-950/80 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+    <div class="px-4 py-3 max-w-6xl mx-auto flex items-center justify-between gap-3">
+      <div>
+        <div class="text-base font-semibold">Careers</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">Browse published job openings</div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="./apply.html" class="px-3 py-2 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm">Apply form</a>
+        <a href="./index.html" class="px-3 py-2 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm">Recruiter dashboard</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="p-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex items-center justify-between gap-3">
+        <div class="text-sm text-slate-600 dark:text-slate-300" id="careers-summary">Loading jobs…</div>
+        <button id="careers-refresh" class="px-3 py-2 rounded bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-sm">Refresh</button>
+      </div>
+
+      <div id="careers-empty" class="hidden mt-4 p-6 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div class="font-semibold">No published jobs found</div>
+        <div class="text-sm text-slate-600 dark:text-slate-300 mt-1">Please check back later.</div>
+      </div>
+
+      <div id="careers-grid" class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+  </main>
+
+  <script src="./scripts/core.js"></script>
+  <script src="./scripts/ui.js"></script>
+  <script src="./scripts/career.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      window.HRMSRecruitment.career.init();
+    });
+  </script>
+</body>
+
+</html>
