@@ -74,9 +74,9 @@ export default function UserDashboard() {
               className="block p-4 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition duration-150"
             >
               <div className="flex justify-between items-start">
-                <div className="flex items-start">
-                  <div className="p-2 bg-blue-50 border border-blue-100 rounded-full mr-3 mt-1">
-                    <notification.icon className="w-4 h-4 text-blue" />
+                <div className="flex items-start md:items-center gap-2">
+                  <div className="p-2 bg-blue-50 border border-blue-100 rounded-full">
+                    <notification.icon className="w-4 h-4 text-primary" />
                   </div>
                   
                   <div>

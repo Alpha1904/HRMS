@@ -87,7 +87,7 @@ export default function Communication() {
   }, []);
 
   const MessageItem = ({ sender, subject, preview, time, tag }) => (
-    <div className="p-4 md:p-6 mb-3 rounded-xl bg-white border border-gray-100 shadow-md">
+    <div className="p-4 md:p-6 mb-3 rounded-xl bg-white border border-gray-200">
       <div className="flex justify-between items-start">
         <div className="flex items-start">
           <div className="p-2 mr-3 border-r-4 border-primary rounded-full bg-white">
@@ -133,10 +133,10 @@ export default function Communication() {
 
   return (
     <div className="space-y-6">
-      <h2>Communication</h2>
+      {/* <h2>Communication</h2> */}
 
-      {/* --- 1. Cartes d'État (UTILISATION DU StatCard IMPORTÉ) --- */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* --- Cartes d'État --- */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {statsCommDisplay.map((stat) => (
           <StatCard
             key={stat.title}
@@ -149,7 +149,7 @@ export default function Communication() {
       </div>
 
       {/* --- Interface à Onglets (Messages / Annonces) --- */}
-      <div className="bg-white p-6 rounded-xl shadow-md">
+      <div className="bg-white p-4 md:p-6 rounded-xl shadow-md">
         <div className="flex mb-4 bg-gray-200 p-1 rounded-md">
           <button
             onClick={() => setActiveTab("Messages")}
