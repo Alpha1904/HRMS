@@ -90,34 +90,34 @@
     tbody.innerHTML = '';
 
     if (!state.data.length) {
-      tbody.innerHTML = '<tr><td class="px-4 py-4 text-sm text-slate-500" colspan="5">No job postings found.</td></tr>';
+      tbody.innerHTML = '<tr><td class="px-4 py-4 text-sm text-gray-500" colspan="5">No job postings found.</td></tr>';
       return;
     }
 
     state.data.forEach((job) => {
       const tr = document.createElement('tr');
-      tr.className = 'border-b border-slate-200 dark:border-slate-800';
+      tr.className = 'border-b border-gray-300';
 
       const appsCount = job._count?.applications ?? 0;
 
       tr.innerHTML = `
         <td class="px-4 py-3">
-          <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(job.title)}</div>
-          <div class="text-xs text-slate-500 dark:text-slate-400">${escapeHtml(job.department || '')}${job.site ? ' • ' + escapeHtml(job.site) : ''}</div>
+          <div class="text-sm font-semibold text-black">${escapeHtml(job.title)}</div>
+          <div class="text-xs text-gray-500">${escapeHtml(job.department || '')}${job.site ? ' • ' + escapeHtml(job.site) : ''}</div>
         </td>
         <td class="px-4 py-3">
-          <span class="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">${escapeHtml(job.status)}</span>
+          <span class="text-xs px-2 py-1 rounded bg-gray-100 text-black">${escapeHtml(job.status)}</span>
         </td>
-        <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">${appsCount}</td>
-        <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">${job.publishedAt ? new Date(job.publishedAt).toLocaleDateString() : '—'}</td>
+        <td class="px-4 py-3 text-sm text-black">${appsCount}</td>
+        <td class="px-4 py-3 text-sm text-black">${job.publishedAt ? new Date(job.publishedAt).toLocaleDateString() : '—'}</td>
         <td class="px-4 py-3">
           <div class="flex flex-wrap gap-2 justify-end">
-            <button data-action="kanban" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs">Kanban</button>
-            <button data-action="edit" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs">Edit</button>
-            <button data-action="publish" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs">Publish</button>
-            <button data-action="pause" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-amber-600 hover:bg-amber-700 text-white text-xs">Pause</button>
-            <button data-action="close" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs">Close</button>
-            <button data-action="delete" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 text-xs">Delete</button>
+            <button data-action="kanban" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-blue-600 hover:bg-blue-400 text-white text-xs">View</button>
+            <button data-action="edit" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-green-600 hover:bg-green-400 text-white text-xs">Edit</button>
+            <button data-action="publish" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-violet-600 hover:bg-violet-400 text-white text-xs">Publish</button>
+            <button data-action="pause" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-gray-600 hover:bg-gray-400 text-white text-xs">Pause</button>
+            <button data-action="close" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-orange-600 hover:bg-orange-400 text-white text-xs">Close</button>
+            <button data-action="delete" data-id="${job.id}" class="px-2.5 py-1.5 rounded bg-red-600 hover:bg-red-400 text-white text-xs">Delete</button>
           </div>
         </td>
       `;
@@ -146,7 +146,8 @@
         }
 
         if (action === 'delete') {
-          if (!confirm('Delete this job posting?')) return;
+          await openDeleteJobModal(id, job?.title);
+          return;
         }
 
         try {
@@ -180,10 +181,10 @@
     const totalPages = meta.totalPages || 1;
     el.innerHTML = `
       <div class="flex items-center justify-between gap-3">
-        <div class="text-xs text-slate-500 dark:text-slate-400">Total: ${meta.total} • Page ${meta.page} / ${totalPages}</div>
+        <div class="text-xs text-gray-500">Total: ${meta.total} • Page ${meta.page} / ${totalPages}</div>
         <div class="flex items-center gap-2">
-          <button id="jobs-prev" class="px-3 py-1.5 rounded border border-slate-200 dark:border-slate-800 text-sm" ${meta.page <= 1 ? 'disabled' : ''}>Prev</button>
-          <button id="jobs-next" class="px-3 py-1.5 rounded border border-slate-200 dark:border-slate-800 text-sm" ${meta.page >= totalPages ? 'disabled' : ''}>Next</button>
+          <button id="jobs-prev" class="px-3 py-1.5 rounded border border-gray-300 text-sm" ${meta.page <= 1 ? 'disabled' : ''}>Prev</button>
+          <button id="jobs-next" class="px-3 py-1.5 rounded border border-gray-300 text-sm" ${meta.page >= totalPages ? 'disabled' : ''}>Next</button>
         </div>
       </div>
     `;
@@ -265,6 +266,43 @@
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+  }
+
+  async function openDeleteJobModal(jobId, jobTitle) {
+    const modal = qs('#delete-job-modal');
+    const titleElement = qs('#delete-job-title');
+    const confirmBtn = qs('#confirm-delete-job-btn');
+    
+    if (!modal || !titleElement || !confirmBtn) return;
+
+    // Set job title
+    titleElement.textContent = jobTitle || `Job #${jobId}`;
+
+    // Show modal
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+
+    // Handle confirm button click
+    const handleConfirm = async () => {
+      try {
+        setLoading(true, 'Deleting job posting…');
+        await deleteJobPosting(jobId);
+        toast('Job posting deleted.', 'success');
+        await loadJobs();
+        
+        // Close modal
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+      } catch (e) {
+        toast(e.message || 'Failed to delete job posting.', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Remove existing listener and add new one
+    confirmBtn.removeEventListener('click', handleConfirm);
+    confirmBtn.addEventListener('click', handleConfirm);
   }
 
   function init() {

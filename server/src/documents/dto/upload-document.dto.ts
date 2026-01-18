@@ -7,8 +7,8 @@ export class UploadDocumentDto {
   entityType: 'profile' | 'candidate' | 'application';
 
   @ApiProperty()
-  @IsInt()
-  entityId: number;
+  @IsString()
+  entityId: string;
 
   @ApiProperty({ example: 'RESUME' })
   @IsString()

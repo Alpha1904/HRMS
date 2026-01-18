@@ -50,6 +50,12 @@ export class JobPostingController {
     return this.jobPostingService.findAll(filters, currentUser);
   }
 
+  @Get('public')
+  @ApiOperation({ summary: 'Get published job postings (public)' })
+  findPublic(@Query() filters: FilterJobPostingDto) {
+    return this.jobPostingService.findPublic(filters);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

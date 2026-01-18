@@ -20,6 +20,15 @@ import { UploadDocumentDto } from './dto/upload-document.dto';
 export class DocumentsController {
   constructor(private documentsService: DocumentsService) {}
 
+
+  // get all docs 
+
+  @Get()
+  @ApiOperation({ summary: 'Get all documents' })
+  async getAllDocuments() {
+    return this.documentsService.docs();
+  }
+
   @Post('upload')
   
   @ApiBearerAuth()
@@ -44,7 +53,7 @@ export class DocumentsController {
     return this.documentsService.upload(
       file,
       dto.entityType,
-      +dto.entityId,
+      dto.entityId,
       dto.type,
     );
   }

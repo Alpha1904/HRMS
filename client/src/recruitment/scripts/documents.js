@@ -5,155 +5,200 @@
     uploadDocument,
     getDocument,
     deleteDocument,
-    getCandidate,
-    getApplication,
+    getAllDocuments,
+    getAllProfiles,
+    getAllCandidates,
+    getAllApplications,
   } = NS.api;
   const { resolveUploadUrl } = NS.core;
 
-  function renderDocumentCard(d) {
-    const url = resolveUploadUrl(d.uploadUrl);
+  let allDocuments = [];
+  let filteredDocuments = [];
+  let entityData = {
+    profiles: [],
+    candidates: [],
+    applications: []
+  };
+
+  function formatDocId(id) {
+    return `doc-${String(id).padStart(2, '0')}`;
+  }
+
+  async function loadEntityData() {
+    try {
+      setLoading(true, 'Loading entity data…');
+      
+      const [profiles, candidates, applications] = await Promise.all([
+        getAllProfiles(),
+        getAllCandidates(), 
+        getAllApplications()
+      ]);
+      
+      entityData.profiles = profiles?.data || profiles || [];
+      entityData.candidates = candidates?.data || candidates || [];
+      entityData.applications = applications?.data || applications || [];
+    } catch (err) {
+      toast(err.message || 'Failed to load entity data.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function populateEntityDropdown(entityType) {
+    const dropdown = qs('#doc-entity-name');
+    const hiddenInput = qs('#doc-entity-id');
+    
+    dropdown.innerHTML = '<option value="">Select...</option>';
+    hiddenInput.value = '';
+    
+    let options = [];
+    
+    switch (entityType) {
+      case 'profile':
+        options = entityData.profiles.map(profile => ({
+          id: profile.id,
+          name: profile.fullName || `Profile ${profile.id}`
+        }));
+        break;
+      case 'candidate':
+        options = entityData.candidates.map(candidate => ({
+          id: candidate.id,
+          name: candidate.fullName || candidate.email || `Candidate ${candidate.id}`
+        }));
+        break;
+      case 'application':
+        options = entityData.applications.map(app => ({
+          id: app.id,
+          name: app.candidate?.fullName || 
+                 app.profile?.fullName || 
+                 `Application ${app.id}`
+        }));
+        break;
+    }
+    
+    options.forEach(option => {
+      const optionEl = document.createElement('option');
+      optionEl.value = option.id;
+      optionEl.textContent = option.name;
+      dropdown.appendChild(optionEl);
+    });
+    
+    dropdown.disabled = false;
+  }
+
+  function handleEntityTypeChange() {
+    const entityType = qs('#doc-entity-type').value;
+    const dropdown = qs('#doc-entity-name');
+    
+    if (!entityType) {
+      dropdown.disabled = true;
+      dropdown.innerHTML = '<option value="">Select entity type first</option>';
+      qs('#doc-entity-id').value = '';
+      return;
+    }
+    
+    populateEntityDropdown(entityType);
+  }
+
+  function handleEntityNameChange() {
+    const selectedId = qs('#doc-entity-name').value;
+    qs('#doc-entity-id').value = selectedId;
+  }
+
+  function renderDocumentRow(doc) {
+    const url = resolveUploadUrl(doc.uploadUrl);
     return `
-      <div class="rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-3">
-        <div class="flex items-start justify-between gap-2">
-          <div class="min-w-0">
-            <div class="text-sm font-semibold truncate">${escapeHtml(d.fileName || '')}</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">Type: ${escapeHtml(d.type || '')} • Doc #${d.id}</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">${escapeHtml(d.mimeType || '')} ${d.size ? `• ${Math.round(d.size / 1024)} KB` : ''}</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">uploadUrl: ${escapeHtml(d.uploadUrl || '')}</div>
+      <tr class="hover:bg-gray-100">
+        <td class="px-4 py-3 font-mono text-xs">${formatDocId(doc.id)}</td>
+        <td class="px-4 py-3">${escapeHtml(doc.fullName || 'Unknown')}</td>
+        <td class="px-4 py-3">
+          <span class="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+            ${escapeHtml(doc.type || '')}
+          </span>
+        </td>
+        <td class="px-4 py-3">
+          <span class="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-black">
+            ${escapeHtml(doc.entityType || '')}
+          </span>
+        </td>
+        <td class="px-4 py-3">
+          <div class="flex gap-2">
+            <a href="${url}" target="_blank" rel="noreferrer" class="px-2.5 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs">View</a>
+            <button data-doc-delete="${doc.id}" class="px-2.5 py-1.5 rounded bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-xs">Delete</button>
           </div>
-          <div class="flex flex-col gap-2 shrink-0">
-            <a class="px-2.5 py-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm" target="_blank" rel="noreferrer" href="${url}">Open</a>
-            <button data-doc-delete="${d.id}" class="px-2.5 py-1.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-sm" type="button">Delete</button>
-          </div>
-        </div>
-      </div>
+        </td>
+      </tr>
     `;
   }
 
-  async function handleUpload(e) {
-    e.preventDefault();
-
-    const entityType = qs('#doc-entity-type').value;
-    const entityId = qs('#doc-entity-id').value;
-    const type = qs('#doc-type').value;
-    const fileInput = qs('#doc-file');
-    const file = fileInput.files && fileInput.files[0];
-
-    if (!file) {
-      toast('Select a file.', 'warn');
-      return;
-    }
-
+  async function loadAllDocuments() {
     try {
-      setLoading(true, 'Uploading…');
-
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('entityType', entityType);
-      fd.append('entityId', String(entityId));
-      fd.append('type', type);
-
-      const created = await uploadDocument(fd);
-      toast('Uploaded.', 'success');
-
-      // If API returns the created document, show it.
-      if (created && created.id) {
-        qs('#doc-id').value = String(created.id);
-        await lookupDocument(created.id);
-      }
-    } catch (err) {
-      toast(err.message || 'Upload failed.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function lookupDocument(id) {
-    try {
-      setLoading(true, 'Fetching document…');
-      const d = await getDocument(id);
-      const el = qs('#doc-lookup-result');
-      el.innerHTML = renderDocumentCard(d);
-      wireDeleteButtons(el);
-    } catch (err) {
-      toast(err.message || 'Failed to fetch document.', 'error');
-      qs('#doc-lookup-result').innerHTML = '';
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleDocLookup(e) {
-    e.preventDefault();
-    const id = Number(qs('#doc-id').value);
-    if (!id) {
-      toast('Enter a document ID.', 'warn');
-      return;
-    }
-    await lookupDocument(id);
-  }
-
-  async function handleEntityDocs(e) {
-    e.preventDefault();
-
-    const type = qs('#entity-type').value;
-    const id = Number(qs('#entity-id').value);
-    if (!id) {
-      toast('Enter an entity ID.', 'warn');
-      return;
-    }
-
-    try {
-      setLoading(true, 'Loading…');
-
-      let docs = [];
-      if (type === 'candidate') {
-        const c = await getCandidate(id);
-        docs = Array.isArray(c.documents) ? c.documents.filter((d) => !d.deletedAt) : [];
-      } else if (type === 'application') {
-        const a = await getApplication(id);
-        if (a.document && !a.document.deletedAt) docs = [a.document];
-      }
-
-      const el = qs('#entity-docs-result');
-      if (!docs.length) {
-        el.innerHTML = '<div class="text-sm text-slate-500 dark:text-slate-400">No documents found.</div>';
-        return;
-      }
-
-      el.innerHTML = `<div class="flex flex-col gap-2">${docs.map(renderDocumentCard).join('')}</div>`;
-      wireDeleteButtons(el);
+      setLoading(true, 'Loading documents…');
+      allDocuments = await getAllDocuments();
+      
+      // Extract unique document types for filter
+      const docTypes = [...new Set(allDocuments.map(doc => doc.type).filter(Boolean))];
+      const typeFilter = qs('#doc-type-filter');
+      typeFilter.innerHTML = '<option value="">All Types</option>' + 
+        docTypes.map(type => `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`).join('');
+      
+      applyFilters();
     } catch (err) {
       toast(err.message || 'Failed to load documents.', 'error');
-      qs('#entity-docs-result').innerHTML = '';
+      qs('#documents-table-body').innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Failed to load documents.</td></tr>';
     } finally {
       setLoading(false);
     }
   }
 
-  function wireDeleteButtons(root) {
-    (root || document).querySelectorAll('button[data-doc-delete]').forEach((btn) => {
+  function applyFilters() {
+    const searchTerm = qs('#doc-search').value.toLowerCase();
+    const typeFilter = qs('#doc-type-filter').value;
+    const entityFilter = qs('#entity-type-filter').value;
+
+    filteredDocuments = allDocuments.filter(doc => {
+      const matchesSearch = !searchTerm || 
+        doc.id.toString().includes(searchTerm) ||
+        (doc.type && doc.type.toLowerCase().includes(searchTerm)) ||
+        (doc.fileName && doc.fileName.toLowerCase().includes(searchTerm)) ||
+        (doc.fullName && doc.fullName.toLowerCase().includes(searchTerm));
+      
+      const matchesType = !typeFilter || doc.type === typeFilter;
+      const matchesEntity = !entityFilter || doc.entityType === entityFilter;
+
+      return matchesSearch && matchesType && matchesEntity;
+    });
+
+    renderTable();
+  }
+
+  function renderTable() {
+    const tbody = qs('#documents-table-body');
+    const noResults = qs('#no-results');
+
+    if (filteredDocuments.length === 0) {
+      tbody.innerHTML = '';
+      noResults.classList.remove('hidden');
+      return;
+    }
+
+    noResults.classList.add('hidden');
+    tbody.innerHTML = filteredDocuments.map(renderDocumentRow).join('');
+    wireDeleteButtons();
+  }
+
+  function wireDeleteButtons() {
+    document.querySelectorAll('button[data-doc-delete]').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = Number(btn.getAttribute('data-doc-delete'));
         if (!id) return;
-        if (!confirm('Delete this document?')) return;
-
-        try {
-          setLoading(true, 'Deleting…');
-          await deleteDocument(id);
-          toast('Deleted.', 'success');
-
-          // Refresh lookup sections if currently showing this id.
-          const lookupId = Number(qs('#doc-id').value);
-          if (lookupId === id) qs('#doc-lookup-result').innerHTML = '';
-
-          // Clear any entity results (unknown where it came from)
-          // Caller can re-run entity load.
-        } catch (err) {
-          toast(err.message || 'Delete failed.', 'error');
-        } finally {
-          setLoading(false);
-        }
+        
+        // Find the document name from the table row
+        const row = btn.closest('tr');
+        const docNameElement = row?.querySelector('td:nth-child(3)'); // Document type column
+        const docName = docNameElement?.textContent || 'this document';
+        
+        await openDeleteModal(id, docName);
       });
     });
   }
@@ -167,10 +212,116 @@
       .replaceAll("'", '&#039;');
   }
 
+  async function handleUpload(e) {
+    e.preventDefault();
+
+    const entityType = qs('#doc-entity-type').value;
+    const entityId = qs('#doc-entity-id').value;
+    const type = qs('#doc-type').value;
+    const fileInput = qs('#doc-file');
+    const file = fileInput.files && fileInput.files[0];
+
+    if (!entityType) {
+      toast('Please select an entity type.', 'warn');
+      return;
+    }
+
+    if (!entityId) {
+      toast('Please select an entity.', 'warn');
+      return;
+    }
+
+    if (!type) {
+      toast('Please select a document type.', 'warn');
+      return;
+    }
+
+    if (!file) {
+      toast('Please select a file.', 'warn');
+      return;
+    }
+
+    try {
+      setLoading(true, 'Uploading…');
+
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('entityType', entityType);
+      fd.append('entityId', entityId);
+      fd.append('type', type);
+
+      const created = await uploadDocument(fd);
+      toast('Document uploaded successfully.', 'success');
+
+      // Reset form and reload table
+      qs('#doc-upload').reset();
+      qs('#doc-entity-name').disabled = true;
+      qs('#doc-entity-name').innerHTML = '<option value="">Select entity type first</option>';
+      await loadAllDocuments();
+    } catch (err) {
+      toast(err.message || 'Upload failed.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function openDeleteModal(documentId, documentName) {
+    const modal = qs('#delete-modal');
+    const nameElement = qs('#delete-doc-name');
+    const confirmBtn = qs('#confirm-delete-btn');
+    
+    if (!modal || !nameElement || !confirmBtn) return;
+
+    // Set document name
+    nameElement.textContent = documentName;
+
+    // Show modal
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+
+    // Handle confirm button click
+    const handleConfirm = async () => {
+      try {
+        setLoading(true, 'Deleting…');
+        await deleteDocument(documentId);
+        toast('Document deleted.', 'success');
+        await loadAllDocuments(); // Reload the table
+        
+        // Close modal
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+      } catch (err) {
+        toast(err.message || 'Delete failed.', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Remove existing listener and add new one
+    confirmBtn.removeEventListener('click', handleConfirm);
+    confirmBtn.addEventListener('click', handleConfirm);
+  }
+
   function init() {
+    // Load entity data first
+    loadEntityData();
+    
+    // Upload form
     qs('#doc-upload')?.addEventListener('submit', handleUpload);
-    qs('#doc-lookup')?.addEventListener('submit', handleDocLookup);
-    qs('#entity-docs')?.addEventListener('submit', handleEntityDocs);
+    
+    // Entity type change handler
+    qs('#doc-entity-type')?.addEventListener('change', handleEntityTypeChange);
+    
+    // Entity name change handler
+    qs('#doc-entity-name')?.addEventListener('change', handleEntityNameChange);
+    
+    // Search and filters
+    qs('#doc-search')?.addEventListener('input', applyFilters);
+    qs('#doc-type-filter')?.addEventListener('change', applyFilters);
+    qs('#entity-type-filter')?.addEventListener('change', applyFilters);
+    
+    // Load initial documents data
+    loadAllDocuments();
   }
 
   NS.documents = {

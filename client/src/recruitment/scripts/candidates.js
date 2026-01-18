@@ -45,27 +45,27 @@
     tbody.innerHTML = '';
 
     if (!state.data.length) {
-      tbody.innerHTML = '<tr><td class="px-4 py-4 text-sm text-slate-500" colspan="5">No candidates found.</td></tr>';
+      tbody.innerHTML = '<tr><td class="px-4 py-4 text-sm text-gray-500" colspan="5">No candidates found.</td></tr>';
       return;
     }
 
     state.data.forEach((c) => {
       const appsCount = c._count?.applications ?? 0;
       const tr = document.createElement('tr');
-      tr.className = 'border-b border-slate-200 dark:border-slate-800';
+      tr.className = 'border-b border-gray-300';
       tr.innerHTML = `
         <td class="px-4 py-3">
-          <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(c.fullName)}</div>
-          <div class="text-xs text-slate-500 dark:text-slate-400">Status: ${escapeHtml(c.status || '')}</div>
+          <div class="text-sm font-semibold text-black">${escapeHtml(c.fullName)}</div>
+          <div class="text-xs text-gray-500">Status: ${escapeHtml(c.status || '')}</div>
         </td>
-        <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">${escapeHtml(c.email)}</td>
-        <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">${escapeHtml(c.phone || '—')}</td>
-        <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-200">${appsCount}</td>
+        <td class="px-4 py-3 text-sm text-black">${escapeHtml(c.email)}</td>
+        <td class="px-4 py-3 text-sm text-black">${escapeHtml(c.phone || '—')}</td>
+        <td class="px-4 py-3 text-sm text-black">${appsCount}</td>
         <td class="px-4 py-3">
           <div class="flex justify-end gap-2">
-            <button data-action="view" data-id="${c.id}" class="px-2.5 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white text-xs">View</button>
-            <button data-action="edit" data-id="${c.id}" class="px-2.5 py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs">Edit</button>
-            <button data-action="deactivate" data-id="${c.id}" class="px-2.5 py-1.5 rounded bg-amber-600 hover:bg-amber-700 text-white text-xs">Deactivate</button>
+            <button data-action="view" data-id="${c.id}" class="px-2.5 py-1.5 rounded bg-blue-600 hover:bg-blue-400 text-white text-xs">View</button>
+            <button data-action="edit" data-id="${c.id}" class="px-2.5 py-1.5 rounded bg-green-600 hover:bg-green-400 text-white text-xs">Edit</button>
+            <button data-action="deactivate" data-id="${c.id}" class="px-2.5 py-1.5 rounded bg-red-600 hover:bg-red-700 text-white text-xs">Deactivate</button>
           </div>
         </td>
       `;
@@ -89,17 +89,7 @@
         }
 
         if (action === 'deactivate') {
-          if (!confirm('Deactivate this candidate?')) return;
-          try {
-            setLoading(true, 'Deactivating…');
-            await deactivateCandidate(id);
-            toast('Candidate deactivated.', 'success');
-            await loadCandidates();
-          } catch (e) {
-            toast(e.message || 'Failed to deactivate.', 'error');
-          } finally {
-            setLoading(false);
-          }
+          await openDeactivateModal(id);
         }
       });
     });
@@ -118,10 +108,10 @@
     const totalPages = meta.totalPages || 1;
     el.innerHTML = `
       <div class="flex items-center justify-between gap-3">
-        <div class="text-xs text-slate-500 dark:text-slate-400">Total: ${meta.total} • Page ${meta.page} / ${totalPages}</div>
+        <div class="text-xs text-gray-500">Total: ${meta.total} • Page ${meta.page} / ${totalPages}</div>
         <div class="flex items-center gap-2">
-          <button id="cand-prev" class="px-3 py-1.5 rounded border border-slate-200 dark:border-slate-800 text-sm" ${meta.page <= 1 ? 'disabled' : ''}>Prev</button>
-          <button id="cand-next" class="px-3 py-1.5 rounded border border-slate-200 dark:border-slate-800 text-sm" ${meta.page >= totalPages ? 'disabled' : ''}>Next</button>
+          <button id="cand-prev" class="px-3 py-1.5 rounded border border-gray-300 text-sm" ${meta.page <= 1 ? 'disabled' : ''}>Prev</button>
+          <button id="cand-next" class="px-3 py-1.5 rounded border border-gray-300 text-sm" ${meta.page >= totalPages ? 'disabled' : ''}>Next</button>
         </div>
       </div>
     `;
@@ -156,6 +146,21 @@
       const docs = Array.isArray(c.documents) ? c.documents.filter((d) => !d.deletedAt) : [];
       const apps = Array.isArray(c.applications) ? c.applications : [];
 
+      // Collect documents from applications as well
+      const applicationDocs = [];
+      for (const app of apps) {
+        if (app.document && !app.document.deletedAt) {
+          applicationDocs.push({
+            ...app.document,
+            source: 'application',
+            applicationId: app.id,
+            applicationTitle: app.posting?.title || 'Job posting'
+          });
+        }
+      }
+
+      const allDocs = [...docs, ...applicationDocs];
+
       const body = qs('#candidate-modal-body');
       body.innerHTML = `
         <form id="candidate-form" class="grid grid-cols-1 gap-3">
@@ -163,45 +168,46 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs text-slate-600 dark:text-slate-300">Full name</label>
-              <input id="cand-fullName" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" value="${escapeHtml(c.fullName || '')}" ${mode === 'view' ? 'disabled' : ''} />
+              <label class="block text-xs text-gray-600">Full name</label>
+              <input id="cand-fullName" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" value="${escapeHtml(c.fullName || '')}" ${mode === 'view' ? 'disabled' : ''} />
             </div>
             <div>
-              <label class="block text-xs text-slate-600 dark:text-slate-300">Email</label>
-              <input id="cand-email" type="email" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" value="${escapeHtml(c.email || '')}" ${mode === 'view' ? 'disabled' : ''} />
+              <label class="block text-xs text-gray-600">Email</label>
+              <input id="cand-email" type="email" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" value="${escapeHtml(c.email || '')}" ${mode === 'view' ? 'disabled' : ''} />
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs text-slate-600 dark:text-slate-300">Phone</label>
-              <input id="cand-phone" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" value="${escapeHtml(c.phone || '')}" ${mode === 'view' ? 'disabled' : ''} />
+              <label class="block text-xs text-gray-600">Phone</label>
+              <input id="cand-phone" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" value="${escapeHtml(c.phone || '')}" ${mode === 'view' ? 'disabled' : ''} />
             </div>
             <div>
-              <label class="block text-xs text-slate-600 dark:text-slate-300">LinkedIn</label>
-              <input id="cand-linkedin" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" value="${escapeHtml(c.linkedinUrl || '')}" ${mode === 'view' ? 'disabled' : ''} />
+              <label class="block text-xs text-gray-600">LinkedIn</label>
+              <input id="cand-linkedin" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" value="${escapeHtml(c.linkedinUrl || '')}" ${mode === 'view' ? 'disabled' : ''} />
             </div>
           </div>
 
           <div class="flex items-center justify-end gap-2">
-            <button type="button" class="px-3 py-2 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm" data-modal-close>Close</button>
-            ${mode === 'edit' ? '<button type="submit" class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm">Save</button>' : ''}
+            <button type="button" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm" data-modal-close>Close</button>
+            ${mode === 'edit' ? '<button type="submit" class="px-3 py-2 rounded bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm">Save</button>' : ''}
           </div>
         </form>
 
-        <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
-            <div class="text-sm font-semibold">Documents</div>
+        <div class="mt-6">
+          <div class="border border-gray-300 rounded-lg p-3">
+            <div class="text-sm font-semibold text-black">Documents (${allDocs.length})</div>
             <div class="mt-2" id="cand-docs"></div>
           </div>
-          <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
-            <div class="text-sm font-semibold">Applications</div>
-            <div class="mt-2" id="cand-apps"></div>
-          </div>
+        </div>
+
+        <div class="mt-4 border border-gray-300 rounded-lg p-3">
+          <div class="text-sm font-semibold text-black">Applications (${apps.length})</div>
+          <div class="mt-2" id="cand-apps"></div>
         </div>
       `;
 
-      renderCandidateDocs(docs);
+      renderCandidateDocs(allDocs);
       renderCandidateApps(apps);
 
       const form = qs('#candidate-form');
@@ -239,21 +245,32 @@
     if (!el) return;
 
     if (!docs.length) {
-      el.innerHTML = '<div class="text-sm text-slate-500 dark:text-slate-400">No documents.</div>';
+      el.innerHTML = '<div class="text-sm text-gray-500">No documents found.</div>';
       return;
     }
 
     el.innerHTML = '';
     docs.forEach((d) => {
       const url = resolveUploadUrl(d.uploadUrl);
+      const isFromApplication = d.source === 'application';
       const row = document.createElement('div');
-      row.className = 'flex items-center justify-between gap-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2';
+      row.className = 'flex items-center justify-between gap-2 rounded border border-gray-300 bg-white px-3 py-2';
       row.innerHTML = `
         <div class="min-w-0">
-          <div class="text-sm font-medium truncate">${escapeHtml(d.fileName || '')}</div>
-          <div class="text-xs text-slate-500 dark:text-slate-400">${escapeHtml(d.type || '')} • Doc #${d.id}</div>
+          <div class="flex items-center gap-2">
+            <div class="text-sm font-medium truncate">${escapeHtml(d.fileName || '')}</div>
+            ${isFromApplication ? `
+              <span class="px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-700">
+                From Application
+              </span>
+            ` : ''}
+          </div>
+          <div class="text-xs text-gray-500">
+            ${escapeHtml(d.type || '')} • Doc #${d.id}
+            ${isFromApplication && d.applicationTitle ? ` • ${escapeHtml(d.applicationTitle)}` : ''}
+          </div>
         </div>
-        <a class="shrink-0 px-2.5 py-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm" target="_blank" rel="noreferrer" href="${url}">Open</a>
+        <a class="shrink-0 px-2.5 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-sm" target="_blank" rel="noreferrer" href="${url}">View</a>
       `;
       el.appendChild(row);
     });
@@ -264,20 +281,20 @@
     if (!el) return;
 
     if (!apps.length) {
-      el.innerHTML = '<div class="text-sm text-slate-500 dark:text-slate-400">No applications.</div>';
+      el.innerHTML = '<div class="text-sm text-gray-500">No applications.</div>';
       return;
     }
 
     el.innerHTML = '';
     apps.forEach((a) => {
       const row = document.createElement('div');
-      row.className = 'rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2';
+      row.className = 'rounded border border-gray-300 bg-white px-3 py-2';
       row.innerHTML = `
         <div class="flex items-center justify-between gap-2">
           <div class="text-sm font-medium truncate">${escapeHtml(a.posting?.title || 'Job posting')}</div>
-          <div class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800">${escapeHtml(a.status || '')}</div>
+          <div class="text-xs px-2 py-0.5 rounded bg-gray-100 text-black">${escapeHtml(a.status || '')}</div>
         </div>
-        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Application #${a.id}</div>
+        <div class="text-xs text-gray-500 mt-1">Application #${a.id}</div>
       `;
       el.appendChild(row);
     });
@@ -295,27 +312,27 @@
     qs('#candidate-modal-body').innerHTML = `
       <form id="candidate-create" class="grid grid-cols-1 gap-3">
         <div>
-          <label class="block text-xs text-slate-600 dark:text-slate-300">Full name *</label>
-          <input id="new-fullName" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" required />
+          <label class="block text-xs text-gray-600">Full name *</label>
+          <input id="new-fullName" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" required />
         </div>
         <div>
-          <label class="block text-xs text-slate-600 dark:text-slate-300">Email *</label>
-          <input id="new-email" type="email" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" required />
+          <label class="block text-xs text-gray-600">Email *</label>
+          <input id="new-email" type="email" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" required />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs text-slate-600 dark:text-slate-300">Phone</label>
-            <input id="new-phone" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" />
+            <label class="block text-xs text-gray-600">Phone</label>
+            <input id="new-phone" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" />
           </div>
           <div>
-            <label class="block text-xs text-slate-600 dark:text-slate-300">LinkedIn</label>
-            <input id="new-linkedin" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" />
+            <label class="block text-xs text-gray-600">LinkedIn</label>
+            <input id="new-linkedin" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" />
           </div>
         </div>
 
         <div class="flex items-center justify-end gap-2">
-          <button type="button" class="px-3 py-2 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm" data-modal-close>Cancel</button>
-          <button type="submit" class="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-sm">Create</button>
+          <button type="button" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm" data-modal-close>Cancel</button>
+          <button type="submit" class="px-3 py-2 rounded bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm">Create</button>
         </div>
       </form>
     `;
@@ -351,6 +368,56 @@
     });
 
     qs('#cand-create-btn')?.addEventListener('click', openCreateModal);
+  }
+
+  async function openDeactivateModal(candidateId) {
+    try {
+      // Get candidate details to show name
+      const candidate = await getCandidate(candidateId);
+      if (!candidate) {
+        toast('Candidate not found.', 'error');
+        return;
+      }
+
+      const modal = qs('#deactivate-modal');
+      const nameElement = qs('#deactivate-candidate-name');
+      const confirmBtn = qs('#confirm-deactivate-btn');
+      
+      if (!modal || !nameElement || !confirmBtn) return;
+
+      // Set candidate name
+      nameElement.textContent = candidate.fullName || 'this candidate';
+
+      // Show modal
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+
+      // Handle confirm button click
+      const handleConfirm = async () => {
+        try {
+          setLoading(true, 'Deactivating…');
+          await deactivateCandidate(candidateId);
+          toast('Candidate deactivated.', 'success');
+          await loadCandidates();
+          
+          // Close modal
+          modal.classList.add('hidden');
+          modal.setAttribute('aria-hidden', 'true');
+        } catch (e) {
+          toast(e.message || 'Failed to deactivate.', 'error');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // Remove existing listener and add new one
+      confirmBtn.removeEventListener('click', handleConfirm);
+      confirmBtn.addEventListener('click', handleConfirm);
+
+    } catch (error) {
+      console.error('Failed to open deactivate modal:', error);
+      toast('Failed to load candidate details.', 'error');
+    }
   }
 
   function escapeHtml(s) {

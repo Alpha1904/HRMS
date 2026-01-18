@@ -414,7 +414,147 @@ async function main() {
 
   console.log('Created draft job posting:', draftPosting.title);
 
-  // Create External Candidates
+  const extraJobPostingPayloads: Prisma.JobPostingUncheckedCreateInput[] = [
+    {
+      title: 'Frontend Engineer',
+      description: 'Build accessible UI components and improve performance.',
+      department: 'Engineering',
+      site: 'London Office',
+      salaryRange: { min: 90000, max: 140000, currency: 'USD' } as Prisma.InputJsonValue,
+      requirements: '3+ years React/TypeScript, strong UX fundamentals.',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 75 * 24 * 60 * 60 * 1000),
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+    {
+      title: 'QA Automation Engineer',
+      description: 'Own test automation strategy and CI pipelines.',
+      department: 'Engineering',
+      site: 'Remote',
+      salaryRange: { min: 80000, max: 120000, currency: 'USD' } as Prisma.InputJsonValue,
+      requirements: 'Playwright/Cypress, API testing, CI/CD experience.',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 75 * 24 * 60 * 60 * 1000),
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+    {
+      title: 'DevOps Engineer',
+      description: 'Improve reliability and observability across services.',
+      department: 'Platform',
+      site: 'New York Office',
+      salaryRange: { min: 110000, max: 170000, currency: 'USD' } as Prisma.InputJsonValue,
+      requirements: 'Kubernetes, Terraform, AWS, incident response.',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+    {
+      title: 'Data Analyst',
+      description: 'Create dashboards and help teams make data-driven decisions.',
+      department: 'Data',
+      site: 'Paris Office',
+      salaryRange: { min: 70000, max: 105000, currency: 'USD' } as Prisma.InputJsonValue,
+      requirements: 'SQL, BI tools, basic statistics, stakeholder management.',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+    {
+      title: 'HR Specialist',
+      description: 'Support onboarding and employee relations.',
+      department: 'HR',
+      site: 'New York Office',
+      salaryRange: { min: 60000, max: 90000, currency: 'USD' } as Prisma.InputJsonValue,
+      requirements: '2+ years HR operations, strong communication.',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+    {
+      title: 'Sales Executive',
+      description: 'Drive new business and manage enterprise accounts.',
+      department: 'Sales',
+      site: 'San Francisco Office',
+      salaryRange: { min: 80000, max: 150000, currency: 'USD' } as Prisma.InputJsonValue,
+      requirements: 'B2B SaaS sales, pipeline management, negotiation.',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+    {
+      title: 'Marketing Manager',
+      description: 'Own campaigns and positioning for growth.',
+      department: 'Marketing',
+      site: 'London Office',
+      salaryRange: { min: 90000, max: 140000, currency: 'USD' } as Prisma.InputJsonValue,
+      requirements: 'Performance marketing, content strategy, analytics.',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+    {
+      title: 'UX Designer',
+      description: 'Design user flows and refine product UX.',
+      department: 'Design',
+      site: 'Remote',
+      salaryRange: { min: 85000, max: 135000, currency: 'USD' } as Prisma.InputJsonValue,
+      requirements: 'Figma, prototyping, usability testing.',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 75 * 24 * 60 * 60 * 1000),
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+    {
+      title: 'Backend Engineer (Node.js)',
+      description: 'Build APIs and services powering the HRMS platform.',
+      department: 'Engineering',
+      site: 'New York Office',
+      salaryRange: { min: 105000, max: 165000, currency: 'USD' } as Prisma.InputJsonValue,
+      requirements: 'Node.js, TypeScript, PostgreSQL, Prisma.',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+    {
+      title: 'Customer Support Specialist',
+      description: 'Help customers troubleshoot issues and improve retention.',
+      department: 'Support',
+      site: 'Remote',
+      salaryRange: { min: 45000, max: 70000, currency: 'USD' } as Prisma.InputJsonValue,
+      requirements: 'Excellent written communication, empathy, ticketing tools.',
+      status: PostingStatus.OPEN,
+      publishedAt: new Date(),
+      expiresAt: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+      recruiterId: recruiterProfile.id,
+      createdBy: recruiterUser.id,
+    },
+  ];
+
+  const extraJobPostings: { id: number; title: string }[] = [];
+  for (const payload of extraJobPostingPayloads) {
+    const created = await prisma.jobPosting.create({ data: payload });
+    extraJobPostings.push({ id: created.id, title: created.title });
+  }
+
+  console.log('Created 10 additional job postings');
+
   const candidate1 = await prisma.candidate.create({
     data: {
       email: 'alice.smith@example.com',
@@ -446,7 +586,23 @@ async function main() {
 
   console.log('Created 3 candidates');
 
-  // Create Applications
+  const extraCandidates: { id: number }[] = [];
+  for (let i = 0; i < 30; i++) {
+    const email = `candidate${i + 1}@example.com`;
+    const created = await prisma.candidate.create({
+      data: {
+        email,
+        fullName: faker.person.fullName(),
+        phone: faker.phone.number(),
+        linkedinUrl: faker.internet.url(),
+        status: 'ACTIVE',
+      },
+    });
+    extraCandidates.push({ id: created.id });
+  }
+
+  console.log('Created 30 additional candidates');
+
   const app1 = await prisma.application.create({
     data: {
       candidateId: candidate1.id,
@@ -470,7 +626,7 @@ async function main() {
     },
   });
 
-  const app3 = await prisma.application.create({
+  await prisma.application.create({
     data: {
       candidateId: candidate3.id,
       postingId: productManagerPosting.id,
@@ -479,8 +635,7 @@ async function main() {
     },
   });
 
-  // Internal application
-  const app4 = await prisma.application.create({
+  await prisma.application.create({
     data: {
       profileId: employeeProfile.id,
       postingId: productManagerPosting.id,
@@ -492,6 +647,50 @@ async function main() {
   });
 
   console.log('Created 4 applications');
+
+  const postingPool = [
+    { id: seniorEngPosting.id },
+    { id: productManagerPosting.id },
+    { id: draftPosting.id },
+    ...extraJobPostings,
+  ];
+
+  const positionByPosting = new Map<number, number>();
+  const nextPosition = (postingId: number) => {
+    const current = positionByPosting.get(postingId) ?? 0;
+    const next = current + 1;
+    positionByPosting.set(postingId, next);
+    return next;
+  };
+
+  const applicationStatuses: ApplicationStatus[] = [
+    ApplicationStatus.PENDING,
+    ApplicationStatus.SCREENING,
+    ApplicationStatus.INTERVIEW,
+    ApplicationStatus.EXAMINATION,
+    ApplicationStatus.REJECTED,
+    ApplicationStatus.HIRED,
+  ];
+
+  for (let i = 0; i < 15; i++) {
+    const posting = faker.helpers.arrayElement(postingPool);
+    const candidate = extraCandidates[i % extraCandidates.length];
+    const status = faker.helpers.arrayElement(applicationStatuses);
+    await prisma.application.create({
+      data: {
+        candidateId: candidate.id,
+        postingId: posting.id,
+        status,
+        boardPosition: nextPosition(posting.id),
+        feedback: i % 3 === 0 ? faker.lorem.sentence() : undefined,
+        score: i % 3 === 0 ? faker.number.int({ min: 60, max: 98 }) : undefined,
+        interviewedAt: status === ApplicationStatus.INTERVIEW ? new Date() : undefined,
+        hiredAt: status === ApplicationStatus.HIRED ? new Date() : undefined,
+      },
+    });
+  }
+
+  console.log('Created 15 additional applications');
 
   // Create Interactions
   await prisma.interaction.create({

@@ -1,9 +1,7 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Role } from '@prisma/client';
 import { CreateCandidateDto } from './dto/create-candidate.dto';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
-import { CurrentUserInterface } from '../../common/interfaces/current-user.interface';
 
 @Injectable()
 export class CandidateService {
@@ -11,9 +9,7 @@ export class CandidateService {
 
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreateCandidateDto, currentUser: CurrentUserInterface) {
-    this.checkAccess(currentUser);
-
+  async create(dto: CreateCandidateDto) {
     // Check if email already exists
     const existing = await this.prisma.candidate.findUnique({
       where: { email: dto.email },
@@ -34,9 +30,7 @@ export class CandidateService {
     return candidate;
   }
 
-  async findAll(filters: any, currentUser: CurrentUserInterface) {
-    this.checkAccess(currentUser);
-
+  async findAll(filters: any) {
     const { email, fullName, page = 1, limit = 10 } = filters;
     const skip = (page - 1) * parseInt(limit);
 
@@ -80,9 +74,7 @@ export class CandidateService {
     };
   }
 
-  async findOne(id: number, currentUser: CurrentUserInterface) {
-    this.checkAccess(currentUser);
-
+  async findOne(id: number) {
     const candidate = await this.prisma.candidate.findUnique({
       where: { id },
       include: {
@@ -112,10 +104,8 @@ export class CandidateService {
     });
   }
 
-  async update(id: number, dto: UpdateCandidateDto, currentUser: CurrentUserInterface) {
-    this.checkAccess(currentUser);
-
-    await this.findOne(id, currentUser);
+  async update(id: number, dto: UpdateCandidateDto) {
+    await this.findOne(id);
 
     return this.prisma.candidate.update({
       where: { id },
@@ -123,10 +113,22 @@ export class CandidateService {
     });
   }
 
-  async deactivate(id: number, currentUser: CurrentUserInterface) {
-    this.checkAccess(currentUser);
+  async findDocuments(id: number) {
+    await this.findOne(id); // Verify candidate exists
+    
+    return this.prisma.document.findMany({
+      where: {
+        candidateId: id,
+        deletedAt: null,
+      },
+      orderBy: {
+        uploadDate: 'desc',
+      },
+    });
+  }
 
-    await this.findOne(id, currentUser);
+  async deactivate(id: number) {
+    await this.findOne(id);
 
     return this.prisma.candidate.update({
       where: { id },
@@ -134,11 +136,5 @@ export class CandidateService {
         status: 'INACTIVE',
       },
     });
-  }
-
-  private checkAccess(currentUser: CurrentUserInterface) {
-    if (currentUser.role !== Role.RECRUITER && currentUser.role !== Role.HR_ADMIN) {
-      throw new ForbiddenException('Only recruiters and HR admins can manage candidates');
-    }
   }
 }

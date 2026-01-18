@@ -8,10 +8,12 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class NotificationService {
-  private prisma: PrismaService;
   private mailTransport: Transporter;
   private readonly logger = new Logger(NotificationService.name);
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private prisma: PrismaService,
+  ) {
     this.mailTransport = createTransport({
       host: this.configService.get('SMTP_HOST'),
       port: Number(this.configService.get('SMTP_PORT')),

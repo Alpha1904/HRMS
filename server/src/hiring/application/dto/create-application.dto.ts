@@ -1,8 +1,10 @@
 import { IsInt, IsString, IsEmail, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateApplicationDto {
   @ApiProperty({ example: 1 })
+  @Type(() => Number)
   @IsInt()
   postingId: number;
 

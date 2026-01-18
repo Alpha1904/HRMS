@@ -119,8 +119,9 @@ export class ApplicationService {
         await this.documentsService.upload(
           resume,
           'application',
-          app.id,
+          app.id.toString(),
           'RESUME',
+          tx,
         );
       }
 
@@ -139,6 +140,66 @@ export class ApplicationService {
     return application;
   }
 
+  async findAll(
+    filters: any,
+    currentUser: CurrentUserInterface,
+  ) {
+    this.checkAccess(currentUser);
+
+    const { status, page = 1, limit = 50 } = filters;
+
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 50;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: any = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    const [applications, total] = await Promise.all([
+      this.prisma.application.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          candidate: true,
+          profile: {
+            include: {
+              user: {
+                select: {
+                  email: true,
+                },
+              },
+            },
+          },
+          posting: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+          document: true,
+        },
+      }),
+      this.prisma.application.count({ where }),
+    ]);
+
+    return {
+      data: applications,
+      meta: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    };
+  }
+
   async findAllByPosting(
     postingId: number,
     filters: any,
@@ -147,7 +208,10 @@ export class ApplicationService {
     this.checkAccess(currentUser);
 
     const { status, page = 1, limit = 50 } = filters;
-    const skip = (page - 1) * limit;
+
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 50;
+    const skip = (pageNum - 1) * limitNum;
 
     const where: any = {
       postingId,
@@ -161,7 +225,7 @@ export class ApplicationService {
       this.prisma.application.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: {
           boardPosition: 'asc',
         },
@@ -192,9 +256,9 @@ export class ApplicationService {
       data: applications,
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
       },
     };
   }

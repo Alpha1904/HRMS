@@ -74,33 +74,33 @@
         const requirements = escapeHtml(j.requirements || '');
 
         return `
-<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col" data-job-card data-job-id="${j.id}">
+<div class="bg-white border border-gray-300 rounded-xl p-4 flex flex-col" data-job-card data-job-id="${j.id}">
   <div class="flex items-start justify-between gap-3">
     <div class="min-w-0">
       <div class="font-semibold truncate" title="${title}">${title}</div>
-      <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">${dept}${dept && site ? ' • ' : ''}${site}</div>
+      <div class="text-xs text-gray-500 mt-1">${dept}${dept && site ? ' • ' : ''}${site}</div>
     </div>
-    <div class="text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">Open</div>
+    <div class="text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Open</div>
   </div>
 
-  <div class="mt-3 text-sm text-slate-700 dark:text-slate-200" data-job-desc>
-    <div class="line-clamp-4" data-job-desc-short>${description || '<span class="text-slate-500 dark:text-slate-400">No description</span>'}</div>
+  <div class="mt-3 text-sm text-black" data-job-desc>
+    <div class="line-clamp-4" data-job-desc-short>${description || '<span class="text-gray-500">No description</span>'}</div>
     <div class="hidden" data-job-desc-full>
-      <div class="whitespace-pre-wrap">${description || '<span class="text-slate-500 dark:text-slate-400">No description</span>'}</div>
-      ${requirements ? `<div class="mt-3"><div class="text-xs font-semibold text-slate-600 dark:text-slate-300">Requirements</div><div class="mt-1 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">${requirements}</div></div>` : ''}
+      <div class="whitespace-pre-wrap">${description || '<span class="text-gray-500">No description</span>'}</div>
+      ${requirements ? `<div class="mt-3"><div class="text-xs font-semibold text-gray-600">Requirements</div><div class="mt-1 text-sm text-black whitespace-pre-wrap">${requirements}</div></div>` : ''}
     </div>
   </div>
 
-  <div class="mt-3 flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
-    ${published ? `<div class="px-2 py-1 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">Published: ${escapeHtml(published)}</div>` : ''}
-    ${salary ? `<div class="px-2 py-1 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">Salary: ${escapeHtml(salary)}</div>` : ''}
-    ${recruiter ? `<div class="px-2 py-1 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">Recruiter: ${recruiter}</div>` : ''}
-    ${apps != null ? `<div class="px-2 py-1 rounded bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">Applications: ${apps}</div>` : ''}
+  <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
+    ${published ? `<div class="px-2 py-1 rounded bg-gray-50 border border-gray-300">Published: ${escapeHtml(published)}</div>` : ''}
+    ${salary ? `<div class="px-2 py-1 rounded bg-gray-50 border border-gray-300">Salary: ${escapeHtml(salary)}</div>` : ''}
+    ${recruiter ? `<div class="px-2 py-1 rounded bg-gray-50 border border-gray-300">Recruiter: ${recruiter}</div>` : ''}
+    ${apps != null ? `<div class="px-2 py-1 rounded bg-gray-50 border border-gray-300">Applications: ${apps}</div>` : ''}
   </div>
 
   <div class="mt-4 flex items-center justify-between gap-2">
-    <button class="px-3 py-2 rounded bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-sm" data-action="toggle">Show more</button>
-    <button class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm" data-action="apply">Apply</button>
+    <button class="px-3 py-2 rounded bg-white hover:bg-gray-50 border border-gray-300 text-black text-sm" data-action="toggle">Show more</button>
+    <button class="px-3 py-2 rounded bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm" data-action="apply">Apply</button>
   </div>
 </div>`;
       })

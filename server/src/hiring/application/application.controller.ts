@@ -61,6 +61,18 @@ export class ApplicationController {
     return this.applicationService.create(dto, resume, currentUser);
   }
 
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.RECRUITER, Role.HR_ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all applications' })
+  findAll(
+    @Query() filters: any,
+    @CurrentUser() currentUser: CurrentUserInterface,
+  ) {
+    return this.applicationService.findAll(filters, currentUser);
+  }
+
   @Get('posting/:postingId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.RECRUITER, Role.HR_ADMIN)

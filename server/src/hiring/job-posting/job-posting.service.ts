@@ -107,6 +107,59 @@ export class JobPostingService {
     };
   }
 
+  async findPublic(filters: FilterJobPostingDto) {
+    const { department, site, page = 1, limit = 10 } = filters;
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      deletedAt: null,
+      status: PostingStatus.OPEN,
+    };
+
+    if (department) {
+      where.department = department;
+    }
+
+    if (site) {
+      where.site = site;
+    }
+
+    const [postings, total] = await Promise.all([
+      this.prisma.jobPosting.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: {
+          publishedAt: 'desc',
+        },
+        include: {
+          recruiter: {
+            select: {
+              id: true,
+              fullName: true,
+            },
+          },
+          _count: {
+            select: {
+              applications: true,
+            },
+          },
+        },
+      }),
+      this.prisma.jobPosting.count({ where }),
+    ]);
+
+    return {
+      data: postings,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async findOne(id: number, currentUser: CurrentUserInterface) {
     const posting = await this.prisma.jobPosting.findFirst({
       where: {

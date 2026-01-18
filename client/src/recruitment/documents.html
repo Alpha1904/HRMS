@@ -9,119 +9,217 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 
-<body class="h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100" data-page="documents">
-  <div id="global-loading" class="hidden fixed inset-0 z-[90] bg-black/20 dark:bg-black/40">
+<body class="h-full bg-white text-black" data-page="documents">
+  <div id="global-loading" class="hidden fixed inset-0 z-[90] bg-black/20">
     <div class="absolute inset-0 flex items-center justify-center">
-      <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg px-5 py-4 flex items-center gap-3">
-        <div class="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600"></div>
-        <div id="global-loading-text" class="text-sm text-slate-700 dark:text-slate-200">Loading…</div>
+      <div class="rounded-xl bg-white border border-gray-300 shadow-lg px-5 py-4 flex items-center gap-3">
+        <div class="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+        <div id="global-loading-text" class="text-sm text-black">Loading…</div>
       </div>
     </div>
   </div>
 
   <div class="min-h-full flex">
-    <aside class="hidden md:flex md:w-64 md:flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-      <div class="px-4 py-4 border-b border-slate-200 dark:border-slate-800">
-        <div class="text-sm font-semibold">Recruitment</div>
-        <div class="text-xs text-slate-500 dark:text-slate-400">Recruiter dashboard</div>
+    <aside class="hidden md:flex md:w-64 md:flex-col border-r border-gray-300 bg-white">
+      <div class="flex gap-5 px-4 py-4 border-b border-gray-300">
+        <div>
+        <button onclick="window.history.back()" aria-label="Go back" title="Back" class="p-2 bg-orange-400 rounded-full hover:bg-orange/10 focus:outline-none focus:ring-2 focus:ring-white/50 text-white transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        </div>
+        <div>
+          <div class="text-sm font-semibold">Recruitment</div>
+          <div class="text-xs text-gray-500">Recruiter dashboard</div>
+        </div>
       </div>
 
       <nav class="p-3 flex flex-col gap-1">
-        <a data-nav="jobs" href="./index.html" class="px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Jobs & Kanban</a>
-        <a data-nav="candidates" href="./candidates.html" class="px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Candidates</a>
-        <a data-nav="documents" href="./documents.html" class="px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Documents</a>
-        <a data-nav="apply" href="./apply.html" class="px-3 py-2 rounded-lg text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Public Apply Form</a>
+        <a data-nav="jobs" href="./index.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Jobs</a>
+        <a data-nav="candidates" href="./candidates.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Candidates</a>
+        <a data-nav="documents" href="./documents.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Documents</a>
+        <a data-nav="careers" href="./career.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Careers (Public)</a>
+        <a data-nav="apply" href="./apply.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Public Apply Form</a>
       </nav>
 
-      <div class="mt-auto p-3 border-t border-slate-200 dark:border-slate-800">
-        <button id="logout-btn" class="w-full px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm">Logout</button>
+      <div class="mt-auto p-3 border-t border-gray-300">
+        <button id="home-btn" class="w-full px-3 py-2 rounded-lg bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm">Home</button>
       </div>
     </aside>
 
     <main class="flex-1 min-w-0">
-      <header class="sticky top-0 z-10 bg-white/90 dark:bg-slate-950/80 backdrop-blur border-b border-slate-200 dark:border-slate-800">
-        <div class="px-4 py-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-gray-300">
+        <div class="px-4 py-3 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="md:hidden text-sm font-semibold">Documents</div>
-            <div id="me-badge" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">Checking…</div>
-          </div>
-
-          <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
-            <input id="token-input" class="w-full sm:w-[420px] px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" placeholder="Paste JWT token here" />
-            <div class="flex gap-2">
-              <button id="token-save-btn" class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm">Save</button>
-              <button id="token-check-btn" class="px-3 py-2 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 text-sm">Check</button>
-              <button id="token-clear-btn" class="px-3 py-2 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 text-sm">Clear</button>
-            </div>
+            <div id="me-badge" class="text-xs px-2 py-1 rounded bg-gray-100 text-black">Checking…</div>
           </div>
         </div>
       </header>
 
       <div class="p-4 space-y-6">
-        <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-          <div class="px-4 py-4 border-b border-slate-200 dark:border-slate-800">
+        <section class="bg-white dark:bg-slate-200 border border-slate-200 dark:border-slate-800 rounded-xl">
+          <div class="px-4 py-4 border-b border-gray-300">
             <div class="text-base font-semibold">Upload document</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">Upload documents linked to a candidate or application.</div>
+            <div class="text-xs text-gray-500">Upload documents linked to a candidate or application.</div>
           </div>
 
-          <form id="doc-upload" class="p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+          <form id="doc-upload" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs text-slate-600 dark:text-slate-300">Entity type</label>
-              <select id="doc-entity-type" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm">
-                <option value="application">application</option>
-                <option value="candidate">candidate</option>
+              <label class="block text-xs text-gray-600 mb-1">Entity Type</label>
+              <select id="doc-entity-type" class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                <option value="">Select Entity Type</option>
+                <option value="profile">Profile</option>
+                <option value="candidate">Candidate</option>
+                <option value="application">Application</option>
               </select>
             </div>
             <div>
-              <label class="block text-xs text-slate-600 dark:text-slate-300">Entity ID</label>
-              <input id="doc-entity-id" type="number" min="1" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" placeholder="e.g. 12" required />
+              <label class="block text-xs text-gray-600 mb-1">Full Name</label>
+              <select id="doc-entity-name" class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" disabled>
+                <option value="">Select entity type first</option>
+              </select>
+              <input id="doc-entity-id" type="hidden" />
             </div>
             <div>
-              <label class="block text-xs text-slate-600 dark:text-slate-300">Type</label>
-              <input id="doc-type" class="w-full px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" placeholder="RESUME" value="RESUME" required />
+              <label class="block text-xs text-gray-600 mb-1">Document Type</label>
+              <select id="doc-type" class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
+                <option value="">Select Document Type</option>
+                <option value="Resume">Resume</option>
+                <option value="CV">CV</option>
+                <option value="Portfolio">Portfolio</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
             <div>
-              <label class="block text-xs text-slate-600 dark:text-slate-300">File</label>
-              <input id="doc-file" type="file" class="w-full text-sm" required />
+              <label class="block text-xs text-gray-600 mb-1">File</label>
+              <div class="relative">
+                <input id="doc-file" type="file" class="w-full px-3 py-2 pr-24 rounded-lg border border-gray-300 bg-white text-sm file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer" required />
+                <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 pointer-events-none">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                  </svg>
+                </span>
+              </div>
             </div>
-            <div class="md:col-span-4 flex justify-end">
-              <button class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm" type="submit">Upload</button>
+            <div class="md:col-span-2 flex justify-end">
+              <button class="px-6 py-2.5 rounded-lg bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" type="submit">
+                Upload Document
+              </button>
             </div>
           </form>
         </section>
 
-        <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
-          <div class="px-4 py-4 border-b border-slate-200 dark:border-slate-800">
-            <div class="text-base font-semibold">Browse documents</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">The backend currently exposes <code class="text-xs">GET /documents/:id</code> but no general list endpoint. Use these helpers.</div>
+        <section class="bg-white border border-gray-300 rounded-xl">
+          <div class="px-4 py-4 border-b border-gray-300">
+            <div class="text-base font-semibold">All Documents</div>
+            <div class="text-xs text-gray-500">View and manage all uploaded documents</div>
           </div>
 
-          <div class="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
-              <div class="text-sm font-semibold">Lookup by document ID</div>
-              <form id="doc-lookup" class="mt-2 flex gap-2">
-                <input id="doc-id" type="number" min="1" class="flex-1 px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" placeholder="Document ID" />
-                <button class="px-3 py-2 rounded bg-slate-900 hover:bg-slate-800 text-white text-sm" type="submit">Fetch</button>
-              </form>
-              <div id="doc-lookup-result" class="mt-3"></div>
+          <div class="p-4 space-y-4">
+            <!-- Search and Filters -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs text-gray-600 mb-1">Search</label>
+                <input id="doc-search" type="text" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" placeholder="Search by name, ID, or type..." />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600 mb-1">Document Type</label>
+                <select id="doc-type-filter" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm">
+                  <option value="">All Types</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600 mb-1">Entity Type</label>
+                <select id="entity-type-filter" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm">
+                  <option value="">All Entities</option>
+                  <option value="profile">Profile</option>
+                  <option value="candidate">Candidate</option>
+                  <option value="application">Application</option>
+                </select>
+              </div>
             </div>
 
-            <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
-              <div class="text-sm font-semibold">List by entity (candidate/application)</div>
-              <form id="entity-docs" class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <select id="entity-type" class="px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm">
-                  <option value="application">application</option>
-                  <option value="candidate">candidate</option>
-                </select>
-                <input id="entity-id" type="number" min="1" class="px-3 py-2 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm" placeholder="Entity ID" required />
-                <button class="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-sm" type="submit">Load</button>
-              </form>
-              <div id="entity-docs-result" class="mt-3"></div>
+            <!-- Documents Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-300">
+                  <tr>
+                    <th class="px-4 py-3 text-left font-medium text-gray-700">Doc ID</th>
+                    <th class="px-4 py-3 text-left font-medium text-gray-700">Full Name</th>
+                    <th class="px-4 py-3 text-left font-medium text-gray-700">Document Type</th>
+                    <th class="px-4 py-3 text-left font-medium text-gray-700">Entity Type</th>
+                    <th class="px-4 py-3 text-left font-medium text-gray-700">Document</th>
+                  </tr>
+                </thead>
+                <tbody id="documents-table-body" class="divide-y divide-gray-300">
+                  <tr>
+                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                      Loading documents...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- No Results Message -->
+            <div id="no-results" class="hidden text-center py-8 text-gray-500">
+              No documents found matching your criteria.
             </div>
           </div>
         </section>
       </div>
     </main>
+  </div>
+
+  <div id="delete-modal" class="hidden fixed inset-0 z-[90]" aria-hidden="true" data-modal>
+    <div class="absolute inset-0 bg-black/40" data-modal-overlay></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-md rounded-xl bg-white border border-gray-300 shadow-xl">
+        <div class="px-6 py-6">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-black">Delete Document</h3>
+              <p class="text-sm text-gray-600 mt-1">This action will permanently delete document and cannot be undone.</p>
+            </div>
+          </div>
+          
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+              </svg>
+              <div class="text-sm text-red-800">
+                <p class="font-medium">Warning:</p>
+                <p class="mt-1">Once deleted, document file will be permanently removed from system and cannot be recovered.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-sm text-gray-600 mb-6">
+            Are you sure you want to delete <span id="delete-doc-name" class="font-medium text-black"></span>?
+          </div>
+
+          <div class="flex gap-3 justify-end">
+            <button type="button" class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-black text-sm font-medium transition-colors" data-modal-close>
+              Cancel
+            </button>
+            <button type="button" id="confirm-delete-btn" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+              Delete Document
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="./scripts/core.js"></script>

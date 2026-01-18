@@ -10,6 +10,7 @@
     createInteraction,
     updateApplicationFeedback,
     uploadDocument,
+    getCandidateDocuments,
   } = NS.api;
   const { resolveUploadUrl } = NS.core;
 
@@ -38,18 +39,18 @@
 
     STATUSES.forEach((status) => {
       const col = document.createElement('div');
-      col.className = 'min-w-[280px] max-w-[320px] w-[300px] flex flex-col bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-xl';
+      col.className = 'min-w-[280px] max-w-[320px] w-[300px] flex flex-col bg-gray-50 border border-gray-300 rounded-xl';
 
       const header = document.createElement('div');
-      header.className = 'px-3 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between';
+      header.className = 'px-3 py-3 border-b border-gray-300 flex items-center justify-between';
 
       const title = document.createElement('div');
-      title.className = 'text-sm font-semibold text-slate-900 dark:text-slate-100';
+      title.className = 'text-sm font-semibold text-black';
       title.textContent = status;
 
       const badge = document.createElement('div');
       badge.id = `count-${status}`;
-      badge.className = 'text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-200';
+      badge.className = 'text-xs px-2 py-0.5 rounded bg-gray-200 text-black';
       badge.textContent = '0';
 
       header.appendChild(title);
@@ -120,33 +121,33 @@
       arr.forEach((app) => {
         const card = document.createElement('div');
         card.className = [
-          'bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm',
-          'p-3 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700',
+          'bg-white border border-gray-300 rounded-lg shadow-sm',
+          'p-3 cursor-pointer hover:border-[rgb(242,101,34)]',
         ].join(' ');
 
         card.setAttribute('data-app-id', String(app.id));
         card.setAttribute('data-board-position', String(app.boardPosition ?? 0));
 
         const title = document.createElement('div');
-        title.className = 'text-sm font-semibold text-slate-900 dark:text-slate-100';
+        title.className = 'text-sm font-semibold text-black';
         title.textContent = getCandidateLabel(app);
 
         const meta = document.createElement('div');
-        meta.className = 'mt-1 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between gap-2';
+        meta.className = 'mt-1 text-xs text-gray-600 flex items-center justify-between gap-2';
 
         const email = document.createElement('div');
         email.className = 'truncate';
         email.textContent = getEmail(app);
 
         const score = document.createElement('div');
-        score.className = 'shrink-0 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200';
+        score.className = 'shrink-0 px-2 py-0.5 rounded bg-gray-100 text-black';
         score.textContent = app.score === null || app.score === undefined ? '—' : `Score ${Math.round(app.score)}`;
 
         meta.appendChild(email);
         meta.appendChild(score);
 
         const feedback = document.createElement('div');
-        feedback.className = 'mt-2 text-xs text-slate-600 dark:text-slate-300 truncate-2';
+        feedback.className = 'mt-2 text-xs text-gray-600 truncate-2';
         feedback.textContent = app.feedback ? app.feedback : 'No feedback yet.';
 
         card.appendChild(title);
@@ -289,63 +290,49 @@
         <div class="flex flex-col gap-4">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">${escapeHtml(name)}</div>
-              <div class="text-sm text-slate-600 dark:text-slate-300">${escapeHtml(email || '')}</div>
-              <div class="mt-2 text-xs text-slate-500 dark:text-slate-400">Status: <span class="font-medium">${escapeHtml(app.status || '')}</span></div>
-            </div>
-            <div class="flex flex-col items-end gap-2">
-              <a id="resume-link" class="${resumeUrl ? '' : 'pointer-events-none opacity-50'} text-sm px-3 py-2 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700" target="_blank" rel="noreferrer">
-                View resume
-              </a>
-              <div class="text-xs text-slate-500 dark:text-slate-400">App #${app.id}</div>
+              <div class="text-lg font-semibold text-black">${escapeHtml(name)}</div>
+              <div class="text-sm text-gray-600">${escapeHtml(email || '')}</div>
+              <div class="mt-2 text-xs text-gray-500">Status: <span class="font-medium">${escapeHtml(app.status || '')}</span></div>
             </div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
-              <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">Feedback</div>
+            <div class="border border-gray-300 rounded-lg p-3">
+              <div class="text-sm font-semibold text-black">Feedback</div>
               <form id="feedback-form" class="mt-2 flex flex-col gap-2">
-                <textarea id="feedback-text" class="w-full min-h-[110px] rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm" placeholder="Write feedback…">${escapeHtml(app.feedback || '')}</textarea>
+                <textarea id="feedback-text" class="w-full min-h-[110px] rounded border border-gray-300 bg-white px-3 py-2 text-sm" placeholder="Write feedback…">${escapeHtml(app.feedback || '')}</textarea>
                 <div class="flex items-center gap-2">
-                  <input id="feedback-score" type="number" min="0" max="100" class="w-28 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm" placeholder="Score" value="${app.score === null || app.score === undefined ? '' : String(app.score)}" />
-                  <button class="ml-auto px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm" type="submit">Save</button>
+                  <input id="feedback-score" type="number" min="0" max="100" class="w-28 rounded border border-gray-300 bg-white px-3 py-2 text-sm" placeholder="Score" value="${app.score === null || app.score === undefined ? '' : String(app.score)}" />
+                  <button class="ml-auto px-3 py-2 rounded bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm" type="submit">Save</button>
                 </div>
               </form>
             </div>
 
-            <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
-              <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">Add interaction</div>
+            <div class="border border-gray-300 rounded-lg p-3">
+              <div class="text-sm font-semibold text-black">Add interaction</div>
               <form id="interaction-form" class="mt-2 flex flex-col gap-2">
-                <select id="interaction-type" class="rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm">
+                <select id="interaction-type" class="rounded border border-gray-300 bg-white px-3 py-2 text-sm">
                   <option value="NOTE">NOTE</option>
                   <option value="EMAIL">EMAIL</option>
                   <option value="INTERVIEW_INVITE">INTERVIEW_INVITE</option>
                 </select>
-                <textarea id="interaction-content" class="w-full min-h-[110px] rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm" placeholder="Content…"></textarea>
+                <textarea id="interaction-content" class="w-full min-h-[110px] rounded border border-gray-300 bg-white px-3 py-2 text-sm" placeholder="Content…"></textarea>
                 <div class="flex">
-                  <button class="ml-auto px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-sm" type="submit">Add</button>
+                  <button class="ml-auto px-3 py-2 rounded bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm" type="submit">Add</button>
                 </div>
               </form>
             </div>
           </div>
 
-          <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
-            <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">Upload document</div>
-            <form id="doc-upload-form" class="mt-2 flex flex-col md:flex-row gap-2 items-start md:items-end">
-              <div class="flex-1 w-full">
-                <label class="block text-xs text-slate-600 dark:text-slate-300">Type</label>
-                <input id="doc-type" class="w-full rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm" placeholder="RESUME, COVER_LETTER, ..." value="RESUME" />
-              </div>
-              <div class="flex-1 w-full">
-                <label class="block text-xs text-slate-600 dark:text-slate-300">File</label>
-                <input id="doc-file" type="file" class="w-full text-sm" />
-              </div>
-              <button class="px-3 py-2 rounded bg-slate-900 hover:bg-slate-800 text-white text-sm" type="submit">Upload</button>
-            </form>
+          <div class="border border-gray-300 rounded-lg p-3">
+            <div class="text-sm font-semibold text-black">Resume or CV</div>
+            <div id="candidate-resume" class="mt-2">
+              <div class="text-sm text-gray-500">Loading resume...</div>
+            </div>
           </div>
 
-          <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
-            <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">Interactions</div>
+          <div class="border border-gray-300 rounded-lg p-3">
+            <div class="text-sm font-semibold text-black">Interactions</div>
             <div id="interactions-list" class="mt-2 flex flex-col gap-2"></div>
           </div>
         </div>
@@ -357,6 +344,9 @@
       // Load interactions
       const interactions = await listInteractions(app.id);
       renderInteractions(interactions);
+
+      // Load candidate documents (resume/CV)
+      await loadCandidateDocuments(app.candidateId);
 
       wireDetailsForms(app);
     } catch (e) {
@@ -373,27 +363,27 @@
 
     const arr = Array.isArray(interactions) ? interactions : [];
     if (!arr.length) {
-      list.innerHTML = '<div class="text-sm text-slate-500 dark:text-slate-400">No interactions yet.</div>';
+      list.innerHTML = '<div class="text-sm text-gray-500">No interactions yet.</div>';
       return;
     }
 
     arr.forEach((it) => {
       const row = document.createElement('div');
-      row.className = 'rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-3';
+      row.className = 'rounded border border-gray-300 bg-white p-3';
 
       const top = document.createElement('div');
       top.className = 'flex items-center justify-between gap-2';
 
       const type = document.createElement('div');
-      type.className = 'text-xs font-semibold text-slate-700 dark:text-slate-200';
+      type.className = 'text-xs font-semibold text-black';
       type.textContent = it.type || 'NOTE';
 
       const date = document.createElement('div');
-      date.className = 'text-xs text-slate-500 dark:text-slate-400';
+      date.className = 'text-xs text-gray-500';
       date.textContent = it.createdAt ? new Date(it.createdAt).toLocaleString() : '';
 
       const content = document.createElement('div');
-      content.className = 'mt-2 text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap';
+      content.className = 'mt-2 text-sm text-black whitespace-pre-wrap';
       content.textContent = it.content || '';
 
       top.appendChild(type);
@@ -402,6 +392,54 @@
       row.appendChild(content);
       list.appendChild(row);
     });
+  }
+
+  async function loadCandidateDocuments(candidateId) {
+    const container = qs('#candidate-resume');
+    if (!container) return;
+
+    try {
+      const documents = await getCandidateDocuments(candidateId);
+      
+      if (!documents || documents.length === 0) {
+        container.innerHTML = '<div class="text-sm text-gray-500">No resume or CV found.</div>';
+        return;
+      }
+
+      // Filter for resume/CV documents
+      const resumeDocs = documents.filter(doc => 
+        doc.type && (doc.type.toLowerCase().includes('resume') || doc.type.toLowerCase().includes('cv'))
+      );
+
+      if (resumeDocs.length === 0) {
+        container.innerHTML = '<div class="text-sm text-gray-500">No resume or CV found.</div>';
+        return;
+      }
+
+      // Display the most recent resume/CV
+      const latestDoc = resumeDocs[0];
+      const docUrl = latestDoc.uploadUrl ? resolveUploadUrl(latestDoc.uploadUrl) : '';
+      
+      container.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="text-sm font-medium text-black">${escapeHtml(latestDoc.fileName || 'Document')}</div>
+            <div class="text-xs text-gray-500">
+              Type: ${escapeHtml(latestDoc.type || 'Unknown')} • 
+              Size: ${latestDoc.size ? formatFileSize(latestDoc.size) : 'Unknown'} •
+              Uploaded: ${latestDoc.uploadDate ? new Date(latestDoc.uploadDate).toLocaleDateString() : 'Unknown'}
+            </div>
+          </div>
+          <a href="${docUrl}" target="_blank" rel="noreferrer" 
+             class="ml-3 px-3 py-2 rounded bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm ${!docUrl ? 'pointer-events-none opacity-50' : ''}">
+            View Resume
+          </a>
+        </div>
+      `;
+    } catch (error) {
+      console.error('Failed to load candidate documents:', error);
+      container.innerHTML = '<div class="text-sm text-gray-500">Failed to load resume.</div>';
+    }
   }
 
   function wireDetailsForms(app) {
@@ -453,40 +491,14 @@
         }
       });
     }
+  }
 
-    const docUploadForm = qs('#doc-upload-form');
-    if (docUploadForm) {
-      docUploadForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        try {
-          setLoading(true, 'Uploading document…');
-          const type = qs('#doc-type').value;
-          const fileInput = qs('#doc-file');
-          const file = fileInput.files && fileInput.files[0];
-          if (!file) {
-            toast('Select a file first.', 'warn');
-            return;
-          }
-
-          const fd = new FormData();
-          fd.append('file', file);
-          fd.append('entityType', 'application');
-          fd.append('entityId', String(app.id));
-          fd.append('type', type || 'RESUME');
-
-          await uploadDocument(fd);
-          toast('Document uploaded.', 'success');
-
-          // Refresh details to update resume link if needed
-          await openApplicationDetails(app.id);
-          await loadBoard(currentPostingId);
-        } catch (err) {
-          toast(err.message || 'Failed to upload document.', 'error');
-        } finally {
-          setLoading(false);
-        }
-      });
-    }
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
   function escapeHtml(s) {

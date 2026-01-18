@@ -10,15 +10,69 @@ export class DocumentsService {
 
   constructor(private prisma: PrismaService) {}
 
+  // GET ALL DOCS
+  async docs(): Promise<any[]> {
+    const documents = await this.prisma.document.findMany({
+      include: {
+        profile: {
+          select: { fullName: true }
+        },
+        candidate: {
+          select: { fullName: true }
+        },
+        application: {
+          include: {
+            candidate: {
+              select: { fullName: true }
+            },
+            profile: {
+              select: { fullName: true }
+            }
+          }
+        }
+      }
+    });
+
+    return documents.map(doc => {
+      let entityType: 'profile' | 'candidate' | 'application' | null = null;
+      let fullName: string | null = null;
+
+      if (doc.profileId) {
+        entityType = 'profile';
+        fullName = doc.profile?.fullName || 'Unknown Profile';
+      } else if (doc.candidateId) {
+        entityType = 'candidate';
+        fullName = doc.candidate?.fullName || 'Unknown Candidate';
+      } else if (doc.applicationId) {
+        entityType = 'application';
+        fullName = doc.application?.candidate?.fullName || 
+                   doc.application?.profile?.fullName || 
+                   'Unknown Application';
+      }
+
+      // Remove the nested relations and add computed fields
+      const { profile, candidate, application, ...docData } = doc;
+      
+      return {
+        ...docData,
+        entityType,
+        fullName
+      };
+    });
+  }
+
   async upload(
     file: Express.Multer.File,
     entityType: 'profile' | 'candidate' | 'application',
-    entityId: number,
+    sentityId: string,
     docType: string,
+    prisma?: any,
   ): Promise<Document> {
-    this.logger.log(`Uploading document for ${entityType} ${entityId}`);
 
-    const uploadUrl = `/uploads/${file.filename}`;
+    const entityId = Number(sentityId)
+    this.logger.log(`Uploading document for ${entityType} ${entityId}`);
+    const serverUrl = 'http://localhost:3000';
+    const uploadUrl = `${serverUrl}/public/uploads/docs/${file.filename}`;
     
     const data: any = {
       fileName: file.originalname,
@@ -36,7 +90,8 @@ export class DocumentsService {
       data.applicationId = entityId;
     }
 
-    return this.prisma.document.create({ data });
+    const prismaClient = prisma || this.prisma;
+    return prismaClient.document.create({ data });
   }
 
   async findById(id: number): Promise<Document> {

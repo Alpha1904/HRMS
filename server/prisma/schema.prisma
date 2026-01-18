@@ -51,6 +51,31 @@ enum EvalPeriod {
   AD_HOC
 }
 
+enum EvaluationPeriod {
+  QUARTERLY
+  ANNUAL
+}
+
+enum EvaluationStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+enum EvaluationType {
+  AUTOMATIC
+  MANUAL
+  SELF
+}
+
+enum ObjectiveStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
 enum PostingStatus {
   OPEN
   CLOSED
@@ -140,7 +165,6 @@ model User {
   sentMessages     UserMessage[] @relation("SentMessages")
   receivedMessages UserMessage[] @relation("ReceivedMessages")
 
-
   // Job Postings created by user
   jobPostingsCreated JobPosting[] @relation("JobPostingsCreated")
 
@@ -196,23 +220,20 @@ model Profile {
   shiftId Int?
 
   // Common relationships
-  documents            Document[]           @relation("ProfileDocuments")
-  leaves               Leave[]              @relation("ProfileLeaves")
-  leaveBalances        LeaveBalance[]       @relation("ProfileLeaveBalances")
-  managedLeaves        Leave[]              @relation("ManagerLeaveApprovals")
-  hrAdminLeaves        Leave[]              @relation("HRAdminLeaveOverrides")
-  shifts               Shift?              @relation("ProfileShifts", fields: [shiftId], references: [id], onDelete: Cascade)
-  shiftChangeRequests  ShiftChangeRequest[] @relation("ProfileShiftRequests")
-  evaluations          Evaluation[]         @relation("ProfileEvaluations")
-  goals                Goal[]               @relation("ProfileGoals")
-  evaluatorEvaluations Evaluation[]         @relation("EvaluatorEvaluations")
-  trainings            Training[]           @relation("ProfileTrainings")
-  assignedTrainings    Training[]           @relation("AssignedTrainings")
-  payments             Payment[]            @relation("ProfilePayments")
-  processedPayments    Payment[]            @relation("ProcessedPayments")
-  departures           Departure?           @relation("ProfileDeparture")
-  processedDepartures  Departure[]          @relation("ProcessedDepartures")
-  applications         Application[]        @relation("ProfileApplications") // For candidates/recruiters
+  documents           Document[]           @relation("ProfileDocuments")
+  leaves              Leave[]              @relation("ProfileLeaves")
+  leaveBalances       LeaveBalance[]       @relation("ProfileLeaveBalances")
+  managedLeaves       Leave[]              @relation("ManagerLeaveApprovals")
+  hrAdminLeaves       Leave[]              @relation("HRAdminLeaveOverrides")
+  shifts              Shift?               @relation("ProfileShifts", fields: [shiftId], references: [id], onDelete: Cascade)
+  shiftChangeRequests ShiftChangeRequest[] @relation("ProfileShiftRequests")
+  trainings           Training[]           @relation("ProfileTrainings")
+  assignedTrainings   Training[]           @relation("AssignedTrainings")
+  payments            Payment[]            @relation("ProfilePayments")
+  processedPayments   Payment[]            @relation("ProcessedPayments")
+  departures          Departure?           @relation("ProfileDeparture")
+  processedDepartures Departure[]          @relation("ProcessedDepartures")
+  applications        Application[]        @relation("ProfileApplications") // For candidates/recruiters
 
   // Announcements (HR only, but linked via profile)
   announcements Announcement[] @relation("ProfileAnnouncements")
@@ -220,14 +241,22 @@ model Profile {
   replies       Reply[]        @relation("ProfileReplies")
 
   // Chat Rooms
-  memberships   ChatMember[]
-  messages      ChatMessage[]
+  memberships ChatMember[]
+  messages    ChatMessage[]
 
   // Reports (HR only)
   reports Report[] @relation("ProfileReports")
 
   // Job postings (recruiter only)
   jobPostings JobPosting[] @relation("ProfileJobPostings")
+
+  evaluations          PerformanceEvaluation[]
+  manualEvaluations    ManualEvaluation[]      @relation("ReviewerEvaluations")
+  objectiveProgressLog ObjectiveProgress[]     @relation("ObjectiveProgressUpdatedBy")
+
+  goals                  Goal[]       @relation("ProfileGoals")
+  evaluationsAsEmployee  Evaluation[] @relation("EvaluationEmployee")
+  evaluationsAsEvaluator Evaluation[] @relation("EvaluationEvaluator")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -258,7 +287,6 @@ model Permissions {
   @@index([role, resource])
 }
 
-
 // ========================================
 // HIRING
 // ========================================
@@ -278,6 +306,7 @@ model Candidate {
 
   @@index([email])
 }
+
 model JobPosting {
   id           Int           @id @default(autoincrement())
   title        String
@@ -327,13 +356,13 @@ model Application {
 
   // Optional: For drag-and-drop ordering within a column. 
   // We use Float to easily insert between two items (e.g., 1.0 and 2.0 -> 1.5)
-  boardPosition Float?            @default(0)
+  boardPosition Float? @default(0)
 
   // Notes/feedback
   feedback String?
   score    Float? // AI or manual score (0-100)
 
-  document Document? @relation("ApplicationDocument")
+  document     Document?     @relation("ApplicationDocument")
   interactions Interaction[] @relation("ApplicationInteractions")
 
   createdAt DateTime @default(now())
@@ -346,10 +375,10 @@ model Application {
 }
 
 model Interaction {
-  id            Int        @id @default(autoincrement())
-  type          String      // NOTE, EMAIL, INTERVIEW_INVITE
-  content       String
-  createdAt     DateTime    @default(now())
+  id        Int      @id @default(autoincrement())
+  type      String // NOTE, EMAIL, INTERVIEW_INVITE
+  content   String
+  createdAt DateTime @default(now())
 
   applicationId Int
   application   Application @relation("ApplicationInteractions", fields: [applicationId], references: [id])
@@ -508,10 +537,10 @@ model WorkScheduleTemplate {
 
 // This is a *single assigned shift* for one person
 model Shift {
-  id        Int     @id @default(autoincrement())
-  profile   Profile[] @relation("ProfileShifts")
+  id      Int       @id @default(autoincrement())
+  profile Profile[] @relation("ProfileShifts")
 
-  title     String? // e.g., "Morning Shift", "Evening Shift"
+  title       String? // e.g., "Morning Shift", "Evening Shift"
   description String?
 
   date      DateTime @db.Date // The specific day of the shift
@@ -564,50 +593,6 @@ model ShiftChangeRequest {
 // ========================================
 // PERFORMANCE & LEARNING
 // ========================================
-model Evaluation {
-  id        Int     @id @default(autoincrement())
-  profileId Int
-  profile   Profile @relation("ProfileEvaluations", fields: [profileId], references: [id], onDelete: Cascade)
-
-  evaluatorId Int?
-  evaluator   Profile? @relation("EvaluatorEvaluations", fields: [evaluatorId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-
-  period       EvalPeriod
-  overallScore Float? // 1-5 scale
-  scores       Json? // {competency1: 4, competency2: 3}
-  achievements String?
-  improvements String?
-  goalsSet     Goal[]     @relation("EvaluationGoalsSet")
-  selfEval     Boolean    @default(false)
-  feedback     String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([profileId, period])
-  @@index([evaluatorId])
-}
-
-model Goal {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  profileId Int // The employee this goal belongs to
-  profile   Profile @relation("ProfileGoals", fields: [profileId], references: [id], onDelete: Cascade)
-
-  title       String
-  description String?
-  status      GoalStatus @default(NOT_STARTED) // Dynamic tracking enum
-  progress    Int?       @default(0) // e.g., 0-100%
-  targetDate  DateTime?
-
-  // Optional: Which evaluation event created this goal?
-  createdInEvaluationId Int?
-  createdInEvaluation   Evaluation? @relation("EvaluationGoalsSet", fields: [createdInEvaluationId], references: [id], onDelete: SetNull)
-
-  @@index([profileId, status])
-}
 
 model Training {
   id             Int          @id @default(autoincrement())
@@ -691,7 +676,6 @@ model UserMessage {
   @@index([createdAt, isRead])
   @@map("Message")
 }
-
 
 model Announcement {
   id          Int       @id @default(autoincrement())
@@ -781,6 +765,7 @@ enum EmployeeStatus {
   SUSPENDED
   TERMINATED
 }
+
 enum ChatType {
   DIRECT
   GROUP
@@ -788,48 +773,43 @@ enum ChatType {
 }
 
 model ChatRoom {
-  id          String       @id @default(uuid())
-  name        String?      // Null for 1:1 chats
-  type        ChatType     @default(DIRECT)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  
-  members     ChatMember[]
-  messages    ChatMessage[]
+  id        String   @id @default(uuid())
+  name      String? // Null for 1:1 chats
+  type      ChatType @default(DIRECT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  ChatMember[]
+  messages ChatMessage[]
+
   @@index([updatedAt])
 }
 
 model ChatMember {
-  id        String   @id @default(uuid())
-  userId    Int
-  roomId    String
-  role      String   @default("MEMBER") // 'OWNER', 'ADMIN', 'MEMBER'
-  
-  user      Profile @relation(fields: [userId], references: [id])
-  room      ChatRoom @relation(fields: [roomId], references: [id])
+  id     String @id @default(uuid())
+  userId Int
+  roomId String
+  role   String @default("MEMBER") // 'OWNER', 'ADMIN', 'MEMBER'
+
+  user Profile  @relation(fields: [userId], references: [id])
+  room ChatRoom @relation(fields: [roomId], references: [id])
 
   @@unique([userId, roomId]) // Prevents duplicate membership
 }
 
 model ChatMessage {
-  id         String   @id @default(uuid())
-  content    String
-  senderId   Int
-  roomId     String
-  createdAt  DateTime @default(now())
-  isEdited   Boolean  @default(false)
+  id        String   @id @default(uuid())
+  content   String
+  senderId  Int
+  roomId    String
+  createdAt DateTime @default(now())
+  isEdited  Boolean  @default(false)
 
-  sender     Profile @relation(fields: [senderId], references: [id])
-  room       ChatRoom @relation(fields: [roomId], references: [id])
+  sender Profile  @relation(fields: [senderId], references: [id])
+  room   ChatRoom @relation(fields: [roomId], references: [id])
 
   @@map("ChatMessage")
 }
-
-
-
-
-
-
 
 //This is the "Alert System" for in-app notifications
 model Notification {
@@ -918,4 +898,192 @@ model AuditLog {
   @@index([performedById])
   @@index([resource, resourceId])
   @@index([createdAt])
+}
+
+model EvaluationCycle {
+  id        Int              @id @default(autoincrement())
+  name      String
+  period    EvaluationPeriod
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean          @default(true)
+
+  evaluations PerformanceEvaluation[]
+
+  tenantId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([period])
+  @@index([isActive])
+  @@index([tenantId])
+}
+
+model PerformanceEvaluation {
+  id         Int     @id @default(autoincrement())
+  employeeId Int
+  employee   Profile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  cycleId Int
+  cycle   EvaluationCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+
+  status     EvaluationStatus @default(DRAFT)
+  finalScore Float?
+  rank       Int?
+
+  automaticScore EvaluationScore?
+  manualReview   ManualEvaluation?
+  selfReview     SelfEvaluation?
+
+  objectives EmployeeObjective[]
+
+  tenantId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([employeeId, cycleId])
+  @@index([status])
+  @@index([tenantId])
+}
+
+model EvaluationCriteria {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  weight      Float
+  isActive    Boolean @default(true)
+
+  tenantId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([tenantId])
+}
+
+model EvaluationScore {
+  id           Int                   @id @default(autoincrement())
+  evaluationId Int                   @unique
+  evaluation   PerformanceEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  totalScore  Float
+  breakdown   Json
+  generatedAt DateTime @default(now())
+}
+
+model ManualEvaluation {
+  id           Int                   @id @default(autoincrement())
+  evaluationId Int                   @unique
+  evaluation   PerformanceEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  reviewerId Int
+  reviewer   Profile @relation("ReviewerEvaluations", fields: [reviewerId], references: [id])
+
+  strengths       String
+  weaknesses      String
+  achievements    String?
+  recommendations String?
+  score           Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reviewerId])
+}
+
+model SelfEvaluation {
+  id           Int                   @id @default(autoincrement())
+  evaluationId Int                   @unique
+  evaluation   PerformanceEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  comments     String
+  achievements String?
+  challenges   String?
+  selfScore    Float?
+
+  submittedAt DateTime @default(now())
+}
+
+model EmployeeObjective {
+  id           Int                   @id @default(autoincrement())
+  evaluationId Int
+  evaluation   PerformanceEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  targetValue String?
+  status      ObjectiveStatus @default(NOT_STARTED)
+  weight      Float?
+
+  progress ObjectiveProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model ObjectiveProgress {
+  id          Int               @id @default(autoincrement())
+  objectiveId Int
+  objective   EmployeeObjective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+
+  progressNote String
+  progressRate Float?
+  updatedById  Int
+  updatedBy    Profile @relation("ObjectiveProgressUpdatedBy", fields: [updatedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([objectiveId])
+}
+
+model Evaluation {
+  id Int @id @default(autoincrement())
+
+  profileId Int
+  profile   Profile @relation("EvaluationEmployee", fields: [profileId], references: [id], onDelete: Cascade)
+
+  evaluatorId Int?
+  evaluator   Profile? @relation("EvaluationEvaluator", fields: [evaluatorId], references: [id], onDelete: NoAction)
+
+  period       EvalPeriod
+  overallScore Float?
+  scores       Json?
+  achievements String?
+  improvements String?
+  selfEval     Boolean    @default(false)
+  feedback     String?
+
+  goalsSet Goal[] @relation("EvaluationGoals")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId, period])
+  @@index([evaluatorId])
+}
+
+model Goal {
+  id Int @id @default(autoincrement())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profileId Int
+  profile   Profile @relation("ProfileGoals", fields: [profileId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  status      GoalStatus @default(NOT_STARTED)
+  progress    Int?       @default(0)
+  targetDate  DateTime?
+
+  createdInEvaluationId Int?
+  createdInEvaluation   Evaluation? @relation("EvaluationGoals", fields: [createdInEvaluationId], references: [id], onDelete: SetNull)
+
+  @@index([profileId, status])
 }

@@ -48,6 +48,10 @@
     return request('GET', `/candidates/${id}`, {});
   }
 
+  function getCandidateDocuments(id) {
+    return request('GET', `/candidates/${id}/documents`, {});
+  }
+
   function createCandidate(payload) {
     return request('POST', '/candidates', { body: payload });
   }
@@ -91,6 +95,10 @@
   }
 
   // Documents
+  function getAllDocuments() {
+    return request('GET', '/documents', {});
+  }
+
   function uploadDocument(formData) {
     return request('POST', '/documents/upload', { formData });
   }
@@ -101,6 +109,23 @@
 
   function deleteDocument(id) {
     return request('DELETE', `/documents/${id}`, {});
+  }
+
+  // Entity data for dropdowns
+  function getProfile(id) {
+    return request('GET', `/profiles/${id}`, {});
+  }
+
+  function getAllProfiles() {
+    return request('GET', '/profiles', {});
+  }
+
+  function getAllCandidates() {
+    return request('GET', '/candidates', {});
+  }
+
+  function getAllApplications() {
+    return request('GET', '/applications', {});
   }
 
   NS.api = {
@@ -117,6 +142,7 @@
 
     listCandidates,
     getCandidate,
+    getCandidateDocuments,
     createCandidate,
     updateCandidate,
     deactivateCandidate,
@@ -130,8 +156,14 @@
     listInteractions,
     createInteraction,
 
+    getAllDocuments,
     uploadDocument,
     getDocument,
     deleteDocument,
+
+    getProfile,
+    getAllProfiles,
+    getAllCandidates,
+    getAllApplications,
   };
 })();
