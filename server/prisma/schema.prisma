@@ -908,6 +908,8 @@ model EvaluationCycle {
   endDate   DateTime
   isActive  Boolean          @default(true)
 
+  deletedAt DateTime?
+
   evaluations PerformanceEvaluation[]
 
   tenantId String?
