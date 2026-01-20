@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Performance Evaluation</title>
+    <link rel="stylesheet" href="../dist/style.css" />
+  </head>
+  <body class="antialiased bg-light text-default">
+    <script type="module">
+      import { enforceAuthenticatedRoute } from '../dist/assets/js/auth-login.js';
+      enforceAuthenticatedRoute();
+    </script>
+
+    <div class="max-w-7xl mx-auto p-4 space-y-4">
+      <div id="perf-nav"></div>
+
+      <div class="bg-white border border-borderColor rounded p-4">
+        <div class="flex items-start justify-between gap-4 flex-col sm:flex-row">
+          <div>
+            <h1 class="text-lg font-semibold">Evaluation #<span id="ev-id"></span></h1>
+            <p class="text-sm text-gray-600">Employee: <span id="ev-employee"></span> | Dept: <span id="ev-dept"></span> | Cycle: <span id="ev-cycle"></span></p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button id="btn-auto" type="button" class="px-3 py-2 rounded text-sm font-medium bg-primary text-white">Calculate Automatic</button>
+            <button id="btn-final" type="button" class="px-3 py-2 rounded text-sm font-medium bg-primary text-white">Calculate Final</button>
+          </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3 text-sm">
+          <div class="border border-borderColor rounded p-3 bg-gray-50">
+            <div class="text-xs text-gray-600">Status</div>
+            <div class="font-semibold" id="ev-status"></div>
+          </div>
+          <div class="border border-borderColor rounded p-3 bg-gray-50">
+            <div class="text-xs text-gray-600">Automatic</div>
+            <div class="font-semibold" id="ev-auto"></div>
+          </div>
+          <div class="border border-borderColor rounded p-3 bg-gray-50">
+            <div class="text-xs text-gray-600">Manual</div>
+            <div class="font-semibold" id="ev-manual"></div>
+          </div>
+          <div class="border border-borderColor rounded p-3 bg-gray-50">
+            <div class="text-xs text-gray-600">Self</div>
+            <div class="font-semibold" id="ev-self"></div>
+          </div>
+          <div class="border border-borderColor rounded p-3 bg-gray-50">
+            <div class="text-xs text-gray-600">Final / Rank</div>
+            <div class="font-semibold"><span id="ev-final"></span> / <span id="ev-rank"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white border border-borderColor rounded p-3">
+        <div class="flex flex-wrap gap-2">
+          <button id="tabbtn-summary" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white">Summary</button>
+          <button id="tabbtn-automatic" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white">Automatic</button>
+          <button id="tabbtn-manual" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white">Manual Review</button>
+          <button id="tabbtn-self" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white">Self Review</button>
+          <button id="tabbtn-objectives" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white">Objectives</button>
+        </div>
+      </div>
+
+      <div id="tab-summary" class="bg-white border border-borderColor rounded p-4">
+        <h2 class="font-semibold mb-2">Summary</h2>
+        <p class="text-sm text-gray-600">This view auto-refreshes every 15s to simulate real-time updates.</p>
+      </div>
+
+      <div id="tab-automatic" class="hidden bg-white border border-borderColor rounded p-4 space-y-3">
+        <h2 class="font-semibold">Automatic scoring breakdown</h2>
+        <div id="auto-breakdown"></div>
+      </div>
+
+      <div id="tab-manual" class="hidden bg-white border border-borderColor rounded p-4 space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="font-semibold">Manual Review</h2>
+          <button id="btn-manual-submit" type="button" class="px-3 py-2 rounded text-sm font-medium bg-primary text-white">Submit Manual Review</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium">Strengths</label>
+            <textarea id="manual-strengths" class="w-full border border-borderColor rounded px-3 py-2" rows="4"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Weaknesses</label>
+            <textarea id="manual-weaknesses" class="w-full border border-borderColor rounded px-3 py-2" rows="4"></textarea>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium">Achievements (optional)</label>
+            <textarea id="manual-achievements" class="w-full border border-borderColor rounded px-3 py-2" rows="3"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Recommendations (optional)</label>
+            <textarea id="manual-recommendations" class="w-full border border-borderColor rounded px-3 py-2" rows="3"></textarea>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Score (0..100) (optional)</label>
+          <input id="manual-score" type="number" min="0" max="100" step="1" class="w-full border border-borderColor rounded px-3 py-2" />
+        </div>
+      </div>
+
+      <div id="tab-self" class="hidden bg-white border border-borderColor rounded p-4 space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="font-semibold">Self Review</h2>
+          <button id="btn-self-submit" type="button" class="px-3 py-2 rounded text-sm font-medium bg-primary text-white">Submit Self Review</button>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Comments</label>
+          <textarea id="self-comments" class="w-full border border-borderColor rounded px-3 py-2" rows="4"></textarea>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium">Achievements (optional)</label>
+            <textarea id="self-achievements" class="w-full border border-borderColor rounded px-3 py-2" rows="3"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Challenges (optional)</label>
+            <textarea id="self-challenges" class="w-full border border-borderColor rounded px-3 py-2" rows="3"></textarea>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Self Score (0..100) (optional)</label>
+          <input id="self-score" type="number" min="0" max="100" step="1" class="w-full border border-borderColor rounded px-3 py-2" />
+        </div>
+      </div>
+
+      <div id="tab-objectives" class="hidden bg-white border border-borderColor rounded p-4 space-y-3">
+        <div class="flex items-center justify-between gap-3 flex-col sm:flex-row">
+          <div>
+            <h2 class="font-semibold">Objectives</h2>
+            <p class="text-sm text-gray-600">Create objectives and log progress updates.</p>
+          </div>
+        </div>
+
+        <div class="border border-borderColor rounded p-3 bg-gray-50">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Title</label>
+              <input id="obj-title" class="w-full border border-borderColor rounded px-3 py-2" placeholder="Increase CSAT" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Description</label>
+              <input id="obj-desc" class="w-full border border-borderColor rounded px-3 py-2" placeholder="Improve support quality" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Target</label>
+              <input id="obj-target" class="w-full border border-borderColor rounded px-3 py-2" placeholder="CSAT >= 4.5" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600">Weight (0..1)</label>
+              <input id="obj-weight" type="number" min="0" max="1" step="0.01" class="w-full border border-borderColor rounded px-3 py-2" placeholder="0.25" />
+            </div>
+          </div>
+          <div class="mt-3">
+            <button id="btn-obj-create" type="button" class="px-3 py-2 rounded text-sm font-medium bg-primary text-white">Create Objective</button>
+          </div>
+        </div>
+
+        <div id="obj-list"></div>
+      </div>
+    </div>
+
+    <script type="module" src="../dist/assets/js/performance/evaluation-detail.js"></script>
+  </body>
+</html>
