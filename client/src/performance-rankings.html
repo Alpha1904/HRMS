@@ -26,8 +26,11 @@
 
         <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
           <div>
-            <label class="block text-xs font-medium text-gray-600">Cycle ID</label>
-            <input id="rankings-cycleId" class="w-full border border-borderColor rounded px-3 py-2" placeholder="1" />
+            <label class="block text-xs font-medium text-gray-600">Cycle</label>
+            <select id="rankings-cycleId" class="w-full border border-borderColor rounded px-3 py-2">
+              <option value="" disabled selected>Select a cycle</option>
+              <option value="" disabled>Loading cycles...</option>
+            </select>
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600">Department (optional)</label>
@@ -51,7 +54,7 @@
           </thead>
           <tbody id="rankings-tbody"></tbody>
         </table>
-        <div id="rankings-empty" class="hidden p-4 text-sm text-gray-600">Enter a cycleId to view rankings.</div>
+        <div id="rankings-empty" class="hidden p-4 text-sm text-gray-600">Select a cycle to view rankings.</div>
       </div>
     </div>
 

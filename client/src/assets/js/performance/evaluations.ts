@@ -9,6 +9,15 @@ type EvalRow = {
   cycle?: { id: number; name: string; period: string };
 };
 
+type CycleRow = {
+  id: number;
+  name: string;
+  period: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+};
+
 function getEl<T extends HTMLElement>(id: string) {
   return document.getElementById(id) as T | null;
 }
@@ -19,6 +28,50 @@ function badgeStatus(s: string) {
   if (v === 'COMPLETED') return `<span class="${base} bg-green-100 text-green-800 border-green-200">COMPLETED</span>`;
   if (v === 'IN_PROGRESS') return `<span class="${base} bg-blue-100 text-blue-800 border-blue-200">IN_PROGRESS</span>`;
   return `<span class="${base} bg-gray-100 text-gray-700 border-gray-200">${v || 'UNKNOWN'}</span>`;
+}
+
+function fmtDate(d: string) {
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return d;
+  return dt.toLocaleDateString();
+}
+
+function cycleLabel(c: CycleRow) {
+  const range = c.startDate && c.endDate ? ` (${fmtDate(c.startDate)} - ${fmtDate(c.endDate)})` : '';
+  const active = c.isActive ? ' [Active]' : '';
+  return `${c.name}${range}${active}`;
+}
+
+async function loadCyclesIntoFilter() {
+  const sel = getEl<HTMLSelectElement>('filter-cycleId');
+  if (!sel) return;
+
+  // Preserve current selection from URL or current select value.
+  const selected = getUrlParam('cycleId') ?? sel.value;
+
+  try {
+    const res = await apiFetch('/performance/cycles', { query: { page: 1, limit: 200 } });
+    const cycles: CycleRow[] = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+
+    sel.innerHTML = '';
+    sel.appendChild(new Option('All cycles', ''));
+
+    // Active cycles first, then by startDate desc (already sorted; stable partition for active).
+    const active = cycles.filter((c) => c.isActive);
+    const inactive = cycles.filter((c) => !c.isActive);
+    [...active, ...inactive].forEach((c) => {
+      sel.appendChild(new Option(cycleLabel(c), String(c.id)));
+    });
+
+    if (selected !== null && selected !== undefined) {
+      sel.value = String(selected);
+    }
+  } catch {
+    // Keep a minimal fallback if cycles cannot be loaded.
+    sel.innerHTML = '';
+    sel.appendChild(new Option('All cycles', ''));
+    sel.appendChild(new Option('Failed to load cycles', ''));
+  }
 }
 
 async function loadEvaluations() {
@@ -107,7 +160,7 @@ function syncFiltersFromUrl() {
 function wireFilters() {
   const applyBtn = getEl<HTMLButtonElement>('filter-apply');
   applyBtn?.addEventListener('click', async () => {
-    const cycleId = (getEl<HTMLInputElement>('filter-cycleId')?.value || '').trim();
+    const cycleId = (getEl<HTMLSelectElement>('filter-cycleId')?.value || '').trim();
     const status = (getEl<HTMLSelectElement>('filter-status')?.value || '').trim();
     const department = (getEl<HTMLInputElement>('filter-department')?.value || '').trim();
     const employeeId = (getEl<HTMLInputElement>('filter-employeeId')?.value || '').trim();
@@ -157,9 +210,9 @@ async function wireInitializeButton() {
   }
 
   btn.addEventListener('click', async () => {
-    const cycleId = (getEl<HTMLInputElement>('filter-cycleId')?.value || '').trim();
+    const cycleId = (getEl<HTMLSelectElement>('filter-cycleId')?.value || '').trim();
     if (!cycleId) {
-      showToast('Enter cycleId to initialize evaluations', 'error');
+      showToast('Select a cycle to initialize evaluations', 'error');
       return;
     }
     try {
@@ -181,6 +234,7 @@ function startPolling() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await renderPerformanceNav('perf-nav');
+  await loadCyclesIntoFilter();
   syncFiltersFromUrl();
   wireFilters();
   wirePager();

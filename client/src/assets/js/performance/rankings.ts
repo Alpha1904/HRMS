@@ -2,8 +2,102 @@ import { apiFetch, getCurrentUser, hasAnyRole, renderPerformanceNav, setUrlParam
 
 type RankingRow = any;
 
+type CycleRow = {
+  id: number;
+  name: string;
+  period: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+};
+
 function getEl<T extends HTMLElement>(id: string) {
   return document.getElementById(id) as T | null;
+}
+
+function fmtDate(d: string) {
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return d;
+  return dt.toLocaleDateString();
+}
+
+function cycleLabel(c: CycleRow) {
+  const range = c.startDate && c.endDate ? ` (${fmtDate(c.startDate)} - ${fmtDate(c.endDate)})` : '';
+  const active = c.isActive ? ' [Active]' : '';
+  return `${c.name}${range}${active}`;
+}
+
+function dedupeCycles(cycles: CycleRow[]): CycleRow[] {
+  const map = new Map<number, CycleRow>();
+  cycles.forEach((c) => {
+    if (!c || !c.id) return;
+    if (!map.has(c.id)) map.set(c.id, c);
+  });
+  return Array.from(map.values());
+}
+
+async function loadCyclesIntoFilter() {
+  const sel = getEl<HTMLSelectElement>('rankings-cycleId');
+  if (!sel) return;
+
+  const selected = getUrlParam('cycleId') ?? sel.value;
+
+  const setOptions = (cycles: CycleRow[]) => {
+    sel.innerHTML = '';
+    sel.appendChild(new Option('Select a cycle', '', true, false));
+    sel.options[0].disabled = true;
+
+    const active = cycles.filter((c) => c.isActive);
+    const inactive = cycles.filter((c) => !c.isActive);
+    [...active, ...inactive].forEach((c) => {
+      sel.appendChild(new Option(cycleLabel(c), String(c.id)));
+    });
+
+    if (selected) {
+      sel.value = String(selected);
+    }
+  };
+
+  try {
+    const res = await apiFetch('/performance/cycles', { query: { page: 1, limit: 200 } });
+    const cycles: CycleRow[] = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+    setOptions(dedupeCycles(cycles));
+    return;
+  } catch (e: any) {
+    // If user doesn't have permission to list cycles (e.g., EMPLOYEE), infer available cycles from accessible evaluations.
+    if (e?.status !== 403) {
+      sel.innerHTML = '';
+      sel.appendChild(new Option('Select a cycle', '', true, false));
+      sel.options[0].disabled = true;
+      sel.appendChild(new Option('Failed to load cycles', '', false, false));
+      sel.options[1].disabled = true;
+      return;
+    }
+  }
+
+  try {
+    const evalRes = await apiFetch('/performance/evaluations', { query: { page: 1, limit: 200 } });
+    const evalRows: any[] = Array.isArray(evalRes?.data) ? evalRes.data : [];
+    const inferred: CycleRow[] = evalRows
+      .map((r) => r?.cycle)
+      .filter(Boolean)
+      .map((c: any) => ({
+        id: Number(c.id),
+        name: String(c.name ?? ''),
+        period: String(c.period ?? ''),
+        startDate: String(c.startDate ?? ''),
+        endDate: String(c.endDate ?? ''),
+        isActive: Boolean(c.isActive ?? false),
+      }));
+
+    setOptions(dedupeCycles(inferred));
+  } catch {
+    sel.innerHTML = '';
+    sel.appendChild(new Option('Select a cycle', '', true, false));
+    sel.options[0].disabled = true;
+    sel.appendChild(new Option('No cycles available', '', false, false));
+    sel.options[1].disabled = true;
+  }
 }
 
 async function loadRankings() {
@@ -55,7 +149,7 @@ async function loadRankings() {
 function wireFilters() {
   const apply = getEl<HTMLButtonElement>('rankings-apply');
   apply?.addEventListener('click', async () => {
-    const cycleId = (getEl<HTMLInputElement>('rankings-cycleId')?.value || '').trim();
+    const cycleId = (getEl<HTMLSelectElement>('rankings-cycleId')?.value || '').trim();
     const department = (getEl<HTMLInputElement>('rankings-dept')?.value || '').trim();
     setUrlParam('cycleId', cycleId);
     setUrlParam('department', department);
@@ -65,9 +159,9 @@ function wireFilters() {
 
   const calc = getEl<HTMLButtonElement>('rankings-calc');
   calc?.addEventListener('click', async () => {
-    const cycleId = Number(getUrlParam('cycleId') || (getEl<HTMLInputElement>('rankings-cycleId')?.value || '').trim());
+    const cycleId = Number(getUrlParam('cycleId') || (getEl<HTMLSelectElement>('rankings-cycleId')?.value || '').trim());
     if (!cycleId || Number.isNaN(cycleId)) {
-      showToast('Enter a cycleId', 'error');
+      showToast('Select a cycle', 'error');
       return;
     }
     try {
@@ -90,7 +184,7 @@ function syncFromUrl() {
   const cycleId = getUrlParam('cycleId');
   const department = getUrlParam('department');
   if (cycleId) {
-    const el = getEl<HTMLInputElement>('rankings-cycleId');
+    const el = getEl<HTMLSelectElement>('rankings-cycleId');
     if (el) el.value = cycleId;
   }
   if (department) {
@@ -101,6 +195,7 @@ function syncFromUrl() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await renderPerformanceNav('perf-nav');
+  await loadCyclesIntoFilter();
   syncFromUrl();
   await wireAdminVisibility();
   wireFilters();
