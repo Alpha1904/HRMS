@@ -14,6 +14,9 @@ import {
   PostingStatus,
   ApplicationStatus,
   Prisma,
+  DepartureType,
+  DepartureStatus,
+  TaskStatus,
 } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
@@ -68,6 +71,18 @@ async function main() {
   await prisma.application.deleteMany();
   await prisma.candidate.deleteMany();
   await prisma.jobPosting.deleteMany();
+  // Clean departures tables before profiles
+  await prisma.departureHistory.deleteMany();
+  await prisma.departureDocument.deleteMany();
+  await prisma.departureChecklist.deleteMany();
+  await prisma.handoverPlan.deleteMany();
+  await prisma.exitSurvey.deleteMany();
+  await prisma.exitInterview.deleteMany();
+  await prisma.departure.deleteMany();
+  // Clean chat and other tables that reference User/Profile
+  await prisma.chatMessage.deleteMany();
+  await prisma.chatMember.deleteMany();
+  await prisma.chatRoom.deleteMany();
   await prisma.profile.deleteMany();
   await prisma.user.deleteMany();
 
@@ -323,6 +338,133 @@ async function main() {
       createdInEvaluationId: historicalEvaluation.id,
     },
   });
+
+  // E. DEPARTURES TEST SCENARIO
+  console.log('Creating test departure for employee9@hrms.com...');
+  const testDeparture = await prisma.departure.create({
+    data: {
+      employeeId: targetEmployee.id,
+      type: DepartureType.RESIGNATION,
+      reason: 'Personal growth opportunity',
+      noticeDate: new Date('2026-02-01T00:00:00.000Z'),
+      requiredNoticeDays: 30,
+      lastWorkDate: new Date('2026-03-02T00:00:00.000Z'),
+      status: DepartureStatus.PENDING,
+      notes: 'Submitted via employee portal',
+      tenantId: faker.string.uuid(),
+      createdById: hrUser.id,
+    },
+  });
+
+  // Create checklist items
+  const checklistItem1 = await prisma.departureChecklist.create({
+    data: {
+      departureId: testDeparture.id,
+      taskName: 'Return laptop',
+      description: 'Return to IT with accessories',
+      assigneeId: testManager.id,
+      dueDate: new Date('2026-02-20T00:00:00.000Z'),
+      status: TaskStatus.NOT_STARTED,
+    },
+  });
+
+  const checklistItem2 = await prisma.departureChecklist.create({
+    data: {
+      departureId: testDeparture.id,
+      taskName: 'Handover documentation',
+      description: 'Prepare project handover docs',
+      assigneeId: targetEmployee.id,
+      dueDate: new Date('2026-02-15T00:00:00.000Z'),
+      status: TaskStatus.IN_PROGRESS,
+    },
+  });
+
+  // Schedule exit interview
+  const exitInterview = await prisma.exitInterview.create({
+    data: {
+      departureId: testDeparture.id,
+      interviewerId: hrAdminProfileId,
+      scheduledDate: new Date('2026-02-15T10:00:00.000Z'),
+      notes: 'Scheduled with HR Director',
+    },
+  });
+
+  // Create exit survey (employee submitted)
+  await prisma.exitSurvey.create({
+    data: {
+      departureId: testDeparture.id,
+      responses: {
+        q1: 'Great team culture',
+        q2: 4,
+        q3: 'Better onboarding process needed',
+        q4: 'More flexible work hours',
+        q5: 5,
+      },
+    },
+  });
+
+  // Create handover plan
+  await prisma.handoverPlan.create({
+    data: {
+      departureId: testDeparture.id,
+      assigneeId: testManager.id,
+      notes: 'Transfer project A ownership',
+      tasks: [
+        { task: 'Project A documentation', status: 'completed' },
+        { task: 'Client introductions', status: 'in_progress' },
+        { task: 'Code walkthrough', status: 'pending' },
+      ],
+    },
+  });
+
+  // Upload departure documents (mock)
+  await prisma.departureDocument.createMany({
+    data: [
+      {
+        departureId: testDeparture.id,
+        name: 'Resignation Letter',
+        type: 'resignation',
+        url: '/uploads/mock-resignation.pdf',
+        uploadedById: targetEmployee.id,
+      },
+      {
+        departureId: testDeparture.id,
+        name: 'Exit Clearance Form',
+        type: 'clearance',
+        url: '/uploads/mock-clearance.pdf',
+        uploadedById: hrUser.id,
+      },
+    ],
+  });
+
+  // Create departure history logs
+  await prisma.departureHistory.createMany({
+    data: [
+      {
+        departureId: testDeparture.id,
+        eventType: 'CREATED',
+        details: { oldStatus: null, newStatus: DepartureStatus.PENDING, notes: 'Employee submitted resignation' },
+        timestamp: new Date(),
+        performedById: targetEmployee.id,
+      },
+      {
+        departureId: testDeparture.id,
+        eventType: 'INTERVIEW_SCHEDULED',
+        details: { oldStatus: DepartureStatus.PENDING, newStatus: DepartureStatus.PENDING, notes: 'Exit interview scheduled with HR Director' },
+        timestamp: new Date(),
+        performedById: hrUser.id,
+      },
+      {
+        departureId: testDeparture.id,
+        eventType: 'SURVEY_SUBMITTED',
+        details: { oldStatus: DepartureStatus.PENDING, newStatus: DepartureStatus.PENDING, notes: 'Employee completed exit survey' },
+        timestamp: new Date(),
+        performedById: targetEmployee.id,
+      },
+    ],
+  });
+
+  console.log(`Created test departure (ID: ${testDeparture.id}) for employee9@hrms.com with full workflow data`);
 
   // --- 4. CREATE HIRING DATA ---
   console.log('Creating hiring data...');

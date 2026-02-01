@@ -25,6 +25,7 @@ import { ChatModule } from './chat/chat.module';
 import { HiringModule } from './hiring/hiring.module';
 import { DocumentsModule } from './documents/documents.module';
 import { PerformanceModule } from './performance/performance.module';
+import { DeparturesModule } from './departures/departures.module';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -55,6 +56,7 @@ import { PerformanceModule } from './performance/performance.module';
     HiringModule,
     DocumentsModule,
     PerformanceModule,
+    DeparturesModule,
   ],
   controllers: [AppController],
   providers: [AppService, TestService],

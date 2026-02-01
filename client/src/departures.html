@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
+	<meta name="robots" content="noindex, nofollow">
+	<title>Departures - HRMS</title>
+
+	<link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="assets/img/apple-touch-icon.png">
+
+	<link rel="stylesheet" href="assets/plugins/icons/feather/feather.css">
+	<link rel="stylesheet" href="assets/css/flowbite.min.css">
+	<link rel="stylesheet" href="assets/plugins/tabler-icons/tabler-icons.min.css">
+	<link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
+	<link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
+	<link rel="stylesheet" href="../dist/style.css">
+</head>
+
+<body class="bg-gray-50">
+	<div class="main-wrapper">
+		<div class="page-wrapper">
+			<div class="content">
+				<div id="departuresContainer" style="box-sizing: border-box; padding-left: 50px; padding-right: 50px;">
+					<div class="mb-4 rounded-[14px]">
+						<div class="p-2 md:p-2 ">
+							<div class="flex flex-col gap-4 md:flex-row md:items-left md:justify-between">
+								<div>
+									<div class="mt-2 flex flex-wrap gap-2">
+										<span id="currentUserBadge" class="inline-flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-800 border border-borderColor">
+											<span class="size-2 rounded-full bg-emerald-500"></span>
+											<span id="currentUserEmail">Loading session…</span>
+											<span class="text-gray-400">•</span>
+											<span id="currentUserRole">—</span>
+										</span>
+									</div>
+								</div>
+							</div>
+							<div class="flex items-center gap-2">
+								<a id="backDashboard" href="#" class="btn btn-white">Back to Dashboard</a>
+								<!-- <button id="logoutBtn" class="hidden btn-primary">Logout</button> -->
+							</div>
+						</div>
+					</div>
+				</div>
+
+					<div id="toastRoot" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+					<div id="departuresApp" style="box-sizing: border-box; padding-left: 50px; padding-right: 50px;"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="assets/js/jquery-3.7.1.min.js"></script>
+	<script src="assets/js/flowbite.min.js"></script>
+	<script src="assets/js/feather.min.js"></script>
+	<script src="assets/js/script.js"></script>
+
+	<script type="module" src="../dist/assets/js/departures/departures-page.js"></script>
+</body>
+
+</html>
