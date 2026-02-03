@@ -200,6 +200,9 @@ model User {
   assignedChecklists DepartureChecklist[] @relation("ChecklistAssignee")
   performedHistory DepartureHistory[] @relation("HistoryPerformedBy")
 
+  // Payment and Bonus Management relations
+  createdSalaryAdjustments SalaryAdjustment[] @relation("CreatedSalaryAdjustments")
+
   @@index([email])
   @@index([role])
   @@index([isActive])
@@ -250,8 +253,6 @@ model Profile {
   shiftChangeRequests ShiftChangeRequest[] @relation("ProfileShiftRequests")
   trainings           Training[]           @relation("ProfileTrainings")
   assignedTrainings   Training[]           @relation("AssignedTrainings")
-  payments            Payment[]            @relation("ProfilePayments")
-  processedPayments   Payment[]            @relation("ProcessedPayments")
   applications        Application[]        @relation("ProfileApplications") // For candidates/recruiters
 
   // Announcements (HR only, but linked via profile)
@@ -278,6 +279,11 @@ model Profile {
   departures Departure[] @relation("EmployeeDepartures")
   conductedInterviews ExitInterview[] @relation("Interviewer")
   handoverPlans HandoverPlan[] @relation("HandoverAssignee")
+
+  // Payment and Bonus Management relations
+  compensationComponents CompensationComponent[] @relation("ProfileCompensationComponents")
+  salaryAdjustments      SalaryAdjustment[]      @relation("ProfileSalaryAdjustments")
+  payslips               Payslip[]               @relation("ProfilePayslips")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -646,32 +652,91 @@ model Training {
 // ========================================
 // PAYROLL & BENEFITS
 // ========================================
-model Payment {
-  id        Int     @id @default(autoincrement())
-  profileId Int
-  profile   Profile @relation("ProfilePayments", fields: [profileId], references: [id], onDelete: Cascade)
 
-  // Processed/approved by HR
-  processedById Int?
-  processedBy   Profile? @relation("ProcessedPayments", fields: [processedById], references: [id], onUpdate: NoAction, onDelete: NoAction)
+// Enum for compensation types
+enum CompensationType {
+  BASE_SALARY
+  BONUS
+  INCENTIVE
+  OTHER
+}
 
-  period        String // e.g., "2025-11"
-  baseSalary    Float
-  bonuses       Float?
-  deductions    Json? // {tax: 1000, benefits: 200}
-  overtimeHours Float?
-  totalNet      Float // Calculated net pay
-  payslipUrl    String? // Link to generated payslip
-  paymentDate   DateTime
+// Enum for frequency of compensation
+enum Frequency {
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+  ONE_TIME
+}
 
-  status String @default("PAID") // DRAFT, PROCESSED, PAID
+// Model for compensation components (base salary, bonuses, incentives, etc.)
+model CompensationComponent {
+  id          Int              @id @default(autoincrement())
+  profileId   Int
+  profile     Profile          @relation("ProfileCompensationComponents", fields: [profileId], references: [id], onDelete: Cascade)
+  type        CompensationType
+  amount      Decimal          @db.Decimal(10, 2)
+  frequency   Frequency?
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  active      Boolean          @default(true)
+
+  // Relation to adjustments (if adjusted)
+  adjustments SalaryAdjustment[] @relation("ComponentSalaryAdjustments")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([profileId])
+  @@index([type])
+  @@index([active])
+}
+
+// Model for salary adjustments/changes (increases, performance bonuses, etc.)
+model SalaryAdjustment {
+  id             Int                    @id @default(autoincrement())
+  profileId      Int
+  profile        Profile                @relation("ProfileSalaryAdjustments", fields: [profileId], references: [id], onDelete: Cascade)
+  componentId    Int?
+  component      CompensationComponent? @relation("ComponentSalaryAdjustments", fields: [componentId], references: [id], onDelete: SetNull)
+  adjustmentType String
+  amount         Decimal                @db.Decimal(10, 2)
+  percentage     Float?
+  reason         String?
+  effectiveDate  DateTime
+  createdById    Int
+  createdBy      User                   @relation("CreatedSalaryAdjustments", fields: [createdById], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([profileId, period])
-  @@index([paymentDate])
+  @@index([profileId])
+  @@index([componentId])
+  @@index([createdById])
+  @@index([effectiveDate])
 }
+
+// Model for monthly payslips
+model Payslip {
+  id          Int     @id @default(autoincrement())
+  profileId   Int
+  profile     Profile @relation("ProfilePayslips", fields: [profileId], references: [id], onDelete: Cascade)
+  month       DateTime
+  grossAmount Decimal  @db.Decimal(10, 2)
+  deductions  Decimal? @db.Decimal(10, 2)
+  netAmount   Decimal  @db.Decimal(10, 2)
+  breakdown   Json?
+  filePath    String
+  generatedAt DateTime @default(now())
+  viewedAt    DateTime?
+
+  @@index([profileId])
+  @@index([month])
+  @@unique([profileId, month])
+}
+
 
 // ========================================
 // COMMUNICATION & ENGAGEMENT
@@ -853,7 +918,6 @@ model Notification {
 
 /// ========================================
 // AUDIT RELATIONS (Reused for consistency)
-// ========================================
 
 model AuditLog {
   id         Int     @id @default(autoincrement())
@@ -874,6 +938,8 @@ model AuditLog {
   @@index([resource, resourceId])
   @@index([createdAt])
 }
+// ========================================
+
 
 model EvaluationCycle {
   id        Int              @id @default(autoincrement())

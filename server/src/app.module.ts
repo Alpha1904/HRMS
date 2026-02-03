@@ -26,6 +26,7 @@ import { HiringModule } from './hiring/hiring.module';
 import { DocumentsModule } from './documents/documents.module';
 import { PerformanceModule } from './performance/performance.module';
 import { DeparturesModule } from './departures/departures.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -57,6 +58,7 @@ import { DeparturesModule } from './departures/departures.module';
     DocumentsModule,
     PerformanceModule,
     DeparturesModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService, TestService],

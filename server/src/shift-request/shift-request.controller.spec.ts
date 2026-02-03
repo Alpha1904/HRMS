@@ -7,7 +7,9 @@ describe('ShiftRequestController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ShiftRequestController],
-    }).compile();
+    })
+      .useMocker(() => ({}))
+      .compile();
 
     controller = module.get<ShiftRequestController>(ShiftRequestController);
   });

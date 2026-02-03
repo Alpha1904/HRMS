@@ -7,7 +7,9 @@ describe('ShiftRequestService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [ShiftRequestService],
-    }).compile();
+    })
+      .useMocker(() => ({}))
+      .compile();
 
     service = module.get<ShiftRequestService>(ShiftRequestService);
   });
