@@ -17,7 +17,7 @@ export async function getMe(): Promise<CurrentUser> {
   const me = await apiRequest('GET', endpoints.me);
   return {
     id: Number(me?.id ?? me?.user?.id),
-    role: String(me?.role ?? me?.user?.role ?? 'EMPLOYEE'),
+    role: String(me?.role ?? me?.user?.role ?? 'EMPLOYEE').toUpperCase(),
     email: String(me?.email ?? me?.user?.email ?? ''),
   };
 }

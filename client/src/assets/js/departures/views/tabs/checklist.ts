@@ -1,6 +1,7 @@
 import { apiRequest } from '../../api.js';
 import { badgeClass, escapeHtml, formatDate, toast } from '../../ui.js';
 import type { CurrentUser } from '../../auth.js';
+import { fetchAllProfiles, renderProfileOptions } from '../../people.js';
 
 function canAdd(role: string): boolean {
   return role === 'MANAGER' || role === 'HR_ADMIN' || role === 'SYSTEM_ADMIN';
@@ -20,7 +21,9 @@ export async function renderChecklist(root: HTMLElement, departureId: number, us
       <div class="${canAdd(user.role) ? '' : 'hidden'}" style="min-width: 520px">
         <form id="addForm" class="grid grid-cols-1 md:grid-cols-2 gap-2">
           <input id="taskName" required class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" placeholder="Task name" />
-          <input id="assigneeId" type="number" min="1" class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" placeholder="Assignee User ID (optional)" />
+          <select id="assigneeId" class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]">
+            <option value="">Loading...</option>
+          </select>
           <input id="dueDate" type="date" class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" />
           <button class="btn btn-primary" type="submit">Add</button>
           <input id="description" class="md:col-span-2 bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" placeholder="Description (optional)" />
@@ -96,6 +99,22 @@ export async function renderChecklist(root: HTMLElement, departureId: number, us
     const form = root.querySelector('#addForm') as HTMLFormElement;
     const err = root.querySelector('#err') as HTMLElement;
 
+    let profiles: any[] = [];
+    try {
+      profiles = await fetchAllProfiles();
+    } catch {
+      profiles = [];
+    }
+
+    const assigneeSel = root.querySelector('#assigneeId') as HTMLSelectElement | null;
+    if (assigneeSel) {
+      assigneeSel.innerHTML = renderProfileOptions(profiles, {
+        valueField: 'userId',
+        includeEmpty: { value: '', label: 'Unassigned' },
+        selected: null,
+      });
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       err.classList.add('hidden');
@@ -103,8 +122,8 @@ export async function renderChecklist(root: HTMLElement, departureId: number, us
       const payload: any = {
         taskName: (root.querySelector('#taskName') as HTMLInputElement).value.trim(),
         description: (root.querySelector('#description') as HTMLInputElement).value.trim() || undefined,
-        assigneeId: (root.querySelector('#assigneeId') as HTMLInputElement).value
-          ? Number((root.querySelector('#assigneeId') as HTMLInputElement).value)
+        assigneeId: (root.querySelector('#assigneeId') as HTMLSelectElement).value
+          ? Number((root.querySelector('#assigneeId') as HTMLSelectElement).value)
           : undefined,
         dueDate: (root.querySelector('#dueDate') as HTMLInputElement).value
           ? new Date((root.querySelector('#dueDate') as HTMLInputElement).value).toISOString()

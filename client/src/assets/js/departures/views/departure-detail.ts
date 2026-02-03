@@ -18,6 +18,19 @@ export async function renderDepartureDetail(
 
   const dep = await apiRequest('GET', `/departures/${departureId}`);
 
+  const allowedNext: Record<string, string[]> = {
+    PENDING: ['APPROVED', 'CANCELLED'],
+    APPROVED: ['IN_PROGRESS', 'CANCELLED'],
+    IN_PROGRESS: ['COMPLETED', 'CANCELLED'],
+    COMPLETED: [],
+    CANCELLED: [],
+  };
+
+  const nextStatuses = allowedNext[String(dep.status)] || [];
+  const statusOptions = nextStatuses.length
+    ? [`<option value="" selected disabled>Select next status</option>`, ...nextStatuses.map((s) => `<option value="${s}">${s}</option>`)].join('')
+    : `<option value="" selected disabled>No further transitions</option>`;
+
   root.innerHTML = `
     <div class="mb-3">
       <a href="#departures" class="text-primary">← Back to list</a>
@@ -61,13 +74,10 @@ export async function renderDepartureDetail(
             <div class="${perms.canManage(user.role) ? '' : 'hidden'}">
               <label class="block mb-1 text-sm font-medium text-title">Change status</label>
               <div class="flex items-center gap-2">
-                <select id="statusSel" class="bg-white border-borderColor text-gray-900 text-sm rounded-input block py-2 px-2.5 h-[38px]">
-                  <option value="APPROVED">APPROVED</option>
-                  <option value="IN_PROGRESS">IN_PROGRESS</option>
-                  <option value="COMPLETED">COMPLETED</option>
-                  <option value="CANCELLED">CANCELLED</option>
+                <select id="statusSel" ${nextStatuses.length ? '' : 'disabled'} class="bg-white border-borderColor text-gray-900 text-sm rounded-input block py-2 px-2.5 h-[38px]">
+                  ${statusOptions}
                 </select>
-                <button id="statusBtn" class="btn btn-primary">Update</button>
+                <button id="statusBtn" ${nextStatuses.length ? '' : 'disabled'} class="btn btn-primary">Update</button>
               </div>
             </div>
 
@@ -100,6 +110,10 @@ export async function renderDepartureDetail(
   const statusBtn = root.querySelector('#statusBtn') as HTMLButtonElement | null;
   statusBtn?.addEventListener('click', async () => {
     const status = (root.querySelector('#statusSel') as HTMLSelectElement).value;
+    if (!status) {
+      toast('Select a valid next status', 'error');
+      return;
+    }
     try {
       await apiRequest('PATCH', `/departures/${departureId}/status`, { status });
       toast('Status updated', 'success');

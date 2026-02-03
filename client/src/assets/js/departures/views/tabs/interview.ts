@@ -1,6 +1,7 @@
 import { apiRequest } from '../../api.js';
 import { escapeHtml, formatDate, toast } from '../../ui.js';
 import type { CurrentUser } from '../../auth.js';
+import { fetchAllProfiles, renderProfileOptions } from '../../people.js';
 
 function canSchedule(role: string): boolean {
   return role === 'MANAGER' || role === 'HR_ADMIN' || role === 'SYSTEM_ADMIN';
@@ -27,7 +28,9 @@ export async function renderInterview(root: HTMLElement, departureId: number, us
         <div class="mt-2 ${canSchedule(user.role) ? '' : 'hidden'}">
           <div class="text-xs text-gray-500 mb-2">Schedule interview</div>
           <form id="sched" class="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <input id="interviewerId" type="number" min="1" required class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" placeholder="Interviewer Profile ID" />
+            <select id="interviewerId" required class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]">
+              <option value="">Loading...</option>
+            </select>
             <input id="scheduledDate" type="datetime-local" required class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" />
             <button class="btn btn-primary md:col-span-2" type="submit">Schedule</button>
             <div id="schedErr" class="md:col-span-2 hidden text-sm text-red-600"></div>
@@ -50,12 +53,29 @@ export async function renderInterview(root: HTMLElement, departureId: number, us
   const sched = root.querySelector('#sched') as HTMLFormElement | null;
   const schedErr = root.querySelector('#schedErr') as HTMLElement | null;
 
+  let profiles: any[] = [];
+  try {
+    profiles = await fetchAllProfiles();
+  } catch {
+    profiles = [];
+  }
+
+  const interviewerSel = root.querySelector('#interviewerId') as HTMLSelectElement | null;
+  if (interviewerSel) {
+    interviewerSel.innerHTML = renderProfileOptions(profiles, {
+      valueField: 'id',
+      includeEmpty: { value: '', label: 'Select interviewer' },
+      selected: current?.interviewerId ?? null,
+      includeUnknownSelected: true,
+    });
+  }
+
   sched?.addEventListener('submit', async (e) => {
     e.preventDefault();
     schedErr?.classList.add('hidden');
     try {
       const payload = {
-        interviewerId: Number((root.querySelector('#interviewerId') as HTMLInputElement).value),
+        interviewerId: Number((root.querySelector('#interviewerId') as HTMLSelectElement).value),
         scheduledDate: new Date((root.querySelector('#scheduledDate') as HTMLInputElement).value).toISOString(),
       };
       await apiRequest('POST', `/departures/${departureId}/interview/schedule`, payload);

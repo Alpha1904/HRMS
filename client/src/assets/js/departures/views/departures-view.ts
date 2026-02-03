@@ -2,6 +2,7 @@ import { apiRequest } from '../api.js';
 import { badgeClass, escapeHtml, formatDate, toast } from '../ui.js';
 import type { CurrentUser } from '../auth.js';
 import { renderDepartureDetail } from './departure-detail.js';
+import { fetchAllProfiles, renderProfileOptions } from '../people.js';
 
 function canCreate(role: string): boolean {
   return role === 'EMPLOYEE' || role === 'MANAGER' || role === 'HR_ADMIN' || role === 'SYSTEM_ADMIN';
@@ -160,7 +161,7 @@ function parseHash(): { route: 'departures' | 'detail'; id?: number } {
   return { route: 'departures' };
 }
 
-function renderShell(root: HTMLElement) {
+function renderShell(root: HTMLElement, user: CurrentUser) {
   root.innerHTML = `
     <div class="grid grid-cols-1 gap-4">
       <div class="card">
@@ -180,7 +181,7 @@ function renderShell(root: HTMLElement) {
             </div>
           </div>
 
-          <div class="mt-4 border border-borderColor rounded-[14px] p-3 md:p-4 bg-slate-50/60">
+          <div class="mt-4 border border-borderColor rounded-[14px] p-3 md:p-4 bg-slate-50/60 ${user.role === 'EMPLOYEE' ? 'hidden' : ''}">
             <div class="grid grid-cols-5 md:grid-cols-5 gap-3">
               <div>
                 <label class="block mb-1 text-sm font-medium text-title">Status</label>
@@ -203,8 +204,10 @@ function renderShell(root: HTMLElement) {
                 </select>
               </div>
               <div>
-                <label class="block mb-1 text-sm font-medium text-title">Profile ID</label>
-                <input id="fltProfileId" type="number" min="1" class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" placeholder="e.g. 421" />
+                <label class="block mb-1 text-sm font-medium text-title">Employee</label>
+                <select id="fltProfileId" class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]">
+                  <option value="">Loading...</option>
+                </select>
               </div>
               <div>
                 <label class="block mb-1 text-sm font-medium text-title">Search</label>
@@ -239,10 +242,18 @@ function renderShell(root: HTMLElement) {
           <button id="closeModal" class="btn btn-white">Close</button>
         </div>
         <form id="createForm" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          ${
+            user.role === 'EMPLOYEE'
+              ? `<input id="cProfileId" type="hidden" />`
+              : `
           <div>
-            <label class="block mb-1 text-sm font-medium text-title">Profile ID</label>
-            <input id="cProfileId" type="number" min="1" required class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" />
+            <label class="block mb-1 text-sm font-medium text-title">Employee</label>
+            <select id="cProfileId" required class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]">
+              <option value="">Loading...</option>
+            </select>
           </div>
+          `
+          }
           <div>
             <label class="block mb-1 text-sm font-medium text-title">Type</label>
             <select id="cType" class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]">
@@ -375,7 +386,28 @@ export async function renderDeparturesPage(root: HTMLElement, user: CurrentUser)
     return;
   }
 
-  renderShell(root);
+  renderShell(root, user);
+
+  let profiles: any[] = [];
+  if (user.role !== 'EMPLOYEE') {
+    try {
+      profiles = await fetchAllProfiles();
+    } catch {
+      profiles = [];
+    }
+  }
+
+  let employeeProfileId: number | null = null;
+  let employeeProfileErr: string | null = null;
+  if (user.role === 'EMPLOYEE') {
+    try {
+      const myProfile: any = await apiRequest('GET', `/profiles/user/${user.id}`);
+      employeeProfileId = myProfile?.id ? Number(myProfile.id) : null;
+    } catch {
+      employeeProfileId = null;
+      employeeProfileErr = 'Failed to load your employee profile';
+    }
+  }
 
   const state: any = {
     status: '',
@@ -390,6 +422,35 @@ export async function renderDeparturesPage(root: HTMLElement, user: CurrentUser)
     },
   };
 
+  const fltProfileSel = root.querySelector('#fltProfileId') as HTMLSelectElement | null;
+  if (fltProfileSel) {
+    fltProfileSel.innerHTML = renderProfileOptions(profiles, {
+      valueField: 'id',
+      includeEmpty: { value: '', label: 'All' },
+      selected: state.profileId,
+    });
+  }
+
+  const cProfileEl = root.querySelector('#cProfileId') as HTMLElement | null;
+  if (cProfileEl && cProfileEl.tagName === 'SELECT') {
+    (cProfileEl as HTMLSelectElement).innerHTML = renderProfileOptions(profiles, {
+      valueField: 'id',
+      includeEmpty: { value: '', label: 'Select employee' },
+      selected: null,
+    });
+  }
+
+  if (user.role === 'EMPLOYEE') {
+    const cProfileHidden = root.querySelector('#cProfileId') as HTMLInputElement | null;
+    if (cProfileHidden && employeeProfileId) cProfileHidden.value = String(employeeProfileId);
+
+    const typeSel = root.querySelector('#cType') as HTMLSelectElement | null;
+    if (typeSel) {
+      typeSel.value = 'RESIGNATION';
+      typeSel.disabled = true;
+    }
+  }
+
   const createBtn = root.querySelector('#createBtn') as HTMLButtonElement;
   if (!canCreate(user.role)) createBtn.classList.add('hidden');
 
@@ -397,6 +458,20 @@ export async function renderDeparturesPage(root: HTMLElement, user: CurrentUser)
   const openModal = () => {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+
+    if (user.role === 'EMPLOYEE') {
+      const cErr = root.querySelector('#cErr') as HTMLElement | null;
+      const submitBtn = root.querySelector('#createForm button[type="submit"]') as HTMLButtonElement | null;
+      if (!employeeProfileId) {
+        if (cErr) {
+          cErr.textContent = employeeProfileErr || 'Employee profile not found for this account';
+          cErr.classList.remove('hidden');
+        }
+        if (submitBtn) submitBtn.disabled = true;
+      } else {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    }
   };
   const closeModal = () => {
     modal.classList.add('hidden');
@@ -412,7 +487,7 @@ export async function renderDeparturesPage(root: HTMLElement, user: CurrentUser)
   (root.querySelector('#applyBtn') as HTMLButtonElement).addEventListener('click', async () => {
     state.status = (root.querySelector('#fltStatus') as HTMLSelectElement).value;
     state.type = (root.querySelector('#fltType') as HTMLSelectElement).value;
-    state.profileId = (root.querySelector('#fltProfileId') as HTMLInputElement).value;
+    state.profileId = (root.querySelector('#fltProfileId') as HTMLSelectElement).value;
     state.search = (root.querySelector('#fltSearch') as HTMLInputElement).value.trim();
     state.page = 1;
     await state.render();
@@ -429,7 +504,7 @@ export async function renderDeparturesPage(root: HTMLElement, user: CurrentUser)
   (root.querySelector('#clearBtn') as HTMLButtonElement).addEventListener('click', async () => {
     (root.querySelector('#fltStatus') as HTMLSelectElement).value = '';
     (root.querySelector('#fltType') as HTMLSelectElement).value = '';
-    (root.querySelector('#fltProfileId') as HTMLInputElement).value = '';
+    (root.querySelector('#fltProfileId') as HTMLSelectElement).value = '';
     (root.querySelector('#fltSearch') as HTMLInputElement).value = '';
     state.status = '';
     state.type = '';
@@ -453,7 +528,7 @@ export async function renderDeparturesPage(root: HTMLElement, user: CurrentUser)
       state.type = '';
     }
     if (key === 'profileId') {
-      (root.querySelector('#fltProfileId') as HTMLInputElement).value = '';
+      (root.querySelector('#fltProfileId') as HTMLSelectElement).value = '';
       state.profileId = '';
     }
     if (key === 'search') {
@@ -471,8 +546,21 @@ export async function renderDeparturesPage(root: HTMLElement, user: CurrentUser)
     e.preventDefault();
     cErr.classList.add('hidden');
 
+    let profileId: number | null = null;
+    if (user.role === 'EMPLOYEE') {
+      profileId = employeeProfileId;
+    } else {
+      profileId = Number((root.querySelector('#cProfileId') as HTMLSelectElement).value);
+    }
+
+    if (!profileId || Number.isNaN(profileId)) {
+      cErr.textContent = 'Employee profile is required';
+      cErr.classList.remove('hidden');
+      return;
+    }
+
     const payload: any = {
-      profileId: Number((root.querySelector('#cProfileId') as HTMLInputElement).value),
+      profileId,
       type: (root.querySelector('#cType') as HTMLSelectElement).value,
       reason: (root.querySelector('#cReason') as HTMLInputElement).value || undefined,
       noticeDate: new Date((root.querySelector('#cNotice') as HTMLInputElement).value).toISOString(),

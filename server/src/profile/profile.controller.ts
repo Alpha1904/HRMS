@@ -36,15 +36,6 @@ export class ProfileController {
     return this.profileService.findAll(query);
   }
 
-  // Get a profile by its *Profile ID*
-  @Get(':id')
-  @ApiOperation({ summary: 'Find a single profile by its ID' })
-  @ApiResponse({ status: 200, description: 'Returns the profile.'})
-  @ApiResponse({ status: 404, description: 'Profile not found.'})
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.profileService.findOne(id);
-  }
-
   // A more useful endpoint: Get a profile by its *User ID*
   @Get('/user/:userId')
   @ApiOperation({ summary: 'Find a single profile by its associated User ID' })
@@ -52,6 +43,15 @@ export class ProfileController {
   @ApiResponse({ status: 404, description: 'Profile not found.'})
   findOneByUserId(@Param('userId', ParseIntPipe) userId: number) {
     return this.profileService.findOneByUserId(userId);
+  }
+
+  // Get a profile by its *Profile ID*
+  @Get(':id')
+  @ApiOperation({ summary: 'Find a single profile by its ID' })
+  @ApiResponse({ status: 200, description: 'Returns the profile.'})
+  @ApiResponse({ status: 404, description: 'Profile not found.'})
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.profileService.findOne(id);
   }
 
   // Update a profile by its *Profile ID*

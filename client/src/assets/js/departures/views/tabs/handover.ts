@@ -1,6 +1,7 @@
 import { apiRequest } from '../../api.js';
 import { escapeHtml, toast } from '../../ui.js';
 import type { CurrentUser } from '../../auth.js';
+import { fetchAllProfiles, renderProfileOptions } from '../../people.js';
 
 function canUpsert(role: string): boolean {
   return role === 'MANAGER' || role === 'HR_ADMIN' || role === 'SYSTEM_ADMIN';
@@ -30,7 +31,9 @@ export async function renderHandover(root: HTMLElement, departureId: number, use
         <div class="mt-2 ${canUpsert(user.role) ? '' : 'hidden'}">
           <div class="text-xs text-gray-500 mb-2">Create / update plan</div>
           <form id="upsert" class="space-y-2">
-            <input id="assigneeId" type="number" min="1" required class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" placeholder="Assignee Profile ID" value="${plan?.assigneeId ?? ''}" />
+            <select id="assigneeId" required class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]">
+              <option value="">Loading...</option>
+            </select>
             <input id="notes" class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" placeholder="Notes" value="${escapeHtml(plan?.notes || '')}" />
             <textarea id="tasks" rows="6" class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 font-mono">${escapeHtml(JSON.stringify(plan?.tasks || [], null, 2))}</textarea>
             <button class="btn btn-primary w-full" type="submit">Save</button>
@@ -61,6 +64,23 @@ export async function renderHandover(root: HTMLElement, departureId: number, use
     const form = root.querySelector('#upsert') as HTMLFormElement;
     const err = root.querySelector('#upErr') as HTMLElement;
 
+    let profiles: any[] = [];
+    try {
+      profiles = await fetchAllProfiles();
+    } catch {
+      profiles = [];
+    }
+
+    const assigneeSel = root.querySelector('#assigneeId') as HTMLSelectElement | null;
+    if (assigneeSel) {
+      assigneeSel.innerHTML = renderProfileOptions(profiles, {
+        valueField: 'id',
+        includeEmpty: { value: '', label: 'Select assignee' },
+        selected: plan?.assigneeId ?? null,
+        includeUnknownSelected: true,
+      });
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       err.classList.add('hidden');
@@ -75,7 +95,7 @@ export async function renderHandover(root: HTMLElement, departureId: number, use
       }
 
       const payload = {
-        assigneeId: Number((root.querySelector('#assigneeId') as HTMLInputElement).value),
+        assigneeId: Number((root.querySelector('#assigneeId') as HTMLSelectElement).value),
         notes: (root.querySelector('#notes') as HTMLInputElement).value || undefined,
         tasks,
       };
