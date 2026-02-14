@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', (): void => {
 });
 
 export async function enforceAuthenticatedRoute(
-  redirectUrl: string = 'login-2.html',
+  redirectUrl: string = 'login.html',
   allowedRoles?: string[],
 ): Promise<void> {
   try {

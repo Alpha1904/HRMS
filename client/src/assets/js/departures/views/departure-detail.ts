@@ -39,9 +39,9 @@ export async function renderDepartureDetail(
     <div class="card">
       <div class="card-body">
         <div class="flex md:flex-row md:items-start md:justify-between gap-3">
-          <div>
+          <div class="md:w-2/3">
             <h5 class="mb-1">Departure #${dep.id}</h5>
-            <div class="text-sm text-gray-500">${escapeHtml(dep.employee?.fullName || `Profile ${dep.employeeId}`)}</div>
+            <div class="text-2xl font-medium text-gray-500">${escapeHtml(dep.employee?.fullName || `Profile ${dep.employeeId}`)}</div>
             <div class="mt-2 flex flex-wrap gap-2 items-center">
               <span class="inline-flex items-center rounded-full border px-2 py-1 text-xs ${badgeClass(dep.status)}">${escapeHtml(dep.status)}</span>
               <span class="inline-flex items-center rounded-full border px-2 py-1 text-xs bg-gray-50 text-gray-700 border-borderColor">${escapeHtml(dep.type)}</span>

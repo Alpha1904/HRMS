@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HRMS • Documents</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="../recruitment/styles.css" />
 </head>
 
 <body class="h-full bg-white text-black" data-page="documents">
@@ -35,14 +35,13 @@
         </div>
       </div>
 
-      <nav class="p-3 flex flex-col gap-1">
-        <a data-nav="jobs" href="./index.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Jobs</a>
-        <a data-nav="candidates" href="./candidates.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Candidates</a>
-        <a data-nav="documents" href="./documents.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Documents</a>
-        <a data-nav="careers" href="./career.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Careers (Public)</a>
-        <a data-nav="apply" href="./apply.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Public Apply Form</a>
+       <nav class="p-3 flex flex-col gap-1">
+        <a data-nav="jobs" href="../recruitment/index.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Jobs</a>
+        <a data-nav="candidates" href="../recruitment/candidates.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Candidates</a>
+        <a data-nav="documents" href="../recruitment/documents.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Documents</a>
+        <a data-nav="careers" href="../recruitment/career.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Careers (Public)</a>
+        <a data-nav="apply" href="../recruitment/apply.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Public Apply Form</a>
       </nav>
-
       <div class="mt-auto p-3 border-t border-gray-300">
         <button id="home-btn" class="w-full px-3 py-2 rounded-lg bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm">Home</button>
       </div>
@@ -222,11 +221,11 @@
     </div>
   </div>
 
-  <script src="./scripts/core.js"></script>
-  <script src="./scripts/ui.js"></script>
-  <script src="./scripts/api.js"></script>
-  <script src="./scripts/app.js"></script>
-  <script src="./scripts/documents.js"></script>
+  <script src="../recruitment/scripts/core.js"></script>
+  <script src="../recruitment/scripts/ui.js"></script>
+  <script src="../recruitment/scripts/api.js"></script>
+  <script src="../recruitment/scripts/app.js"></script>
+  <script src="../recruitment/scripts/documents.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       window.HRMSRecruitment.documents.init();

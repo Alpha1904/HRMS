@@ -50,7 +50,7 @@ export async function apiRequest(
 
   if (res.status === 401) {
     clearAuthStorage();
-    window.location.href = 'login-2.html';
+    window.location.href = 'login.html';
     throw new Error('Unauthorized');
   }
 

@@ -2,8 +2,10 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   ParseIntPipe,
   Post,
   Req,
@@ -29,6 +31,8 @@ import { CurrentUserInterface } from '../common/interfaces/current-user.interfac
 import { CreateAdjustmentDto } from './dto/create-adjustment.dto';
 import { CreateCompensationDto } from './dto/create-compensation.dto';
 import { GeneratePayslipDto } from './dto/generate-payslip.dto';
+import { UpdateAdjustmentDto } from './dto/update-adjustment.dto';
+import { UpdateCompensationDto } from './dto/update-compensation.dto';
 import { AdjustmentService } from './services/adjustment.service';
 import { CompensationService } from './services/compensation.service';
 import { PayslipService } from './services/payslip.service';
@@ -78,6 +82,34 @@ export class PaymentController {
     return this.compensation.findByProfile(profileId, user);
   }
 
+  @Patch('compensation/:id')
+  @Roles(Role.HR_ADMIN, Role.SYSTEM_ADMIN)
+  @ApiOperation({ summary: 'Update a compensation component (admin)' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiBody({ type: UpdateCompensationDto })
+  @ApiResponse({ status: 200, description: 'Compensation component updated' })
+  updateCompensation(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateCompensationDto,
+    @CurrentUser() user: CurrentUserInterface,
+    @Req() req: any,
+  ) {
+    return this.compensation.update(id, dto, this.auditContext(user, req));
+  }
+
+  @Delete('compensation/:id')
+  @Roles(Role.HR_ADMIN, Role.SYSTEM_ADMIN)
+  @ApiOperation({ summary: 'Soft-delete (deactivate) a compensation component (admin)' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({ status: 200, description: 'Compensation component deleted' })
+  deleteCompensation(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: CurrentUserInterface,
+    @Req() req: any,
+  ) {
+    return this.compensation.softDelete(id, this.auditContext(user, req));
+  }
+
   @Post('adjustment')
   @Roles(Role.HR_ADMIN, Role.SYSTEM_ADMIN)
   @ApiOperation({ summary: 'Admin applies salary change (e.g., increase, bonus)' })
@@ -102,6 +134,21 @@ export class PaymentController {
     @CurrentUser() user: CurrentUserInterface,
   ) {
     return this.adjustments.findByProfile(profileId, user);
+  }
+
+  @Patch('adjustment/:id')
+  @Roles(Role.HR_ADMIN, Role.SYSTEM_ADMIN)
+  @ApiOperation({ summary: 'Update a salary adjustment (admin)' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiBody({ type: UpdateAdjustmentDto })
+  @ApiResponse({ status: 200, description: 'Salary adjustment updated' })
+  updateAdjustment(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateAdjustmentDto,
+    @CurrentUser() user: CurrentUserInterface,
+    @Req() req: any,
+  ) {
+    return this.adjustments.update(id, dto, this.auditContext(user, req));
   }
 
   @Post('payslip/generate')

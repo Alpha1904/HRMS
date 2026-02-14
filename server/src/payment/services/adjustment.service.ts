@@ -8,6 +8,7 @@ import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CurrentUserInterface } from '../../common/interfaces/current-user.interface';
 import { CreateAdjustmentDto } from '../dto/create-adjustment.dto';
+import { UpdateAdjustmentDto } from '../dto/update-adjustment.dto';
 import { AuditContext, PaymentAuditService } from './payment-audit.service';
 
 @Injectable()
@@ -101,6 +102,78 @@ export class AdjustmentService {
         component: true,
         createdBy: { select: { id: true, email: true, role: true } },
       },
+    });
+  }
+
+  async update(id: number, dto: UpdateAdjustmentDto, ctx: AuditContext) {
+    const existing = await this.prisma.salaryAdjustment.findUnique({
+      where: { id },
+      include: {
+        component: true,
+        createdBy: { select: { id: true, email: true, role: true } },
+      },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Salary adjustment not found');
+    }
+
+    const effectiveDate = dto.effectiveDate ? new Date(dto.effectiveDate) : undefined;
+    if (effectiveDate && Number.isNaN(effectiveDate.getTime())) {
+      throw new BadRequestException('Invalid effectiveDate');
+    }
+
+    if (dto.componentId !== undefined && dto.componentId !== null) {
+      const component = await this.prisma.compensationComponent.findFirst({
+        where: {
+          id: dto.componentId,
+          profileId: existing.profileId,
+          deletedAt: null,
+        },
+        select: { id: true },
+      });
+
+      if (!component) {
+        throw new BadRequestException('Invalid componentId for this profile');
+      }
+    }
+
+    const componentUpdate: Prisma.CompensationComponentUpdateOneWithoutAdjustmentsNestedInput | undefined =
+      dto.componentId === undefined
+        ? undefined
+        : dto.componentId === null
+          ? { disconnect: true }
+          : { connect: { id: dto.componentId } };
+
+    const data: Prisma.SalaryAdjustmentUpdateInput = {
+      component: componentUpdate,
+      adjustmentType: dto.adjustmentType,
+      amount: dto.amount !== undefined ? new Prisma.Decimal(dto.amount) : undefined,
+      percentage: dto.percentage === null ? null : dto.percentage,
+      reason: dto.reason === null ? null : dto.reason,
+      effectiveDate,
+    };
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.salaryAdjustment.update({
+        where: { id },
+        data,
+        include: {
+          component: true,
+          createdBy: { select: { id: true, email: true, role: true } },
+        },
+      });
+
+      await this.audit.log(
+        ctx,
+        'UPDATE_SALARY_ADJUSTMENT',
+        'SalaryAdjustment',
+        updated.id,
+        existing,
+        updated,
+      );
+
+      return updated;
     });
   }
 }

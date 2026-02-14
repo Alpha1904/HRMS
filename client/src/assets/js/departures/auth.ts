@@ -9,7 +9,7 @@ export type CurrentUser = {
 export function requireAuth(): void {
   const token = sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
   if (!token) {
-    window.location.href = 'login-2.html';
+    window.location.href = 'login.html';
   }
 }
 
@@ -24,5 +24,5 @@ export async function getMe(): Promise<CurrentUser> {
 
 export function logout(): void {
   clearAuthStorage();
-  window.location.href = 'login-2.html';
+  window.location.href = 'login.html';
 }

@@ -2,6 +2,8 @@ import {
   PrismaClient,
   Role,
   ContractType,
+  CompensationType,
+  Frequency,
   LeaveType,
   ShiftChangeStatus,
   LeaveStatus,
@@ -20,6 +22,8 @@ import {
 } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
+import { join } from 'path';
 
 const prisma = new PrismaClient();
 
@@ -44,6 +48,10 @@ async function main() {
 
   // --- 1. CLEANUP (Reverse order of dependency) ---
   console.log('Cleaning existing data...');
+  await prisma.payslip.deleteMany();
+  await prisma.salaryAdjustment.deleteMany();
+  await prisma.compensationComponent.deleteMany();
+  await prisma.auditLog.deleteMany();
   await prisma.reply.deleteMany();
   await prisma.topic.deleteMany();
   await prisma.forum.deleteMany();
@@ -257,6 +265,113 @@ async function main() {
   if (!targetEmployee) {
     throw new Error("Target Employee (employee9@hrms.com) not found. Check creation loop.");
   }
+
+  const ensureDirExists = (dir: string) => {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  };
+
+  const writeMockPdf = (filePath: string) => {
+    if (fs.existsSync(filePath)) return;
+    const content = `%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n`;
+    fs.writeFileSync(filePath, content, 'utf8');
+  };
+
+  const seedPaymentForProfile = async (profileId: number) => {
+    const baseSalary = await prisma.compensationComponent.create({
+      data: {
+        profileId,
+        type: CompensationType.BASE_SALARY,
+        amount: new Prisma.Decimal('5000.00'),
+        frequency: Frequency.MONTHLY,
+        description: 'Base salary',
+        startDate: new Date('2025-01-01T00:00:00.000Z'),
+        active: true,
+      },
+    });
+
+    const monthlyAllowance = await prisma.compensationComponent.create({
+      data: {
+        profileId,
+        type: CompensationType.OTHER,
+        amount: new Prisma.Decimal('250.00'),
+        frequency: Frequency.MONTHLY,
+        description: 'Transport allowance',
+        startDate: new Date('2025-06-01T00:00:00.000Z'),
+        active: true,
+      },
+    });
+
+    await prisma.compensationComponent.create({
+      data: {
+        profileId,
+        type: CompensationType.BONUS,
+        amount: new Prisma.Decimal('1200.00'),
+        frequency: Frequency.ONE_TIME,
+        description: 'One-time bonus',
+        startDate: new Date('2026-01-15T00:00:00.000Z'),
+        active: true,
+      },
+    });
+
+    await prisma.salaryAdjustment.create({
+      data: {
+        profileId,
+        componentId: baseSalary.id,
+        adjustmentType: 'INCREASE',
+        amount: new Prisma.Decimal('200.00'),
+        percentage: null,
+        reason: 'Annual review',
+        effectiveDate: new Date('2026-02-01T00:00:00.000Z'),
+        createdById: hrUser.id,
+      },
+    });
+
+    await prisma.salaryAdjustment.create({
+      data: {
+        profileId,
+        componentId: monthlyAllowance.id,
+        adjustmentType: 'ALLOWANCE_UPDATE',
+        amount: new Prisma.Decimal('50.00'),
+        percentage: null,
+        reason: 'Cost of living adjustment',
+        effectiveDate: new Date('2026-01-01T00:00:00.000Z'),
+        createdById: hrUser.id,
+      },
+    });
+
+    const uploadDir = join(process.cwd(), 'uploads', 'payslips');
+    ensureDirExists(uploadDir);
+
+    const months = ['2026-01-01T00:00:00.000Z', '2026-02-01T00:00:00.000Z'];
+    for (const m of months) {
+      const monthStart = new Date(m);
+      const ym = `${monthStart.getUTCFullYear()}-${String(monthStart.getUTCMonth() + 1).padStart(2, '0')}`;
+      const filePath = join(uploadDir, `${profileId}-${ym}.pdf`);
+      writeMockPdf(filePath);
+
+      await prisma.payslip.upsert({
+        where: { profileId_month: { profileId, month: monthStart } },
+        update: {
+          grossAmount: new Prisma.Decimal('5400.00'),
+          deductions: new Prisma.Decimal('400.00'),
+          netAmount: new Prisma.Decimal('5000.00'),
+          breakdown: [{ kind: 'MOCK', note: 'Seeded payslip for UI testing' }] as any,
+          filePath,
+        },
+        create: {
+          profileId,
+          month: monthStart,
+          grossAmount: new Prisma.Decimal('5400.00'),
+          deductions: new Prisma.Decimal('400.00'),
+          netAmount: new Prisma.Decimal('5000.00'),
+          breakdown: [{ kind: 'MOCK', note: 'Seeded payslip for UI testing' }] as any,
+          filePath,
+        },
+      });
+    }
+  };
+
+  await seedPaymentForProfile(targetEmployee.id);
 
   // A. Initial Topic/Reply in Forum
   const generalForum = await prisma.forum.findUnique({ where: { name: 'General Discussion' } });

@@ -1,19 +1,54 @@
-import { fetchProfiles, fetchProfileById } from './fetch.js';
+import { fetchProfiles, fetchProfileById, detectApiBase } from './fetch.js';
 
 
 // --- Employees ---
 
+async function userId(): Promise<number | undefined> {
+    let id: number | null = null;
+  const storedId = typeof window !== 'undefined' ? sessionStorage.getItem('currentUserId') : null;
+  if (storedId) {
+    const parsed = parseInt(storedId, 10);
+    if (!Number.isNaN(parsed) && parsed > 0) {
+      id = parsed;
+    }
+  }
 
+  if (!id) {
+    const API_BASE_URL = detectApiBase();
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/me`, { method: 'GET', headers, credentials: 'include' });
+      if (res.ok) {
+        const me = await res.json();
+        const uid = me?.id || me?.user?.id;
+        if (uid && typeof uid === 'number' && uid > 0) {
+          id = uid;
+          sessionStorage.setItem('currentUserId', String(uid));
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (!id) {
+    console.warn('No authenticated user id found');
+    return;
+  }
+
+  return id;
+}
 
 
 /**
  * Loads recent employees from backend and populates the dashboard employees table.
  * Fetches the first 5 employees and renders them in the employee section.
  */
-const id = 354; // Manager ID
 async function loadDashboardEmployees() {
   try {
-
+    const id = await userId();
+    if (!id) return;
     const profile = (await fetchProfileById(id)) as any;
 
      const headerImg = document.querySelector('#me-img') as HTMLImageElement | null;

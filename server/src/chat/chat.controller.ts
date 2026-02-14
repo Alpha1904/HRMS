@@ -196,8 +196,8 @@ export class ChatController {
     @Body() body: { name: string; memberUserIds: number[] },
   ) {
     // Restrict to MANAGER role
-    if (user.role !== 'MANAGER') {
-      throw new HttpException('Only managers can create groups', HttpStatus.FORBIDDEN);
+    if (user.role !== 'MANAGER' && user.role !== 'HR_ADMIN') {
+      throw new HttpException('Only managers and HR admins can create groups', HttpStatus.FORBIDDEN);
     }
     if (!body.name?.trim()) {
       throw new HttpException('Group name is required', HttpStatus.BAD_REQUEST);

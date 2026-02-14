@@ -14,9 +14,9 @@
     }
     if (loc && (loc.hostname === '127.0.0.1' || loc.hostname === 'localhost')) {
       // Common static dev servers use 5500/5501.
-      if (loc.port === '5500' || loc.port === '5501') {
+      
         return 'http://localhost:3000/api';
-      }
+      
     }
 
     // Fallback for same-origin deployments with a proxy.
@@ -32,19 +32,19 @@
     }
   })();
 
-  const TOKEN_STORAGE_KEY = 'hrms.jwt';
+  const TOKEN_STORAGE_KEY = 'accessToken';
 
   function getToken() {
-    return localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+    return sessionStorage.getItem(TOKEN_STORAGE_KEY) || '';
   }
 
   function setToken(token) {
     const t = String(token || '').trim();
     if (!t) {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      sessionStorage.removeItem(TOKEN_STORAGE_KEY);
       return;
     }
-    localStorage.setItem(TOKEN_STORAGE_KEY, t);
+    sessionStorage.setItem(TOKEN_STORAGE_KEY, t);
   }
 
   function buildQuery(query) {
@@ -56,6 +56,16 @@
     });
     const qs = params.toString();
     return qs ? `?${qs}` : '';
+  }
+
+  function redirectToLogin() {
+    try {
+      const u = new URL(window.location.href);
+      const next = encodeURIComponent(u.pathname + u.search + u.hash);
+      window.location.href = `/client/src/login.html?next=${next}`;
+    } catch {
+      window.location.href = '/client/src/login.html';
+    }
   }
 
   async function request(method, path, options) {
@@ -91,7 +101,17 @@
         const data = await resp.json();
         msg = data.message || msg;
       } catch {
-        // ignore
+        try {
+          const t = await resp.text();
+          if (t) msg = t;
+        } catch {
+          // ignore
+        }
+      }
+
+      if (resp.status === 401) {
+        setToken('');
+        redirectToLogin();
       }
       const err = new Error(msg);
       err.status = resp.status;

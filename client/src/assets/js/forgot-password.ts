@@ -111,7 +111,7 @@ function onResetPasswordPage() {
         return;
       }
       alert('Password reset successful');
-      window.location.href = 'login-2.html';
+      window.location.href = 'login.html';
     } catch (_) {
       alert('Network error');
     }

@@ -95,7 +95,7 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
   if (resp.status === 401) {
     sessionStorage.removeItem('accessToken');
     localStorage.removeItem('accessToken');
-    window.location.href = 'login-2.html';
+    window.location.href = 'login.html';
     return;
   }
 
@@ -197,6 +197,6 @@ export async function renderPerformanceNav(containerId: string) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('currentUserId');
     localStorage.removeItem('currentUserRole');
-    window.location.href = 'login-2.html';
+    window.location.href = 'login.html';
   });
 }

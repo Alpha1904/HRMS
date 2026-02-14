@@ -8,6 +8,7 @@ import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CurrentUserInterface } from '../../common/interfaces/current-user.interface';
 import { CreateCompensationDto } from '../dto/create-compensation.dto';
+import { UpdateCompensationDto } from '../dto/update-compensation.dto';
 import { AuditContext, PaymentAuditService } from './payment-audit.service';
 
 @Injectable()
@@ -98,6 +99,90 @@ export class CompensationService {
         deletedAt: null,
       },
       orderBy: { startDate: 'desc' },
+    });
+  }
+
+  async update(id: number, dto: UpdateCompensationDto, ctx: AuditContext) {
+    const existing = await this.prisma.compensationComponent.findFirst({
+      where: { id, deletedAt: null },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Compensation component not found');
+    }
+
+    const nextStartDate = dto.startDate ? new Date(dto.startDate) : existing.startDate;
+    const nextEndDate =
+      dto.endDate === null
+        ? null
+        : dto.endDate
+          ? new Date(dto.endDate)
+          : existing.endDate;
+
+    if (nextStartDate && Number.isNaN(nextStartDate.getTime())) {
+      throw new BadRequestException('Invalid startDate');
+    }
+    if (nextEndDate && Number.isNaN(nextEndDate.getTime())) {
+      throw new BadRequestException('Invalid endDate');
+    }
+    if (nextEndDate && nextStartDate && nextEndDate < nextStartDate) {
+      throw new BadRequestException('endDate must be after startDate');
+    }
+
+    const data: Prisma.CompensationComponentUpdateInput = {
+      type: dto.type,
+      amount: dto.amount !== undefined ? new Prisma.Decimal(dto.amount) : undefined,
+      frequency: dto.frequency === null ? null : dto.frequency,
+      description: dto.description === null ? null : dto.description,
+      startDate: dto.startDate ? nextStartDate : undefined,
+      endDate: dto.endDate !== undefined ? nextEndDate : undefined,
+      active: dto.active,
+    };
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.compensationComponent.update({
+        where: { id },
+        data,
+      });
+
+      await this.audit.log(
+        ctx,
+        'UPDATE_COMPENSATION',
+        'CompensationComponent',
+        updated.id,
+        existing,
+        updated,
+      );
+
+      return updated;
+    });
+  }
+
+  async softDelete(id: number, ctx: AuditContext) {
+    const existing = await this.prisma.compensationComponent.findFirst({
+      where: { id, deletedAt: null },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Compensation component not found');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.compensationComponent.update({
+        where: { id },
+        data: { deletedAt: new Date(), active: false },
+      });
+
+      await this.audit.log(
+        ctx,
+        'DELETE_COMPENSATION',
+        'CompensationComponent',
+        deleted.id,
+        existing,
+        deleted,
+      );
+
+      return deleted;
     });
   }
 }
