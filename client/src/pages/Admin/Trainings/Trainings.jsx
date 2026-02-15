@@ -1,0 +1,1 @@
+import React from 'react'; export default function Trainings(){ return <div><h2>Formations</h2></div> }

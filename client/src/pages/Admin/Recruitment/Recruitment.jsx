@@ -1,0 +1,1 @@
+import React from 'react'; export default function Recruitment(){ return <div><h2>Recrutements</h2></div> }
