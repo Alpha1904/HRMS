@@ -141,19 +141,19 @@ let currentUser = null;
 
   function getDashboardUrl() {
     if (!currentUser || !currentUser.role) {
-      return '../dashboard.admin.html'; // fallback
+      return './dashboard.admin.html'; // fallback
     }
     
     const role = currentUser.role.toLowerCase();
     switch (role) {
       case 'hr_admin':
-        return '../dashboard.admin.html';
+        return './dashboard.admin.html';
       case 'manager':
-        return '../dashboard.manager.html';
+        return './dashboard.manager.html';
       case 'employee':
-        return '../dashboard.employee.html';
+        return './dashboard.employee.html';
       default:
-        return '../dashboard.admin.html'; // fallback
+        return './dashboard.admin.html'; // fallback
     }
   }
 
