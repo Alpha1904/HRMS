@@ -95,7 +95,7 @@ export class CreateEvaluationDto {
 }
 
 // For self-evaluation, we don't need the evaluatorId immediately.
-export class CreateSelfEvaluationDto extends CreateEvaluationDto {
+export class CreateEvaluationSelfEvaluationDto extends CreateEvaluationDto {
   @ApiProperty({
     description: 'Flag indicating this is a self-evaluation. Must be true.',
     example: true,
@@ -103,3 +103,5 @@ export class CreateSelfEvaluationDto extends CreateEvaluationDto {
   @IsBoolean()
   selfEval: boolean = true;
 }
+
+export { CreateEvaluationSelfEvaluationDto as CreateSelfEvaluationDto };
