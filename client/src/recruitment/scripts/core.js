@@ -19,8 +19,7 @@
       
     }
 
-    // Fallback for same-origin deployments with a proxy.
-    return '/api';
+    return 'https://hrms-n8o4.onrender.com/api/';
   }
 
   const API_BASE = detectApiBase();

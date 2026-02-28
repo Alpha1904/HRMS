@@ -173,7 +173,9 @@ function processDynamicEvents(dataArray) {
         if (event.profile && Array.isArray(event.profile)) {
             event.profile.forEach(profile => {
                 const fcEvent = {
-                    id: String(event.id), // Add the shift ID from backend
+                    // FullCalendar event IDs must be unique. A single shift can be assigned to multiple profiles,
+                    // so we namespace the FC event id by profile id.
+                    id: `${event.id}-${profile.id}`,
                     resourceId: String(profile.id), 
                     title: event.title || 'Untitled Event',
                     start: startIso,   
@@ -182,6 +184,7 @@ function processDynamicEvents(dataArray) {
                     backgroundColor: color, 
                     borderColor: color,
                     extendedProps: {
+                        shiftId: event.id,
                         description: event.description || 'No description',
                         timer: timerString,
                         isCompleted: event.isCompleted || false  // Include completed status
@@ -206,6 +209,10 @@ function initializeAddEventForm() {
 
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
+        // Prevent any other listeners from triggering a native submit/navigation.
+        if (typeof e.stopImmediatePropagation === 'function') {
+            e.stopImmediatePropagation();
+        }
         
         // Get form values
         const title = document.getElementById('event-title').value.trim();
@@ -256,17 +263,86 @@ function initializeAddEventForm() {
             // Check if we're editing or creating
             if (currentEventData && currentEventData.id) {
                 // UPDATE MODE
+                const completedCheckbox = document.getElementById('eventCompleted');
+                const isCompleted = completedCheckbox ? !!completedCheckbox.checked : undefined;
                 const updatePayload = {
                     date: formattedDate,
                     startTime: startTime.substring(0, 5),
-                    endTime: endTime.substring(0, 5)
+                    endTime: endTime.substring(0, 5),
+                    title: title,
+                    description: description,
+                    ...(isCompleted === undefined ? {} : { isCompleted })
                 };
                 
-                console.log('Updating event with ID:', currentEventData.id, 'Payload:', updatePayload);
-                const response = await updateShift(currentEventData.id, updatePayload);
+                const shiftIdForUpdate = currentEventData.shiftId || currentEventData.id;
+                console.log('Updating shift with ID:', shiftIdForUpdate, 'Payload:', updatePayload);
+                const response = await updateShift(shiftIdForUpdate, updatePayload);
                 
                 console.log('Event updated successfully:', response);
                 showToast('Event updated successfully!', 'success');
+
+                // Keep local state in sync
+                currentEventData.title = title;
+                currentEventData.description = description;
+                if (isCompleted !== undefined) {
+                    currentEventData.isCompleted = isCompleted;
+                }
+
+                // Update event in the current calendar view without a hard refresh
+                const cal = (typeof window !== 'undefined' && window.__hrmsCalendar) ? window.__hrmsCalendar : null;
+                if (cal) {
+                    const shiftId = currentEventData.shiftId || currentEventData.id;
+                    const allEvents = typeof cal.getEvents === 'function' ? cal.getEvents() : [];
+
+                    // Build ISO timestamps (YYYY-MM-DDTHH:mm)
+                    const startIso = `${formattedDate}T${startTime.substring(0, 5)}:00`;
+                    const endIso = `${formattedDate}T${endTime.substring(0, 5)}:00`;
+                    const startObj = new Date(startIso);
+                    const endObj = new Date(endIso);
+
+                    const timeOptions = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };
+                    const newTimer = (!isNaN(startObj.getTime()) && !isNaN(endObj.getTime()))
+                        ? `${startObj.toLocaleTimeString('en-US', timeOptions)} - ${endObj.toLocaleTimeString('en-US', timeOptions)}`
+                        : '';
+
+                    const affected = allEvents.filter((ev) => String(ev.extendedProps?.shiftId) === String(shiftId));
+                    const eventRebuilds = affected.map((ev) => ({
+                        id: ev.id,
+                        resourceId: ev.getResources?.()[0]?.id,
+                        backgroundColor: ev.backgroundColor,
+                        borderColor: ev.borderColor,
+                        classNames: ev.classNames,
+                    }));
+                    affected.forEach((ev) => ev.remove());
+                    eventRebuilds.forEach((rebuilt) => {
+                        cal.addEvent({
+                            id: rebuilt.id,
+                            resourceId: rebuilt.resourceId,
+                            title: title || 'Untitled Event',
+                            start: !isNaN(startObj.getTime()) ? startObj : undefined,
+                            end: !isNaN(endObj.getTime()) ? endObj : undefined,
+                            allDay: false,
+                            backgroundColor: rebuilt.backgroundColor,
+                            borderColor: rebuilt.borderColor,
+                            classNames: rebuilt.classNames,
+                            extendedProps: {
+                                shiftId: shiftId,
+                                description: description || 'No description',
+                                timer: newTimer,
+                                isCompleted: (isCompleted !== undefined) ? isCompleted : (currentEventData.isCompleted || false)
+                            }
+                        });
+                    });
+                }
+
+                // If details modal is open, refresh its displayed values too
+                const detailsModal = document.getElementById('event_modal');
+                if (detailsModal && !detailsModal.classList.contains('hidden')) {
+                    const titleEl = document.getElementById('eventTitle');
+                    const descEl = document.getElementById('eventDesc');
+                    if (titleEl) titleEl.textContent = title || 'Untitled Event';
+                    if (descEl) descEl.textContent = description || 'No description provided';
+                }
             } else {
                 // CREATE MODE - Support multiple employees
                 console.log('Raw selected employee IDs before parsing:', Array.from(employeeSelectEl.selectedOptions).map(opt => ({ value: opt.value, type: typeof opt.value })));
@@ -311,8 +387,15 @@ function initializeAddEventForm() {
             }
             
             // Refresh calendar
-            if (typeof calendar !== 'undefined' && calendar) {
-                location.reload();
+            const cal = (typeof window !== 'undefined' && window.__hrmsCalendar) ? window.__hrmsCalendar : null;
+            if (cal) {
+                // Do NOT auto-refresh the page after editing, otherwise it hides console logs and
+                // prevents us from verifying UI updates. If you still want a hard refresh, do it
+                // manually (Ctrl+F5) or only after CREATE mode.
+                if (!currentEventData || !currentEventData.id) {
+                    // CREATE MODE fallback (optional). Keep disabled to avoid disruptive reloads.
+                    // location.reload();
+                }
             }
             
         } catch (error) {
@@ -526,6 +609,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                   // Store current event data for editing
                   currentEventData = {
                     id: event.id,
+                    shiftId: event.extendedProps?.shiftId,
                     title: event.title,
                     start: event.start,
                     end: event.end,
@@ -599,6 +683,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                     return;
                   }
 
+                  const shiftId = event.extendedProps?.shiftId;
+                  if (!shiftId) {
+                    console.error('Shift ID is missing from event.extendedProps');
+                    info.revert();
+                    showToast('Error: Shift ID is missing', 'error');
+                    return;
+                  }
+
                   try {
                     const resourceChanged = newResourceId !== oldResourceId;
                     const dateChanged = oldEvent.start.getTime() !== event.start.getTime() || 
@@ -627,7 +719,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         endTime
                       });
 
-                      await updateShift(parseInt(event.id), {
+                      await updateShift(parseInt(shiftId), {
                         date: eventDate,
                         startTime: startTime,
                         endTime: endTime
@@ -642,7 +734,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         toResourceId: newResourceId
                       });
 
-                      await reassignShift(parseInt(event.id), parseInt(newResourceId));
+                      await reassignShift(parseInt(shiftId), parseInt(newResourceId));
                     }
 
                     // Show success message
@@ -675,6 +767,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             });
 
             calendar.render();
+
+            // Expose calendar for other handlers (edit form submit, modal checkbox, etc.)
+            if (typeof window !== 'undefined') {
+                window.__hrmsCalendar = calendar;
+            }
             
             // Setup close button handlers for event modal
             setupEventModalCloseHandlers();
@@ -739,11 +836,21 @@ function setupEventModalCloseHandlers() {
             
             try {
                 const checkObj = { isCompleted: this.checked };
-                console.log('Updating completed status for shift:', currentEventData.id);
-                await updateShift(currentEventData.id, checkObj);
-                
+                const shiftIdForUpdate = currentEventData.shiftId || currentEventData.id;
+                console.log('Updating completed status for shift:', shiftIdForUpdate);
+                await updateShift(shiftIdForUpdate, checkObj);
+
                 // Update the current event data
                 currentEventData.isCompleted = this.checked;
+
+                // Update calendar event UI state
+                const cal = (typeof window !== 'undefined' && window.__hrmsCalendar) ? window.__hrmsCalendar : null;
+                if (cal) {
+                    const existingEvent = cal.getEventById(String(currentEventData.id));
+                    if (existingEvent) {
+                        existingEvent.setExtendedProp('isCompleted', this.checked);
+                    }
+                }
                 
                 const statusText = this.checked ? 'marked as completed' : 'marked as incomplete';
                 console.log('Shift ' + statusText);
@@ -768,7 +875,17 @@ function setupEventModalCloseHandlers() {
     // Edit button handler
     const editBtn = document.getElementById('editEventBtn');
     if (editBtn) {
-        editBtn.addEventListener('click', function() {
+        // If this button lives inside any <form>, browsers may treat it as a submit button by default.
+        // Force it to behave like a normal button to avoid page refresh.
+        if (!editBtn.hasAttribute('type')) {
+            editBtn.setAttribute('type', 'button');
+        }
+
+        editBtn.addEventListener('click', function(e) {
+            if (e) {
+                e.preventDefault();
+                if (typeof e.stopPropagation === 'function') e.stopPropagation();
+            }
             if (!currentEventData) {
                 showToast('No event data available', 'warning');
                 return;

@@ -32,9 +32,13 @@ export function detectApiBase(): string {
     if (port === '5500' || port === '5501' || hostname === '127.0.0.1') {
       return 'http://localhost:3000/api';
     }
+
+    if (hostname === 'localhost') {
+      return 'http://localhost:3000/api';
+    }
   }
 
-  return '/api';
+  return 'https://hrms-n8o4.onrender.com/api';
 }
 
 const API_BASE_URL = detectApiBase();

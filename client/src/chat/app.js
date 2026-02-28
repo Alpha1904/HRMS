@@ -1,6 +1,8 @@
 // --- CONFIGURATION ---
-const API_URL = 'http://localhost:3000/api';
-const SOCKET_URL = 'http://localhost:3000';
+import { detectApiBase } from '../assets/js/fetch.js';
+
+const API_URL = detectApiBase();
+const SOCKET_URL = API_URL.replace(/\/?api\/?$/, '');
 const TOKEN = typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null;
 
 // --- TOAST HELPER ---

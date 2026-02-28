@@ -18,6 +18,13 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>Smarthr Admin Template</title>
     <style>
+      #add_event > div > div {
+  box-shadow: 0 25px 60px rgba(0,0,0,0.60) !important;
+}
+ 
+#event_modal {
+  box-shadow: -20px 0 60px rgba(0,0,0,0.60) !important;
+}
       /* Custom multi-select styling */
       .custom-multiselect {
         background: linear-gradient(180deg, rgba(236,253,245,1) 0%, rgba(255,255,255,1) 60%);
@@ -8741,7 +8748,7 @@
         id="add_event"
       >
         <div class="relative p-4 w-full max-w-[500px] max-h-full">
-          <div class="relative bg-white rounded-defaultradius">
+          <div class="relative bg-white rounded-defaultradius shadow-2xl shadow-black/60">
             <div
               class="flex items-center justify-between p-4 border-b border-borderColor"
             >
@@ -8870,7 +8877,7 @@
 
       <!-- Event Modal - Right Sidebar Style -->
       <div
-        class="hidden fixed top-0 right-0 z-[1055] h-screen w-[600px] md:w-[420px] bg-white shadow-lg transition-all duration-1000 ease-in-out overflow-y-auto"
+        class="hidden fixed top-0 right-0 z-[1055] h-screen w-[600px] md:w-[420px] bg-white shadow-2xl shadow-black/60 transition-all duration-1000 ease-in-out overflow-y-auto"
         id="event_modal"
       >
         <!-- Modal Header -->

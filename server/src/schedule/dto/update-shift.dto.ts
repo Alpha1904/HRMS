@@ -53,6 +53,24 @@ export class UpdateShiftDto {
   templateId?: number | null;
 
   @ApiProperty({
+    description: 'The title of the shift.',
+    example: 'Team Meeting',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiProperty({
+    description: 'The description of the shift.',
+    example: 'Weekly team sync to discuss project progress',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiProperty({
     description: 'Mark the shift as completed or incomplete.',
     example: true,
     required: false,

@@ -569,6 +569,7 @@ model Shift {
 
   title       String? // e.g., "Morning Shift", "Evening Shift"
   description String?
+  isCompleted Boolean @default(false)
 
   date      DateTime @db.Date // The specific day of the shift
   startTime DateTime @db.Time // The start time (e.g., 09:00:00)
