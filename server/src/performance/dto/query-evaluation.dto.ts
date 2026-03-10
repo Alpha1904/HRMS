@@ -59,6 +59,11 @@ export class QueryEvaluationDto {
   @IsInt()
   employeeId?: number;
 
+  @ApiPropertyOptional({ example: 'John Doe', description: 'Filter by employee full name (case-insensitive, partial match)' })
+  @IsOptional()
+  @IsString()
+  employeeName?: string;
+
   @ApiPropertyOptional({ type: String, format: 'date-time' })
   @IsOptional()
   @IsDateString()

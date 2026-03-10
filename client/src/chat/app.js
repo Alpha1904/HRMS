@@ -1,5 +1,7 @@
 // --- CONFIGURATION ---
-import { detectApiBase } from '../assets/js/fetch.js';
+//import { detectApiBase } from '../assets/js/fetch.ts';
+
+import { detectApiBase } from "../../dist/assets/js/fetch.js";
 
 const API_URL = detectApiBase();
 const SOCKET_URL = API_URL.replace(/\/?api\/?$/, '');
@@ -692,6 +694,19 @@ function toggleAddMembersModal(show) {
 function mmBtn (){
     toggleCreateGroupModal(true);
     fetchMember({ target: { value: '' } });
+}
+
+if (typeof window !== 'undefined') {
+    window.mmBtn = mmBtn;
+    window.toggleModal = toggleModal;
+    window.toggleCreateGroupModal = toggleCreateGroupModal;
+    window.toggleAddMembersModal = toggleAddMembersModal;
+    window.toggleManageMembersModal = toggleManageMembersModal;
+    window.handleAddMembers = handleAddMembers;
+    window.handleCreateGroup = handleCreateGroup;
+    window.handleRemoveMembers = handleRemoveMembers;
+    window.toggleMemberSelection = toggleMemberSelection;
+    window.closeConfirmationModal = closeConfirmationModal;
 }
 
 function updateSelectedMembersUI() {

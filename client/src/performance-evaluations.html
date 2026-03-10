@@ -24,7 +24,7 @@
           <button id="init-evals" type="button" class="px-3 py-2 rounded text-sm font-medium bg-primary text-white">Initialize Evaluations For Cycle</button>
         </div>
 
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-6 gap-3">
+        <div class="mt-4 grid grid-cols-4 md:grid-cols-6 gap-3">
           <div>
             <label class="block text-xs font-medium text-gray-600">Cycle</label>
             <select id="filter-cycleId" class="w-full border border-borderColor rounded px-3 py-2">
@@ -47,24 +47,10 @@
             <input id="filter-department" class="w-full border border-borderColor rounded px-3 py-2" placeholder="Engineering" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-600">Employee Profile ID</label>
-            <input id="filter-employeeId" class="w-full border border-borderColor rounded px-3 py-2" placeholder="10" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600">Sort By</label>
-            <select id="filter-sortBy" class="w-full border border-borderColor rounded px-3 py-2">
-              <option value="">Default</option>
-              <option value="createdAt">createdAt</option>
-              <option value="updatedAt">updatedAt</option>
-              <option value="finalScore">finalScore</option>
-              <option value="status">status</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-600">Sort Order</label>
-            <select id="filter-sortOrder" class="w-full border border-borderColor rounded px-3 py-2">
-              <option value="desc">desc</option>
-              <option value="asc">asc</option>
+            <label class="block text-xs font-medium text-gray-600">Employee Full Name</label>
+            <select id="filter-employeeId" class="w-full border border-borderColor rounded px-3 py-2">
+              <option value="">All employees</option>
+              <option value="" disabled>Loading employees...</option>
             </select>
           </div>
         </div>

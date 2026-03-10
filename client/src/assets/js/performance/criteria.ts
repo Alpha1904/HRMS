@@ -103,7 +103,7 @@ async function loadCriteria() {
     if (toggleBtn) {
       const id = Number(toggleBtn.dataset.id);
       try {
-        await apiFetch(`/performance/criteria/${id}/toggle-status`, { method: 'POST' });
+        await apiFetch(`/performance/criteria/${id}/toggle-status`, { method: 'PATCH' });
         showToast('Criteria status updated', 'success');
         await loadCriteria();
       } catch (err: any) {

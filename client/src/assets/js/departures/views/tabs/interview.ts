@@ -10,12 +10,24 @@ function canSchedule(role: string): boolean {
 export async function renderInterview(root: HTMLElement, departureId: number, user: CurrentUser, dep: any): Promise<void> {
   const current = dep.exitInterview;
 
+  let profiles: any[] = [];
+  try {
+    profiles = await fetchAllProfiles();
+  } catch {
+    profiles = [];
+  }
+
+  const interviewerId = current?.interviewerId === undefined || current?.interviewerId === null ? undefined : Number(current.interviewerId);
+  const interviewerName = interviewerId
+    ? String(profiles.find((p: any) => Number(p?.id) === interviewerId)?.fullName ?? '').trim()
+    : '';
+
   root.innerHTML = `
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
       <div class="border border-borderColor rounded-[10px] p-3">
         <h6 class="mb-1">Current interview</h6>
         <div class="text-sm text-gray-700">
-          <div><span class="text-gray-500">InterviewerId:</span> ${escapeHtml(current?.interviewerId ?? '-')}</div>
+          <div><span class="text-gray-500">Interviewer:</span> ${escapeHtml(interviewerName || (interviewerId ? String(interviewerId) : '-'))}</div>
           <div><span class="text-gray-500">Scheduled:</span> ${formatDate(current?.scheduledDate) || '-'}</div>
           <div><span class="text-gray-500">Interview date:</span> ${formatDate(current?.interviewDate) || '-'}</div>
           <div class="mt-2"><span class="text-gray-500">Notes:</span> ${escapeHtml(current?.notes || '')}</div>
@@ -52,13 +64,6 @@ export async function renderInterview(root: HTMLElement, departureId: number, us
 
   const sched = root.querySelector('#sched') as HTMLFormElement | null;
   const schedErr = root.querySelector('#schedErr') as HTMLElement | null;
-
-  let profiles: any[] = [];
-  try {
-    profiles = await fetchAllProfiles();
-  } catch {
-    profiles = [];
-  }
 
   const interviewerSel = root.querySelector('#interviewerId') as HTMLSelectElement | null;
   if (interviewerSel) {

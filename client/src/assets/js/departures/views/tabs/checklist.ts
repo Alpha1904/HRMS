@@ -21,7 +21,7 @@ export async function renderChecklist(root: HTMLElement, departureId: number, us
       <div class="${canAdd(user.role) ? '' : 'hidden'}" style="min-width: 520px">
         <form id="addForm" class="grid grid-cols-1 md:grid-cols-2 gap-2">
           <input id="taskName" required class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" placeholder="Task name" />
-          <select id="assigneeId" class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]">
+          <select id="assigneeId" class="hidden bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]">
             <option value="">Loading...</option>
           </select>
           <input id="dueDate" type="date" class="bg-white border-borderColor text-gray-900 text-sm rounded-input block w-full py-2 px-2.5 h-[38px]" />
@@ -37,7 +37,7 @@ export async function renderChecklist(root: HTMLElement, departureId: number, us
         <thead>
           <tr>
             <th class="py-2 px-5">Task</th>
-            <th class="py-2 px-5">Assignee (UserId)</th>
+            <th class="py-2 px-5">Assignee By</th>
             <th class="py-2 px-5">Due</th>
             <th class="py-2 px-5">Status</th>
             <th class="py-2 px-5">Update</th>
@@ -50,17 +50,33 @@ export async function renderChecklist(root: HTMLElement, departureId: number, us
 
   const rows = root.querySelector('#rows') as HTMLElement;
 
+  let profiles: any[] = [];
+  try {
+    profiles = await fetchAllProfiles();
+  } catch {
+    profiles = [];
+  }
+
+  const assigneeNameById = new Map<number, string>();
+  profiles.forEach((p: any) => {
+    const id = Number(p?.userId ?? p?.id);
+    const fullName = String(p?.fullName ?? '').trim();
+    if (id && fullName) assigneeNameById.set(id, fullName);
+  });
+
   const renderRows = (list: any[]) => {
     rows.innerHTML = (list || [])
       .map((it) => {
         const status = it.status;
+        const assigneeId = it.assigneeId === undefined || it.assigneeId === null ? undefined : Number(it.assigneeId);
+        const assigneeName = assigneeId ? assigneeNameById.get(assigneeId) : undefined;
         return `
           <tr class="border-b border-borderColor">
             <td class="py-2 px-5">
               <div class="font-medium text-gray-900">${escapeHtml(it.taskName)}</div>
               <div class="text-xs text-gray-500">${escapeHtml(it.description || '')}</div>
             </td>
-            <td class="py-2 px-5 text-sm">${it.assigneeId ?? '-'}</td>
+            <td class="py-2 px-5 text-sm">${escapeHtml(assigneeName || (assigneeId ? String(assigneeId) : '-'))}</td>
             <td class="py-2 px-5 text-sm">${formatDate(it.dueDate) || '-'}</td>
             <td class="py-2 px-5 text-sm">
               <span class="inline-flex items-center rounded-full border px-2 py-1 text-xs ${badgeClass(status)}">${escapeHtml(status)}</span>
@@ -99,32 +115,33 @@ export async function renderChecklist(root: HTMLElement, departureId: number, us
     const form = root.querySelector('#addForm') as HTMLFormElement;
     const err = root.querySelector('#err') as HTMLElement;
 
-    let profiles: any[] = [];
-    try {
-      profiles = await fetchAllProfiles();
-    } catch {
-      profiles = [];
-    }
-
     const assigneeSel = root.querySelector('#assigneeId') as HTMLSelectElement | null;
     if (assigneeSel) {
+      const sessionUserIdRaw = sessionStorage.getItem('currentUserId') || localStorage.getItem('currentUserId');
+      const sessionUserId = sessionUserIdRaw ? Number(sessionUserIdRaw) : NaN;
+      const effectiveAssigneeId = Number.isFinite(sessionUserId) ? sessionUserId : Number(user.id);
+
       assigneeSel.innerHTML = renderProfileOptions(profiles, {
         valueField: 'userId',
         includeEmpty: { value: '', label: 'Unassigned' },
-        selected: null,
+        selected: effectiveAssigneeId,
+        includeUnknownSelected: true,
       });
+      assigneeSel.value = String(effectiveAssigneeId);
     }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       err.classList.add('hidden');
 
+      const sessionUserIdRaw = sessionStorage.getItem('userId');
+      const sessionUserId = sessionUserIdRaw ? Number(sessionUserIdRaw) : NaN;
+      const effectiveAssigneeId = Number.isFinite(sessionUserId) ? sessionUserId : Number(user.id);
+
       const payload: any = {
         taskName: (root.querySelector('#taskName') as HTMLInputElement).value.trim(),
         description: (root.querySelector('#description') as HTMLInputElement).value.trim() || undefined,
-        assigneeId: (root.querySelector('#assigneeId') as HTMLSelectElement).value
-          ? Number((root.querySelector('#assigneeId') as HTMLSelectElement).value)
-          : undefined,
+        assigneeId: effectiveAssigneeId,
         dueDate: (root.querySelector('#dueDate') as HTMLInputElement).value
           ? new Date((root.querySelector('#dueDate') as HTMLInputElement).value).toISOString()
           : undefined,

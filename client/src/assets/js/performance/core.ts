@@ -40,8 +40,32 @@ export function showToast(message: string, variant: 'success' | 'error' | 'info'
     host = document.createElement('div');
     host.id = hostId;
     host.className = 'fixed top-3 right-3 z-[9999] space-y-2';
-    document.body.appendChild(host);
+    // Ensure it is always visible even if Tailwind classes are missing at runtime.
+    (host.style as any).position = 'fixed';
+    (host.style as any).top = '12px';
+    (host.style as any).right = '12px';
+    (host.style as any).zIndex = '9999';
+    (host.style as any).display = 'flex';
+    (host.style as any).flexDirection = 'column';
+    (host.style as any).gap = '8px';
+    // Force append to body immediately.
+    if (document.body && host) {
+  document.body.appendChild(host);
+} else {
+  // If body is not yet available, wait for it.
+  const ensure = () => {
+    if (document.body && host) {
+      document.body.appendChild(host);
+    } else {
+      setTimeout(ensure, 10);
+    }
+  };
+  ensure();
+}
   }
+
+  // Ensure host is non-null before using it below
+  if (!host) return;
 
   const el = document.createElement('div');
   const base = 'px-4 py-3 rounded shadow text-sm border flex items-start gap-2 max-w-[360px]';
@@ -56,7 +80,16 @@ export function showToast(message: string, variant: 'success' | 'error' | 'info'
   el.setAttribute('role', 'status');
   el.textContent = message;
 
+  // Fallback visibility styles.
+  (el.style as any).borderRadius = '8px';
+  (el.style as any).boxShadow = '0 10px 25px rgba(0,0,0,0.15)';
+  (el.style as any).padding = '12px 14px';
+
   host.appendChild(el);
+
+  // Always log as a fallback for debugging when toasts are not visible.
+  const prefix = variant === 'error' ? '[perf:error]' : variant === 'success' ? '[perf:success]' : '[perf:info]';
+  console.log(prefix, message);
 
   const t = window.setTimeout(() => {
     el.remove();
@@ -68,6 +101,26 @@ export function showToast(message: string, variant: 'success' | 'error' | 'info'
     el.remove();
     if (host && host.childElementCount === 0) host.remove();
   });
+}
+
+// Helper: create a visible test button for debugging toast host
+export function createToastTestButton() {
+  const btn = document.createElement('button');
+  btn.textContent = 'Test Toast';
+  btn.style.position = 'fixed';
+  btn.style.bottom = '12px';
+  btn.style.right = '12px';
+  btn.style.zIndex = '9999';
+  btn.style.padding = '8px 12px';
+  btn.style.borderRadius = '6px';
+  btn.style.border = '1px solid #ccc';
+  btn.style.background = '#fff';
+  btn.style.cursor = 'pointer';
+  btn.addEventListener('click', () => {
+    showToast('Test toast from button', 'success');
+  });
+  if (document.body) document.body.appendChild(btn);
+  else document.addEventListener('DOMContentLoaded', () => document.body.appendChild(btn), { once: true });
 }
 
 export async function apiFetch(path: string, options: ApiFetchOptions = {}) {

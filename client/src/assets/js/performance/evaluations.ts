@@ -18,8 +18,45 @@ type CycleRow = {
   isActive: boolean;
 };
 
+type ProfileRow = {
+  id: number;
+  fullName: string;
+};
+
 function getEl<T extends HTMLElement>(id: string) {
   return document.getElementById(id) as T | null;
+}
+
+async function loadEmployeesIntoFilter() {
+  const sel = getEl<HTMLSelectElement>('filter-employeeId');
+  if (!sel) return;
+
+  const selected = getUrlParam('employeeId') ?? sel.value;
+
+  try {
+    const res = await apiFetch('/profiles', { query: { page: 1, limit: 2000 } });
+    const rows: ProfileRow[] = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+
+    sel.innerHTML = '';
+    sel.appendChild(new Option('All employees', ''));
+
+    rows
+      .slice()
+      .sort((a, b) => String(a.fullName || '').localeCompare(String(b.fullName || '')))
+      .forEach((p) => {
+        const label = `Emp-${p.id} ${p.fullName ?? ''}`.trim();
+        sel.appendChild(new Option(label, String(p.id)));
+      });
+
+    if (selected !== null && selected !== undefined) {
+      sel.value = String(selected);
+    }
+  } catch {
+    // Keep a minimal fallback if employees cannot be loaded.
+    sel.innerHTML = '';
+    sel.appendChild(new Option('All employees', ''));
+    sel.appendChild(new Option('Failed to load employees', ''));
+  }
 }
 
 function badgeStatus(s: string) {
@@ -124,6 +161,8 @@ async function loadEvaluations() {
     const scoreText = r.finalScore === null || r.finalScore === undefined ? '-' : Number(r.finalScore).toFixed(2);
     const rankText = r.rank === null || r.rank === undefined ? '-' : String(r.rank);
 
+    const detailsHref = `./performance-evaluation.html?id=${encodeURIComponent(String(r.id))}`;
+
     tr.innerHTML = `
       <td class="py-2 px-4 text-sm">#${r.id}</td>
       <td class="py-2 px-4 text-sm">${r.employee?.fullName ?? ''}</td>
@@ -133,11 +172,29 @@ async function loadEvaluations() {
       <td class="py-2 px-4 text-sm">${scoreText}</td>
       <td class="py-2 px-4 text-sm">${rankText}</td>
       <td class="py-2 px-4">
-        <a class="px-2 py-1 text-xs border rounded bg-white hover:bg-dark-transparent" href="performance-evaluation.html?id=${r.id}">View</a>
+        <button type="button" class="eval-view px-2 py-1 text-xs border rounded bg-white hover:bg-dark-transparent" data-id="${String(r.id)}">View</button>
       </td>
     `;
 
     tbody.appendChild(tr);
+  });
+}
+
+function wireRowActions() {
+  const tbody = getEl<HTMLTableSectionElement>('evals-tbody');
+  if (!tbody) return;
+
+  tbody.addEventListener('click', (ev) => {
+    const t = ev.target as HTMLElement;
+    const btn = t.closest<HTMLButtonElement>('.eval-view');
+    if (!btn) return;
+
+    const idRaw = btn.dataset.id;
+    if (!idRaw) return;
+
+    const href = `./performance-evaluation?id=${encodeURIComponent(String(idRaw))}`;
+    const url = new URL(href, window.location.href);
+    window.location.assign(url.toString());
   });
 }
 
@@ -163,7 +220,7 @@ function wireFilters() {
     const cycleId = (getEl<HTMLSelectElement>('filter-cycleId')?.value || '').trim();
     const status = (getEl<HTMLSelectElement>('filter-status')?.value || '').trim();
     const department = (getEl<HTMLInputElement>('filter-department')?.value || '').trim();
-    const employeeId = (getEl<HTMLInputElement>('filter-employeeId')?.value || '').trim();
+    const employeeId = (getEl<HTMLSelectElement>('filter-employeeId')?.value || '').trim();
     const sortBy = (getEl<HTMLSelectElement>('filter-sortBy')?.value || '').trim();
     const sortOrder = (getEl<HTMLSelectElement>('filter-sortOrder')?.value || '').trim();
 
@@ -235,9 +292,11 @@ function startPolling() {
 document.addEventListener('DOMContentLoaded', async () => {
   await renderPerformanceNav('perf-nav');
   await loadCyclesIntoFilter();
+  await loadEmployeesIntoFilter();
   syncFiltersFromUrl();
   wireFilters();
   wirePager();
+  wireRowActions();
   await wireInitializeButton();
 
   await loadEvaluations();

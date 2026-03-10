@@ -1,7 +1,8 @@
-
 import {
   fetchProfiles,
   fetchProfileById,
+  fetchProfileByUserId,
+  detectApiBase,
   updateProfile,
   deleteProfile,
   updateAvatar,
@@ -28,7 +29,39 @@ interface Profile {
   }
 }
 
+let currentEmployeeDetailsProfileId: number | null = null;
 
+function applyProfileToEmployeeDetailsUI(profile: Partial<Profile> & any) {
+  const avatar = document.getElementById('employee-avatar') as HTMLImageElement | null;
+  if (avatar && profile.avatarUrl) avatar.src = profile.avatarUrl;
+
+  const name = document.getElementById('employee-name') as HTMLElement | null;
+  if (name && typeof profile.fullName === 'string') name.textContent = profile.fullName || 'N/A';
+
+  const phone = document.getElementById('employee-phone') as HTMLElement | null;
+  if (phone && typeof profile.phone === 'string') phone.textContent = profile.phone || 'N/A';
+
+  const email = document.getElementById('employee-email') as HTMLElement | null;
+  if (email && profile.user?.email) {
+    const emailSpan = email.querySelector('.email-value') as HTMLElement | null;
+    if (emailSpan) emailSpan.textContent = profile.user.email || 'N/A';
+  }
+
+  const hireDate = document.getElementById('employee-hireDate') as HTMLElement | null;
+  if (hireDate && profile.hireDate) hireDate.textContent = new Date(profile.hireDate).toLocaleDateString();
+
+  const formFullName = document.getElementById('form-employee-fullName') as HTMLInputElement | null;
+  if (formFullName && typeof profile.fullName === 'string') formFullName.value = profile.fullName || '';
+
+  const formEmail = document.getElementById('form-employee-email') as HTMLInputElement | null;
+  if (formEmail && profile.user?.email) formEmail.value = profile.user.email || '';
+
+  const formPhone = document.getElementById('form-employee-phone') as HTMLInputElement | null;
+  if (formPhone && typeof profile.phone === 'string') formPhone.value = profile.phone || '';
+
+  const formDepartment = document.getElementById('form-employee-department') as HTMLSelectElement | null;
+  if (formDepartment && typeof profile.department === 'string') formDepartment.value = profile.department || '';
+}
 
 // ----- Breadcrumb ------
 async function setupBreadcrumb() {
@@ -121,7 +154,6 @@ async function setupBreadcrumb() {
   }
 }
 
-
 // --- UI Helper Functions ---
 
 /**
@@ -130,9 +162,30 @@ async function setupBreadcrumb() {
  * @param isError If true, styles the notification as an error.
  */
 function showNotification(message: string, isError = false) {
-    // In a real app, you would use a library like Toastify or a custom component.
-    // For this example, we'll use a simple alert.
     console.log(`Notification: ${message}`, isError ? 'Error' : 'Success');
+
+    const maybeToastify = (window as any).Toastify;
+    if (typeof maybeToastify === 'function') {
+      maybeToastify({
+        text: message,
+        duration: 3500,
+        close: true,
+        gravity: 'top',
+        position: 'right',
+        stopOnFocus: true,
+        style: {
+          background: isError
+            ? 'linear-gradient(to right, #ef4444, #b91c1c)'
+            : 'linear-gradient(to right, #22c55e, #16a34a)',
+          borderRadius: '10px',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+          fontSize: '14px',
+          padding: '12px 14px',
+        },
+      }).showToast();
+      return;
+    }
+
     alert(message);
 }
 
@@ -142,8 +195,24 @@ function showNotification(message: string, isError = false) {
  * @returns A promise that resolves to true if confirmed, false otherwise.
  */
 function showConfirmation(message: string): Promise<boolean> {
-    // This is a stand-in for a custom modal. In a real app, you would create
-    // a proper modal element and handle its button clicks.
+    const maybeSwal = (window as any).Swal;
+    if (maybeSwal && typeof maybeSwal.fire === 'function') {
+      return maybeSwal
+        .fire({
+          title: 'Confirm',
+          text: message,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes',
+          cancelButtonText: 'Cancel',
+          reverseButtons: true,
+          focusCancel: true,
+          confirmButtonColor: '#dc2626',
+          cancelButtonColor: '#6b7280',
+        })
+        .then((result: any) => !!result.isConfirmed);
+    }
+
     return Promise.resolve(confirm(message));
 }
 
@@ -281,8 +350,9 @@ function initProfilesDataTable() {
   });
 }
 
-
-
+/**
+ * Sets up event listeners for the page's action buttons.
+ */
 function setupActionListeners() {
     const tableBody = document.querySelector('.datatable tbody');
 
@@ -366,11 +436,20 @@ async function populateEditModal(id: number, modalId: string) {
         (modal.querySelector('#edit-emp-id') as HTMLInputElement).value = `Emp-${profile.id}`;
         
         // Use the centralized map to populate fields
-        (modal.querySelector(`#${editFormFieldMap.fullName}`) as HTMLInputElement).value = profile.fullName || '';
-        (modal.querySelector(`#${editFormFieldMap.email}`) as HTMLInputElement).value = profile.user?.email || '';
-        (modal.querySelector(`#${editFormFieldMap.phone}`) as HTMLInputElement).value = profile.phone || '';
-        (modal.querySelector(`#${editFormFieldMap.department}`) as HTMLSelectElement).value = profile.department || '';
-        (modal.querySelector(`#${editFormFieldMap.isActive}`) as HTMLSelectElement).value = profile.user?.isActive ? 'Active' : 'Inactive';
+        const fullNameEl = modal.querySelector(`#${editFormFieldMap.fullName}`) as HTMLInputElement | null;
+        if (fullNameEl) fullNameEl.value = profile.fullName || '';
+
+        const emailEl = modal.querySelector(`#${editFormFieldMap.email}`) as HTMLInputElement | null;
+        if (emailEl) emailEl.value = profile.user?.email || '';
+
+        const phoneEl = modal.querySelector(`#${editFormFieldMap.phone}`) as HTMLInputElement | null;
+        if (phoneEl) phoneEl.value = profile.phone || '';
+
+        const deptEl = modal.querySelector(`#${editFormFieldMap.department}`) as HTMLSelectElement | null;
+        if (deptEl) deptEl.value = profile.department || '';
+
+        const statusEl = modal.querySelector(`#${editFormFieldMap.isActive}`) as HTMLSelectElement | null;
+        if (statusEl) statusEl.value = profile.user?.isActive ? 'Active' : 'Inactive';
         
         // Format the date for <input type="date"> (YYYY-MM-DD)
         if (profile.hireDate && modal.querySelector(`#${editFormFieldMap.hireDate}`)) {
@@ -379,8 +458,10 @@ async function populateEditModal(id: number, modalId: string) {
         }
 
         // Set avatar preview
-        (modal.querySelector('#edit-avatar-preview') as HTMLImageElement).src = 
-            profile.avatarUrl || 'assets/img/users/user-32.jpg';
+        const avatarPreview = modal.querySelector('#edit-avatar-preview') as HTMLImageElement | null;
+        if (avatarPreview) {
+          avatarPreview.src = profile.avatarUrl || 'assets/img/users/user-32.jpg';
+        }
         
     } catch (error: any) {
         console.error('Failed to fetch profile data:', error);
@@ -393,6 +474,7 @@ async function populateEditModal(id: number, modalId: string) {
  */
 async function handleEditFormSubmit(event: SubmitEvent) {
     event.preventDefault();
+    event.stopPropagation();
     
     const form = event.target as HTMLFormElement;
     const id = parseInt((form.querySelector('#edit-profile-id') as HTMLInputElement).value, 10);
@@ -403,13 +485,14 @@ async function handleEditFormSubmit(event: SubmitEvent) {
 
     try {
         // --- Step 1: Handle Avatar Upload (if any) ---
-        const avatarFileInput = form.querySelector('#edit-avatar-file') as HTMLInputElement;
-        if (avatarFileInput.files && avatarFileInput.files.length > 0) {
-            const formData = new FormData();
-            formData.append('file', avatarFileInput.files[0]);
-            
-            // Call the avatar endpoint 
-            await updateAvatar(id, formData);
+        const avatarFileInput = form.querySelector('#edit-avatar-file') as HTMLInputElement | null;
+        const avatarFile = avatarFileInput?.files && avatarFileInput.files.length > 0 ? avatarFileInput.files[0] : null;
+        if (avatarFile) {
+          const formData = new FormData();
+          formData.append('file', avatarFile);
+
+          // Call the avatar endpoint
+          await updateAvatar(id, formData);
         }
 
         // --- Step 2: Handle Profile Data Update ---
@@ -421,8 +504,8 @@ async function handleEditFormSubmit(event: SubmitEvent) {
         const userPayload: Record<string, any> = {};
 
         formValues.forEach((value, key) => {
-          // Exclude fields you don't want to send, like the file input or hidden IDs
-          if (key === 'file' || key === 'profileId' || key === 'id' || key === 'empId') return;
+          // Exclude fields you don't want to send, like hidden IDs
+          if (key === 'profileId' || key === 'id' || key === 'empId') return;
 
           if (key === 'avatarUrl') {
             const url = typeof value === 'string' ? value.trim() : '';
@@ -450,6 +533,9 @@ async function handleEditFormSubmit(event: SubmitEvent) {
           updateProfileDto[key] = value;
         });
 
+        // Never send avatarUrl from this form (we handle avatar upload via updateAvatar)
+        delete updateProfileDto.avatarUrl;
+
         // Attach nested user payload if any user fields were present
         if (Object.keys(userPayload).length > 0) {
           updateProfileDto.user = userPayload;
@@ -459,6 +545,16 @@ async function handleEditFormSubmit(event: SubmitEvent) {
 
         // Call the data update endpoint
         await updateProfile(id, updateProfileDto);
+
+        // Fetch the latest profile and update UI immediately (employee-details page)
+        try {
+          if (currentEmployeeDetailsProfileId && currentEmployeeDetailsProfileId === id) {
+            const updated = await fetchProfileById(id) as Profile & any;
+            applyProfileToEmployeeDetailsUI(updated);
+          }
+        } catch (e) {
+          console.warn('Could not refresh employee-details UI after update', e);
+        }
 
         // --- Step 3: Success ---
         showNotification('Profile updated successfully!');
@@ -471,8 +567,10 @@ async function handleEditFormSubmit(event: SubmitEvent) {
             modal.classList.add('hidden'); // Hide the modal on success
         }
         
-        // Refresh the DataTable to show updated data
-        $('.datatable').DataTable().ajax.reload(null, false);
+        // Refresh the DataTable to show updated data (employees list page)
+        if (document.querySelector('.datatable') && $.fn && $.fn.DataTable && $.fn.DataTable.isDataTable('.datatable')) {
+          $('.datatable').DataTable().ajax.reload(null, false);
+        }
 
     } catch (error: any) {
         console.error('Failed to update profile:', error);
@@ -501,6 +599,25 @@ function setupStaticListeners() {
         // Attempt to build a payload from commonly used field names
         const form = e.target as HTMLFormElement;
 
+        const normalizeDateToYMD = (raw: string) => {
+          const v = (raw || '').trim();
+          if (!v) return '';
+          // Already ISO date (from <input type="date">)
+          if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+          // Common UI format: dd/mm/yyyy or dd-mm-yyyy
+          const m = v.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+          if (m) {
+            const dd = String(m[1]).padStart(2, '0');
+            const mm = String(m[2]).padStart(2, '0');
+            const yyyy = m[3];
+            return `${yyyy}-${mm}-${dd}`;
+          }
+          // Last resort: try Date parsing
+          const d = new Date(v);
+          if (!Number.isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+          return '';
+        };
+
         const get = (selector: string) => {
           const el = form.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(selector);
           return el ? (el.value || '').trim() : '';
@@ -514,7 +631,9 @@ function setupStaticListeners() {
           profile: {
             fullName: get('[name="fullName"]') || get('input[placeholder*="Full Name"]') || get('input[aria-label*="Full Name"]'),
             phone: get('[name="phone"]') || get('input[placeholder*="Phone"]'),
-            hireDate: get('[name="hireDate"]') || get('input[placeholder*="dd/mm/yyyy"]') || get('input[type="date"]'),
+            hireDate: normalizeDateToYMD(
+              get('[name="hireDate"]') || get('input[placeholder*="dd/mm/yyyy"]') || get('input[type="date"]'),
+            ),
             department: get('[name="department"]') || get('select') || get('input[placeholder*="Department"]'),
           },
         };
@@ -590,6 +709,25 @@ function setupStaticListeners() {
     }
 }
 
+function setupEmployeeDetailsEditModal() {
+  const modal = document.getElementById('edit_employee');
+  if (!modal) return;
+
+  const openers = document.querySelectorAll<HTMLElement>('[data-modal-toggle="edit_employee"]');
+  if (openers.length === 0) return;
+
+  openers.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!currentEmployeeDetailsProfileId) {
+        showNotification('No employee selected to edit.', true);
+        return;
+      }
+      populateEditModal(currentEmployeeDetailsProfileId, 'edit_employee');
+    });
+  });
+}
+
 /**
  * Loads employee details from backend and populates the employee-details page.
  * Called on page load if the page contains employee detail elements.
@@ -598,14 +736,94 @@ async function loadEmployeeDetails() {
   // Get employee ID from URL query param: ?id=123
   const params = new URLSearchParams(window.location.search);
   const employeeId = params.get('id');
-  
-  if (!employeeId) {
-    console.warn('No employee ID in URL query param');
+
+  const getStoredCurrentUserId = (): number | null => {
+    const direct =
+      sessionStorage.getItem('currentUserId') ||
+      localStorage.getItem('currentUserId') ||
+      sessionStorage.getItem('userId') ||
+      localStorage.getItem('userId');
+    if (direct) {
+      const n = parseInt(String(direct), 10);
+      if (!Number.isNaN(n) && n > 0) return n;
+    }
+
+    const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const u: any = JSON.parse(userStr);
+        const id = u?.id ?? u?.user?.id;
+        const n = typeof id === 'number' ? id : parseInt(String(id || ''), 10);
+        if (!Number.isNaN(n) && n > 0) return n;
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const getStoredAccessToken = () =>
+    sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
+
+  const resolveProfileIdToLoad = async (): Promise<number | null> => {
+    // 1) Explicit query param always wins
+    if (employeeId) {
+      const n = parseInt(employeeId, 10);
+      return Number.isNaN(n) ? null : n;
+    }
+
+    // 2) If no query param, try to use current authenticated user
+    const uid = getStoredCurrentUserId();
+    if (uid) {
+      try {
+        const profile: any = await fetchProfileByUserId(uid);
+        const pid = profile?.id;
+        const n = typeof pid === 'number' ? pid : parseInt(String(pid || ''), 10);
+        return !Number.isNaN(n) && n > 0 ? n : null;
+      } catch (_) {
+        // Fall through to /auth/me
+      }
+    }
+
+    // 3) Fallback: call /auth/me (requires token)
+    const token = getStoredAccessToken();
+    if (!token) return null;
+
+    try {
+      const API_BASE_URL = detectApiBase();
+      const res = await fetch(`${API_BASE_URL}/auth/me`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+      });
+      if (!res.ok) return null;
+      const me: any = await res.json();
+      const id = me?.id ?? me?.user?.id;
+      const n = typeof id === 'number' ? id : parseInt(String(id || ''), 10);
+      if (Number.isNaN(n) || n <= 0) return null;
+
+      // store for later pages
+      sessionStorage.setItem('currentUserId', String(n));
+
+      const profile: any = await fetchProfileByUserId(n);
+      const pid = profile?.id;
+      const pn = typeof pid === 'number' ? pid : parseInt(String(pid || ''), 10);
+      return !Number.isNaN(pn) && pn > 0 ? pn : null;
+    } catch (_) {
+      return null;
+    }
+  };
+
+  const profileId = await resolveProfileIdToLoad();
+  if (!profileId) {
+    window.location.href = 'login.html';
     return;
   }
 
+  currentEmployeeDetailsProfileId = profileId;
+
   try {
-    const profile = await fetchProfileById(parseInt(employeeId, 10)) as Profile & any;
+    const profile = await fetchProfileById(profileId) as Profile & any;
 
     // Populate profile header section
     const avatar = document.getElementById('employee-avatar') as HTMLImageElement;
@@ -674,6 +892,59 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check if we're on the employee-details page
   if (document.getElementById('employee-name')) {
     loadEmployeeDetails();
+    setupEmployeeDetailsEditModal();
+    setupStaticListeners();
+  }
+
+  // Redirect "Dashboard" link based on current user role
+  const backToDashboard = document.getElementById('backToDashboard');
+  if (backToDashboard) {
+    const link = backToDashboard.querySelector('a');
+    if (link) {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        const roleFromStorage = () => {
+          const direct =
+            sessionStorage.getItem('currentUserRole') ||
+            localStorage.getItem('currentUserRole') ||
+            sessionStorage.getItem('role') ||
+            localStorage.getItem('role');
+          if (direct) return direct;
+
+          const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
+          if (userStr) {
+            try {
+              const u: any = JSON.parse(userStr);
+              return u?.role || u?.user?.role;
+            } catch (_) {
+              return null;
+            }
+          }
+          return null;
+        };
+
+        const role = String(roleFromStorage() || '').toUpperCase();
+        let dest = 'dashboard.employee.html';
+        switch (role) {
+          case 'MANAGER':
+            dest = 'dashboard.manager.html';
+            break;
+          case 'HR_ADMIN':
+          case 'SYSTEM_ADMIN':
+          case 'ADMIN':
+          case 'RECRUITER':
+            dest = 'dashboard.admin.html';
+            break;
+          case 'EMPLOYEE':
+          default:
+            dest = 'dashboard.employee.html';
+            break;
+        }
+
+        window.location.href = dest;
+      });
+    }
   }
 
   // Initialize DataTable and attach all necessary event listeners (only on employees list page)

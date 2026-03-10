@@ -20,13 +20,8 @@ export class EvaluationCriteriaService {
     @Inject(CACHE_MANAGER) private cache: Cache,
   ) {}
 
-  private cacheKey(tenantId?: string) {
-    return `performance:criteria:${tenantId ?? 'global'}`;
-  }
 
-  private async invalidateCache(tenantId?: string) {
-    await this.cache.del(this.cacheKey(tenantId));
-  }
+  
 
   private async assertWeightsNotAboveOne(tenantId?: string) {
     const total = await this.prisma.evaluationCriteria.aggregate({
@@ -37,7 +32,7 @@ export class EvaluationCriteriaService {
     if (sum > 1.00001) {
       throw new BadRequestException({
         statusCode: 400,
-        message: 'Validation failed',
+        message: 'Active criteria weights must not exceed 1.0',
         errors: [{ field: 'weight', message: 'Active criteria weights must not exceed 1.0' }],
       });
     }
@@ -45,8 +40,7 @@ export class EvaluationCriteriaService {
 
   async getCriteria(filters: { isActive?: boolean; tenantId?: string }) {
     const tenantId = filters.tenantId;
-    const cached = await this.cache.get<any>(this.cacheKey(tenantId));
-    if (cached) return cached;
+    
 
     const where: any = {};
     if (typeof filters.isActive === 'boolean') where.isActive = filters.isActive;
@@ -57,7 +51,6 @@ export class EvaluationCriteriaService {
       orderBy: { createdAt: 'asc' },
     });
 
-    await this.cache.set(this.cacheKey(tenantId), data, 60_000);
 
     return data;
   }
@@ -84,7 +77,6 @@ export class EvaluationCriteriaService {
     });
 
     await this.assertWeightsNotAboveOne(created.tenantId ?? undefined);
-    await this.invalidateCache(created.tenantId ?? undefined);
     await this.audit.log(ctx, 'CREATE_CRITERIA', 'EvaluationCriteria', created.id, undefined, created);
 
     return created;
@@ -114,7 +106,6 @@ export class EvaluationCriteriaService {
     });
 
     await this.assertWeightsNotAboveOne(updated.tenantId ?? undefined);
-    await this.invalidateCache(updated.tenantId ?? undefined);
     await this.audit.log(ctx, 'UPDATE_CRITERIA', 'EvaluationCriteria', id, existing, updated);
 
     return updated;
@@ -134,7 +125,6 @@ export class EvaluationCriteriaService {
     });
 
     await this.assertWeightsNotAboveOne(updated.tenantId ?? undefined);
-    await this.invalidateCache(updated.tenantId ?? undefined);
     await this.audit.log(ctx, 'TOGGLE_CRITERIA', 'EvaluationCriteria', id, existing, updated);
 
     return updated;
@@ -149,7 +139,6 @@ export class EvaluationCriteriaService {
     }
 
     await this.prisma.evaluationCriteria.delete({ where: { id } });
-    await this.invalidateCache(existing.tenantId ?? undefined);
     await this.audit.log(ctx, 'DELETE_CRITERIA', 'EvaluationCriteria', id, existing, undefined);
 
     return { message: `Criteria ${id} deleted` };
@@ -165,7 +154,7 @@ export class EvaluationCriteriaService {
     if (Math.abs(sum - 1) > 0.0001) {
       throw new BadRequestException({
         statusCode: 400,
-        message: 'Validation failed',
+        message: 'Active criteria weights must sum to 1.0',
         errors: [{ field: 'weight', message: 'Active criteria weights must sum to 1.0' }],
       });
     }

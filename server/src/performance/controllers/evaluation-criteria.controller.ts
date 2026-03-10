@@ -68,7 +68,7 @@ export class EvaluationCriteriaController {
     return this.criteria.deleteCriteria(id, { performedById: user.id, ipAddress: req.ip, userAgent: req.headers['user-agent'] }, user);
   }
 
-  @Post(':id/toggle-status')
+  @Patch(':id/toggle-status')
   @Roles(Role.HR_ADMIN, Role.SYSTEM_ADMIN)
   @ApiOperation({ summary: 'Toggle criteria active status' })
   @ApiParam({ name: 'id', type: Number, example: 1 })

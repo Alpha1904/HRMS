@@ -49,9 +49,9 @@ export function toast(message: string, type: 'success' | 'error' | 'info' | 'war
   }
 
   const colors: Record<string, string> = {
-    success: 'bg-emerald-600',
+    success: 'bg-green-400',
     error: 'bg-red-600',
-    info: 'bg-gray-900',
+    info: 'bg-blue-900',
     warn: 'bg-amber-600',
   };
 

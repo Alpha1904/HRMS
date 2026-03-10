@@ -94,6 +94,13 @@ export class PerformanceEvaluationsService {
 
     if (query.department) where.employee = { department: query.department };
 
+    if (query.employeeName) {
+      where.employee = {
+        ...(where.employee ?? {}),
+        fullName: { contains: query.employeeName, mode: 'insensitive' },
+      };
+    }
+
     if (currentUser.role === Role.EMPLOYEE) {
       const profile = await this.prisma.profile.findUnique({ where: { userId: currentUser.id }, select: { id: true } });
       if (!profile) throw new ForbiddenException('User profile not found');

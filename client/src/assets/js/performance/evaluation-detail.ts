@@ -58,6 +58,7 @@ function renderObjective(obj: any) {
       <div class="mt-3 flex flex-wrap gap-2">
         <button class="obj-log px-2 py-1 text-xs border rounded bg-white hover:bg-dark-transparent" data-id="${obj.id}">Log progress</button>
         <button class="obj-status px-2 py-1 text-xs border rounded bg-white hover:bg-dark-transparent" data-id="${obj.id}">Update status</button>
+        <button class="obj-del px-2 py-1 text-xs border rounded bg-white hover:bg-dark-transparent" data-id="${obj.id}">Delete</button>
       </div>
       <div class="mt-3 text-xs text-gray-600 space-y-1">
         ${(Array.isArray(obj.progress) ? obj.progress : [])
@@ -259,6 +260,10 @@ async function updateObjectiveStatus(objectiveId: number) {
   await apiFetch(`/performance/objectives/${objectiveId}/status`, { method: 'PATCH', body: { status } });
 }
 
+async function deleteObjective(objectiveId: number) {
+  await apiFetch(`/performance/objectives/${objectiveId}`, { method: 'DELETE' });
+}
+
 function startPolling(evaluationId: number) {
   const intervalMs = 15000;
   window.setInterval(() => {
@@ -384,6 +389,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (next) renderObjectives(next);
       } catch (err: any) {
         showToast(err?.message || 'Failed to update objective status', 'error');
+      }
+      return;
+    }
+
+    const delBtn = t.closest<HTMLButtonElement>('.obj-del');
+    if (delBtn) {
+      const id = Number(delBtn.dataset.id);
+      if (!Number.isFinite(id) || id <= 0) return;
+      const ok = window.confirm('Delete this objective?');
+      if (!ok) return;
+      try {
+        await deleteObjective(id);
+        showToast('Objective deleted', 'success');
+        const next = await loadEvaluation();
+        if (next) renderObjectives(next);
+      } catch (err: any) {
+        showToast(err?.message || 'Failed to delete objective', 'error');
       }
     }
   });

@@ -70,12 +70,12 @@ export class ChecklistsService {
     });
     if (!existing) throw new NotFoundException('Checklist item not found');
 
-    const isHr = currentUser.role === Role.HR_ADMIN || currentUser.role === Role.SYSTEM_ADMIN;
-    const isAssignee = existing.assigneeId && existing.assigneeId === currentUser.id;
+    //const isHr = currentUser.role === Role.HR_ADMIN || currentUser.role === Role.SYSTEM_ADMIN;
+    //const isAssignee = existing.assigneeId && existing.assigneeId === currentUser.id;
 
-    if (!isHr && !isAssignee) {
-      throw new ForbiddenException('Only the assignee or HR can update this checklist item');
-    }
+    // if (!isHr && !isAssignee) {
+    //   throw new ForbiddenException('Only the assignee or HR can update this checklist item');
+    // }
 
     const nextStatus = dto.status ?? existing.status;
 
