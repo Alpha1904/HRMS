@@ -9,6 +9,32 @@ type Criteria = {
   tenantId?: string | null;
 };
 
+async function loadTaskObjectivesWeightSum(): Promise<number | null> {
+  try {
+    const evaluationsRes = await apiFetch('/performance/evaluations?limit=1');
+    const rows: any[] = Array.isArray(evaluationsRes)
+      ? evaluationsRes
+      : Array.isArray(evaluationsRes?.data)
+        ? evaluationsRes.data
+        : [];
+
+    const evalId = Number(rows?.[0]?.id);
+    if (!Number.isFinite(evalId) || evalId <= 0) return null;
+
+    const breakdown = await apiFetch(`/performance/evaluations/${evalId}/criteria-breakdown`);
+    const w = breakdown?.task?.weight;
+    if (w === undefined || w === null) return null;
+    const n = Number(w);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function isTaskCriteria(name?: string | null) {
+  return String(name ?? '').toLowerCase().includes('task');
+}
+
 function getEl<T extends HTMLElement>(id: string) {
   return document.getElementById(id) as T | null;
 }
@@ -21,10 +47,21 @@ function openModal(open: boolean) {
 }
 
 function setForm(row?: Partial<Criteria>) {
+  const isTask = isTaskCriteria(row?.name ?? (getEl<HTMLInputElement>('crit-name')?.value ?? ''));
+  const weightWrap = getEl<HTMLDivElement>('crit-weight-wrap');
+  const weightInput = getEl<HTMLInputElement>('crit-weight');
+
   (getEl<HTMLInputElement>('crit-id')!).value = row?.id ? String(row.id) : '';
   (getEl<HTMLInputElement>('crit-name')!).value = row?.name ?? '';
   (getEl<HTMLInputElement>('crit-desc')!).value = row?.description ? String(row.description) : '';
-  (getEl<HTMLInputElement>('crit-weight')!).value = row?.weight !== undefined ? String(row.weight) : '';
+  if (weightInput) {
+    weightInput.value = row?.weight !== undefined ? String(row.weight) : '';
+    weightInput.disabled = isTask;
+  }
+  if (weightWrap) {
+    if (isTask) weightWrap.classList.add('hidden');
+    else weightWrap.classList.remove('hidden');
+  }
   (getEl<HTMLInputElement>('crit-tenant')!).value = row?.tenantId ? String(row.tenantId) : '';
 }
 
@@ -43,7 +80,12 @@ async function loadCriteria() {
   const res = await apiFetch('/performance/criteria');
   const rows: Criteria[] = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
 
-  const activeTotal = rows.filter((c) => c.isActive).reduce((sum, c) => sum + Number(c.weight || 0), 0);
+  const taskObjectivesWeightSum = await loadTaskObjectivesWeightSum();
+
+  const activeTotal = rows
+    .filter((c) => c.isActive)
+    .filter((c) => !isTaskCriteria(c.name))
+    .reduce((sum, c) => sum + Number(c.weight || 0), 0);
   totalEl.textContent = activeTotal.toFixed(2);
   if (Math.abs(activeTotal - 1) > 0.001) {
     totalEl.className = 'text-red-600 font-semibold';
@@ -74,10 +116,16 @@ async function loadCriteria() {
       `
       : '';
 
+    const weightLabel = isTaskCriteria(c.name)
+      ? taskObjectivesWeightSum === null
+        ? '-'
+        : Number(taskObjectivesWeightSum).toFixed(2)
+      : Number(c.weight).toFixed(2);
+
     tr.innerHTML = `
       <td class="py-2 px-4 text-sm">${c.name}</td>
       <td class="py-2 px-4 text-sm text-gray-600">${c.description ?? ''}</td>
-      <td class="py-2 px-4 text-sm">${Number(c.weight).toFixed(2)}</td>
+      <td class="py-2 px-4 text-sm">${weightLabel}</td>
       <td class="py-2 px-4">${activeBadge}</td>
       <td class="py-2 px-4">${actions}</td>
     `;
@@ -135,17 +183,25 @@ async function submitForm() {
   const weightRaw = (getEl<HTMLInputElement>('crit-weight')!).value.trim();
   const tenantId = (getEl<HTMLInputElement>('crit-tenant')!).value.trim();
 
+  const isTask = isTaskCriteria(name);
   const weight = Number(weightRaw);
-  if (!name || Number.isNaN(weight)) {
-    showToast('Name and valid weight are required', 'error');
-    return;
-  }
-  if (weight < 0 || weight > 1) {
-    showToast('Weight must be between 0 and 1', 'error');
+  if (!name) {
+    showToast('Name is required', 'error');
     return;
   }
 
-  const payload: any = { name, weight };
+  const payload: any = { name };
+  if (!isTask) {
+    if (Number.isNaN(weight)) {
+      showToast('Valid weight is required', 'error');
+      return;
+    }
+    if (weight < 0 || weight > 1) {
+      showToast('Weight must be between 0 and 1', 'error');
+      return;
+    }
+    payload.weight = weight;
+  }
   if (description) payload.description = description;
   if (tenantId) payload.tenantId = tenantId;
 
@@ -178,6 +234,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       openModal(true);
     });
   }
+
+  getEl<HTMLInputElement>('crit-name')?.addEventListener('input', () => setForm(undefined));
 
   getEl<HTMLButtonElement>('crit-modal-close')?.addEventListener('click', () => openModal(false));
   getEl<HTMLButtonElement>('crit-modal-cancel')?.addEventListener('click', () => openModal(false));

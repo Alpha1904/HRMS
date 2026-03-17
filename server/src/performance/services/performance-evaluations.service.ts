@@ -169,6 +169,16 @@ export class PerformanceEvaluationsService {
       throw new ForbiddenException('Cross-tenant read denied');
     }
 
+    const objectives = Array.isArray((evaluation as any).objectives) ? (evaluation as any).objectives : [];
+    objectives.forEach((o: any) => {
+      const progress = Array.isArray(o.progress) ? o.progress : [];
+      const latestWithRate = progress
+        .filter((p: any) => p.progressRate !== null && p.progressRate !== undefined)
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+      o.progressRate = latestWithRate ? latestWithRate.progressRate : 0;
+    });
+
     return evaluation;
   }
 
@@ -246,6 +256,10 @@ export class PerformanceEvaluationsService {
       throw new BadRequestException('Automatic score is required');
     }
 
+    if (evaluation.status !== EvaluationStatus.IN_PROGRESS && evaluation.status !== EvaluationStatus.COMPLETED) {
+      throw new BadRequestException('Evaluation must be IN_PROGRESS to calculate final score');
+    }
+
     const automaticScore = evaluation.automaticScore.totalScore;
     const manualScore = evaluation.manualReview?.score ?? 0;
     const selfScore = evaluation.selfReview?.selfScore ?? 0;
@@ -254,7 +268,10 @@ export class PerformanceEvaluationsService {
 
     const updated = await this.prisma.performanceEvaluation.update({
       where: { id },
-      data: { finalScore },
+      data: {
+        finalScore,
+        ...(evaluation.status === EvaluationStatus.IN_PROGRESS ? { status: EvaluationStatus.COMPLETED } : {}),
+      },
     });
 
     await this.audit.log(ctx, 'CALCULATE_FINAL_SCORE', 'PerformanceEvaluation', id, evaluation, updated);
@@ -266,6 +283,7 @@ export class PerformanceEvaluationsService {
       selfScore: evaluation.selfReview?.selfScore ?? null,
       finalScore,
       formula: `(${automaticScore} * 0.6) + (${manualScore} * 0.3) + (${selfScore} * 0.1)`,
+      evaluation: updated,
     };
   }
 

@@ -68,6 +68,18 @@ async function main() {
   await prisma.evaluationCriteria.deleteMany();
   await prisma.goal.deleteMany();
   await prisma.evaluation.deleteMany();
+  // Clean departures tables before deleting profiles/shifts
+  await prisma.departureHistory.deleteMany();
+  await prisma.departureDocument.deleteMany();
+  await prisma.departureChecklist.deleteMany();
+  await prisma.handoverPlan.deleteMany();
+  await prisma.exitSurvey.deleteMany();
+  await prisma.exitInterview.deleteMany();
+  await prisma.departure.deleteMany();
+  // Clean chat and other tables that reference User/Profile (and depend on profile relations)
+  await prisma.chatMessage.deleteMany();
+  await prisma.chatMember.deleteMany();
+  await prisma.chatRoom.deleteMany();
   await prisma.shiftChangeRequest.deleteMany();
   await prisma.shift.deleteMany();
   await prisma.workScheduleTemplate.deleteMany();
@@ -79,18 +91,6 @@ async function main() {
   await prisma.application.deleteMany();
   await prisma.candidate.deleteMany();
   await prisma.jobPosting.deleteMany();
-  // Clean departures tables before profiles
-  await prisma.departureHistory.deleteMany();
-  await prisma.departureDocument.deleteMany();
-  await prisma.departureChecklist.deleteMany();
-  await prisma.handoverPlan.deleteMany();
-  await prisma.exitSurvey.deleteMany();
-  await prisma.exitInterview.deleteMany();
-  await prisma.departure.deleteMany();
-  // Clean chat and other tables that reference User/Profile
-  await prisma.chatMessage.deleteMany();
-  await prisma.chatMember.deleteMany();
-  await prisma.chatRoom.deleteMany();
   await prisma.profile.deleteMany();
   await prisma.user.deleteMany();
 
@@ -1053,44 +1053,23 @@ async function main() {
   const evaluationCriteria = await prisma.evaluationCriteria.createMany({
     data: [
       {
-        name: 'Technical Excellence',
-        description: 'Code quality, technical skills, problem-solving abilities, and innovation',
-        weight: 0.25,
+        name: 'attendance',
+        description: 'Measures attendance based on approved leave during the evaluation cycle',
+        weight: 0.5,
         isActive: true,
         tenantId: q1Cycle.tenantId,
       },
       {
-        name: 'Productivity & Delivery',
-        description: 'Meeting deadlines, output quality, and project completion rates',
-        weight: 0.20,
+        name: 'discipline',
+        description: 'Measures disciplinary incidents and policy compliance',
+        weight: 0.5,
         isActive: true,
         tenantId: q1Cycle.tenantId,
       },
       {
-        name: 'Team Collaboration',
-        description: 'Communication, teamwork, mentoring, and knowledge sharing',
-        weight: 0.15,
-        isActive: true,
-        tenantId: q1Cycle.tenantId,
-      },
-      {
-        name: 'Customer Impact',
-        description: 'Customer satisfaction, user feedback, and business value delivered',
-        weight: 0.15,
-        isActive: true,
-        tenantId: q1Cycle.tenantId,
-      },
-      {
-        name: 'Leadership & Initiative',
-        description: 'Taking ownership, driving projects, and showing leadership potential',
-        weight: 0.15,
-        isActive: true,
-        tenantId: q1Cycle.tenantId,
-      },
-      {
-        name: 'Learning & Development',
-        description: 'Skill acquisition, adapting to new technologies, and personal growth',
-        weight: 0.10,
+        name: 'task',
+        description: 'Task/objective completion (weight is computed server-side from objectives weight sum)',
+        weight: 0,
         isActive: true,
         tenantId: q1Cycle.tenantId,
       },

@@ -239,11 +239,64 @@ export async function renderPerformanceNav(containerId: string) {
       </div>
       <div class="flex items-center gap-2">
         <span class="text-xs text-gray-500">Role: ${role || 'UNKNOWN'}</span>
-        <button id="perf-logout" type="button" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white hover:bg-dark-transparent">Logout</button>
+        <button class="rounded text-sm font-medium border border-borderColor bg-white hover:bg-dark-transparent" id="backToDashboard">
+									<a href="javascript:void(0)" class="active subdrop relative flex item-center w-full p-2 text-sm leading-normal font-medium text-gray-900 group hover:bg-dark-transparent transition-all duration-500 ease-in-out rounded-[5px]">
+										<i class="ti ti-smart-home text-gray-500 group-hover:text-gray-900 group-active:text-gray-900"></i>
+										<span class="ms-2"> Dashboard</span>
+									</a>
+				</button>
       </div>
     </div>
   `;
+  const backToDashboard = document.getElementById('backToDashboard');
+  if (backToDashboard) {
+    const link = backToDashboard.querySelector('a');
+    if (link) {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
 
+        const roleFromStorage = () => {
+          const direct =
+            sessionStorage.getItem('currentUserRole') ||
+            localStorage.getItem('currentUserRole') ||
+            sessionStorage.getItem('role') ||
+            localStorage.getItem('role');
+          if (direct) return direct;
+
+          const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
+          if (userStr) {
+            try {
+              const u: any = JSON.parse(userStr);
+              return u?.role || u?.user?.role;
+            } catch (_) {
+              return null;
+            }
+          }
+          return null;
+        };
+
+        const role = String(roleFromStorage() || '').toUpperCase();
+        let dest = 'dashboard.employee.html';
+        switch (role) {
+          case 'MANAGER':
+            dest = 'dashboard.manager.html';
+            break;
+          case 'HR_ADMIN':
+          case 'SYSTEM_ADMIN':
+          case 'ADMIN':
+          case 'RECRUITER':
+            dest = 'dashboard.admin.html';
+            break;
+          case 'EMPLOYEE':
+          default:
+            dest = 'dashboard.employee.html';
+            break;
+        }
+
+        window.location.href = dest;
+      });
+    }
+  }
   const btn = document.getElementById('perf-logout');
   btn?.addEventListener('click', () => {
     sessionStorage.removeItem('accessToken');

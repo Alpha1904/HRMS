@@ -55,6 +55,7 @@
         <div class="flex flex-wrap gap-2">
           <button id="tabbtn-summary" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white">Summary</button>
           <button id="tabbtn-automatic" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white">Automatic</button>
+          <button id="tabbtn-criteria" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white">Criteria</button>
           <button id="tabbtn-manual" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white">Manual Review</button>
           <button id="tabbtn-self" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white">Self Review</button>
           <button id="tabbtn-objectives" class="px-3 py-2 rounded text-sm font-medium border border-borderColor bg-white">Objectives</button>
@@ -69,6 +70,38 @@
       <div id="tab-automatic" class="hidden bg-white border border-borderColor rounded p-4 space-y-3">
         <h2 class="font-semibold">Automatic scoring breakdown</h2>
         <div id="auto-breakdown"></div>
+      </div>
+
+      <div id="tab-criteria" class="hidden bg-white border border-borderColor rounded p-4 space-y-3">
+        <h2 class="font-semibold">Criteria breakdown</h2>
+        <div id="criteria-breakdown"></div>
+      </div>
+
+      <div id="criteria-edit-modal" class="hidden fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center p-4">
+        <div class="w-full max-w-lg bg-white rounded border border-borderColor shadow">
+          <div class="flex items-center justify-between p-4 border-b border-borderColor">
+            <div class="font-semibold">Edit Criteria</div>
+            <button id="criteria-edit-close" type="button" class="px-2 py-1 border rounded bg-white hover:bg-dark-transparent">X</button>
+          </div>
+          <div class="p-4 space-y-3">
+            <input id="criteria-edit-id" class="hidden" />
+
+            <div>
+              <label class="block text-sm font-medium">Name</label>
+              <input id="criteria-edit-name" disabled class="w-full border border-borderColor rounded px-3 py-2 bg-gray-50" />
+            </div>
+
+            <div id="criteria-edit-weight-wrap">
+              <label class="block text-sm font-medium">Weight (0..1)</label>
+              <input id="criteria-edit-weight" type="number" min="0" max="1" step="0.01" class="w-full border border-borderColor rounded px-3 py-2" />
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2">
+              <button id="criteria-edit-cancel" type="button" class="px-3 py-2 rounded text-sm border border-borderColor bg-white hover:bg-dark-transparent">Cancel</button>
+              <button id="criteria-edit-save" type="button" class="px-3 py-2 rounded text-sm font-medium bg-primary text-white">Save</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="tab-manual" class="hidden bg-white border border-borderColor rounded p-4 space-y-3">
@@ -159,10 +192,111 @@
           </div>
         </div>
 
-        <div id="obj-list"></div>
+        <div style="margin-top: 1rem;" id="obj-list"></div>
+      </div>
+
+      <!-- Objective Log Progress Modal -->
+      <div id="obj-log-modal" class="hidden fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded border border-borderColor shadow">
+          <div class="flex items-center justify-between p-4 border-b border-borderColor">
+            <div class="font-semibold">Log Progress</div>
+            <button id="obj-log-close" type="button" class="px-2 py-1 border rounded bg-white hover:bg-dark-transparent">X</button>
+          </div>
+          <div class="p-4 space-y-3">
+            <input id="obj-log-id" class="hidden" />
+            <div>
+              <label class="block text-sm font-medium">Progress Note</label>
+              <textarea id="obj-log-note" class="w-full border border-borderColor rounded px-3 py-2" rows="3" placeholder="Enter progress note..."></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium">Progress % (0-100) <span class="text-gray-500">(optional)</span></label>
+              <input id="obj-log-rate" type="number" min="0" max="100" class="w-full border border-borderColor rounded px-3 py-2" placeholder="e.g. 75" />
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2">
+              <button id="obj-log-cancel" type="button" class="px-3 py-2 rounded text-sm border border-borderColor bg-white hover:bg-dark-transparent">Cancel</button>
+              <button id="obj-log-save" type="button" class="px-3 py-2 rounded text-sm font-medium bg-primary text-white">Save Progress</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Objective Update Status Modal -->
+      <div id="obj-status-modal" class="hidden fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded border border-borderColor shadow">
+          <div class="flex items-center justify-between p-4 border-b border-borderColor">
+            <div class="font-semibold">Update Status</div>
+            <button id="obj-status-close" type="button" class="px-2 py-1 border rounded bg-white hover:bg-dark-transparent">X</button>
+          </div>
+          <div class="p-4 space-y-3">
+            <input id="obj-status-id" class="hidden" />
+            <div>
+              <label class="block text-sm font-medium">Select New Status</label>
+              <div class="grid grid-cols-1 gap-2 mt-2">
+                <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="radio" name="obj-status-value" value="NOT_STARTED" class="w-4 h-4" />
+                  <span class="text-sm">Not Started</span>
+                </label>
+                <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="radio" name="obj-status-value" value="IN_PROGRESS" class="w-4 h-4" />
+                  <span class="text-sm">In Progress</span>
+                </label>
+                <label class="flex items-center gap-2 p-3 border rounded cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="radio" name="obj-status-value" value="COMPLETED" class="w-4 h-4" />
+                  <span class="text-sm">Completed</span>
+                </label>
+              </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2">
+              <button id="obj-status-cancel" type="button" class="px-3 py-2 rounded text-sm border border-borderColor bg-white hover:bg-dark-transparent">Cancel</button>
+              <button id="obj-status-save" type="button" class="px-3 py-2 rounded text-sm font-medium bg-primary text-white">Update Status</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Objective Delete Confirmation Modal -->
+      <div id="obj-delete-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div style="box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.6); border-radius: 2%;" class="w-full max-w-md bg-white rounded-2xl border-0 shadow-2xl overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="obj-delete-card">
+          <div class="bg-gradient-to-br from-red-500 via-rose-500 to-red-600 p-6 relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mt-2 -mr-2 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+            <div class="absolute bottom-0 left-0 -mb-2 -ml-2 w-16 h-16 bg-white/10 rounded-full blur-lg"></div>
+            <div class="relative flex items-center gap-4">
+              <div>
+                <div class="font-bold text-black text-xl drop-shadow-sm" style="color: #d20d0d;">Delete Objective</div>
+                <div class="text-red-100 text-sm font-medium drop-shadow-sm">This action is permanent</div>
+              </div>
+            </div>
+          </div>
+          <div class="p-6 space-y-4">
+            <input id="obj-delete-id" class="hidden" />
+            <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
+              <svg class="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <p class="text-sm text-rose-800">Are you sure you want to delete this objective? <span class="font-semibold">This cannot be undone.</span></p>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p class="text-sm font-semibold text-gray-800" id="obj-delete-title"></p>
+              </div>
+              <p class="text-xs text-gray-500 leading-relaxed pl-6" id="obj-delete-desc"></p>
+            </div>
+            <div class="flex items-center justify-end gap-3 pt-3">
+              <button id="obj-delete-cancel" type="button" class="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all">
+                Cancel
+              </button>
+              <button style="background-color: #d82828;" id="obj-delete-confirm" type="button" class="px-5 py-2.5 rounded-xl text-sm font-medium text-white hover:bg-orange-500 transition-all">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <script type="module" src="../dist/assets/js/performance/evaluation-detail.js"></script>
+    <script type="module" src="../dist/assets/js/performance/evaluation-detail.js?v=20260315-2"></script>
   </body>
 </html>

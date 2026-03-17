@@ -125,4 +125,12 @@ export class PerformanceEvaluationsController {
   getBreakdown(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: CurrentUserInterface) {
     return this.automatic.getScoreBreakdown(id, user);
   }
+
+  @Get('evaluations/:id/criteria-breakdown')
+  @UseGuards(JwtAuthGuard, RolesGuard, EvaluationAccessGuard)
+  @ApiOperation({ summary: 'Get criteria breakdown (attendance, discipline, task)' })
+  @ApiParam({ name: 'id', type: Number, example: 1 })
+  getCriteriaBreakdown(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: CurrentUserInterface) {
+    return this.automatic.getCriteriaBreakdown(id, user);
+  }
 }
