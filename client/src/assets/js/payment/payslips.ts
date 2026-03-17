@@ -7,6 +7,7 @@ import {
   hasAnyRole,
   monthInputValueToIsoDate,
   renderPaymentNav,
+  searchProfiles,
   showToast,
 } from './core.js';
 
@@ -31,6 +32,20 @@ type PayslipRow = {
   netAmount: any;
   status?: string;
 };
+
+async function fillProfileSelect(term: string) {
+  const select = el<HTMLSelectElement>('profileSelect');
+  select.innerHTML = '<option value="">Select a profile</option>';
+
+  const profiles = await searchProfiles(term);
+  profiles.forEach((p: any) => {
+    const opt = document.createElement('option');
+    opt.value = String(p.id);
+    const email = p?.user?.email ? ` • ${p.user.email}` : '';
+    opt.textContent = `${p.id} - ${p.fullName || 'Unknown'}${email}`;
+    select.appendChild(opt);
+  });
+}
 
 function mapPayslipToRow(profileId: number, data: any): PayslipRow {
   return {
@@ -152,6 +167,25 @@ async function init() {
 
   if (!isAdmin && profileWrap) profileWrap.classList.add('hidden');
   if (!isAdmin) btnGenerate.classList.add('hidden');
+
+  if (isAdmin) {
+    const btnProfileSearch = el<HTMLButtonElement>('btn-profile-search');
+    const profileSearch = el<HTMLInputElement>('profileSearch');
+    const profileSelect = el<HTMLSelectElement>('profileSelect');
+    const profileIdInput = el<HTMLInputElement>('profileId');
+
+    btnProfileSearch.addEventListener('click', async () => {
+      try {
+        await fillProfileSelect(profileSearch.value.trim());
+      } catch (e: any) {
+        showToast(e?.message || 'Failed to search profiles', 'error');
+      }
+    });
+
+    profileSelect.addEventListener('change', () => {
+      if (profileSelect.value) profileIdInput.value = profileSelect.value;
+    });
+  }
 
   const now = new Date();
   const ym = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;

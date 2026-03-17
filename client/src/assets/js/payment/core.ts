@@ -192,7 +192,7 @@ export async function searchProfiles(term: string): Promise<any[]> {
     query: {
       search: term,
       page: 1,
-      limit: 10,
+      limit: 1000,
       sortBy: 'fullName',
       sortOrder: 'asc',
     },

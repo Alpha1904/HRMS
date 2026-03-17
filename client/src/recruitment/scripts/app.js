@@ -129,10 +129,9 @@ let currentUser = null;
     if (restrictedPages.includes(currentPage) && !checkPageAccess()) {
       toast('Access denied. HR Admin and Recruiter roles only.', 'error', 5000);
       // Redirect to careers page (public) or dashboard
-      const dashboardUrl = getDashboardUrl();
       setTimeout(() => {
-        window.location.href = dashboardUrl;
-      }, 1000);
+        window.location.href = './../dashboard.employee.html';
+      }, 100);
       return false;
     }
     
@@ -141,19 +140,19 @@ let currentUser = null;
 
   function getDashboardUrl() {
     if (!currentUser || !currentUser.role) {
-      return './dashboard.admin.html'; // fallback
+      return './../dashboard.admin.html'; // fallback
     }
     
     const role = currentUser.role.toLowerCase();
     switch (role) {
       case 'hr_admin':
-        return './dashboard.admin.html';
+        return './../dashboard.admin.html';
       case 'manager':
-        return './dashboard.manager.html';
+        return './../dashboard.manager.html';
       case 'employee':
-        return './dashboard.employee.html';
+        return './../dashboard.employee.html';
       default:
-        return './dashboard.admin.html'; // fallback
+        return './../dashboard.admin.html'; // fallback
     }
   }
 
