@@ -7,18 +7,7 @@ import { extname } from 'path';
 
 
 @Module({
-  imports: [PrismaModule, MulterModule.register({
-      storage: diskStorage({
-        destination: './public/uploads/avatars',
-        filename: (req, file, cb) => {
-          const randomName = Array(32)
-            .fill(null)
-            .map(() => Math.round(Math.random() * 5).toString(5))
-            .join('');
-          cb(null, `${randomName}${extname(file.originalname)}`);
-        },
-      }),
-    }),],
+  imports: [PrismaModule, MulterModule],
   controllers: [ProfileController],
   providers: [ProfileService],
   exports: [ProfileService],

@@ -33,15 +33,15 @@ export class AuthService {
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 30 * 60 * 1000, // 30 minutes
+      sameSite: 'none',
+      maxAge: 30 * 60 * 1000,
     });
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     const { id, email, role } = user;
@@ -67,15 +67,15 @@ export class AuthService {
       res.cookie('accessToken', tokens.accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 15 * 60 * 1000, // 15 minutes
+        sameSite: 'none',
+        maxAge: 15 * 60 * 1000,
       });
 
       res.cookie('refreshToken', tokens.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        sameSite: 'none',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
       const hashedToken = await bcrypt.hash(tokens.refreshToken, 10);
@@ -160,7 +160,7 @@ export class AuthService {
 
     return this.jwtService.sign(payload, {
       secret: 'jwt_secret',
-      expiresIn: '15m',
+      expiresIn: '7d',
     });
   }
 
@@ -243,7 +243,7 @@ export class AuthService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otp = Math.floor(100000 + Math.random() * 9000).toString(); // 4-digit OTP
       const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
       await this.prismaService.user.update({
         where: { id: user.id },

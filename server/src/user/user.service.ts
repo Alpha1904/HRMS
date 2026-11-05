@@ -13,6 +13,22 @@ import { User } from '@prisma/client';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
+  private normalizeHireDate(raw?: string) {
+    const v = (raw || '').trim();
+    if (!v) return undefined;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+    const m = v.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (m) {
+      const dd = String(m[1]).padStart(2, '0');
+      const mm = String(m[2]).padStart(2, '0');
+      const yyyy = m[3];
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    const d = new Date(v);
+    if (!Number.isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+    return undefined;
+  }
+
   async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
     const { email, password, role, tenantId, profile } = createUserDto;
 
@@ -39,6 +55,8 @@ export class UserService {
             create: {
               fullName: profile.fullName,
               department: profile.department,
+              phone: profile.phone,
+              hireDate: this.normalizeHireDate(profile.hireDate),
               position: profile.position,
               contractType: profile.contractType,
             },

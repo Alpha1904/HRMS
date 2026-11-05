@@ -7,7 +7,9 @@ describe('LeaveController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [LeaveController],
-    }).compile();
+    })
+      .useMocker(() => ({}))
+      .compile();
 
     controller = module.get<LeaveController>(LeaveController);
   });

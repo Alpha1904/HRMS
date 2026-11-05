@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min, IsIn } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class QueryProfileDto {
@@ -26,4 +26,15 @@ export class QueryProfileDto {
   @Min(1)
   @ApiPropertyOptional({ description: 'The number of items per page', default: 10 })
   limit?: number;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ description: 'Field to sort by (e.g. fullName, id, hireDate, user.email)' })
+  sortBy?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['asc', 'desc', 'ASC', 'DESC'])
+  @ApiPropertyOptional({ description: 'Sort direction (asc or desc)', example: 'asc' })
+  sortOrder?: string;
 }

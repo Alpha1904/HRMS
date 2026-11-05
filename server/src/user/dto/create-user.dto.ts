@@ -25,6 +25,16 @@ class CreateUserProfileDto {
 
   @IsString()
   @IsOptional()
+  @ApiPropertyOptional({ description: 'Contact phone number', example: '+1-202-555-0143' })
+  phone?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({ description: 'Hire date in YYYY-MM-DD format', example: '2023-01-15' })
+  hireDate?: string;
+
+  @IsString()
+  @IsOptional()
   @ApiPropertyOptional({ description: 'Job position', example: 'Software Developer' })
   position?: string;
 

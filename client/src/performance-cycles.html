@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Performance Cycles</title>
+    <link rel="stylesheet" href="../dist/style.css" />
+  </head>
+  <body class="antialiased bg-light text-default">
+    <script type="module">
+      import { enforceAuthenticatedRoute } from '../dist/assets/js/auth-login.js';
+      enforceAuthenticatedRoute();
+    </script>
+
+    <div class="max-w-6xl mx-auto p-4 space-y-4">
+      <div id="perf-nav"></div>
+
+      <div class="bg-white border border-borderColor rounded p-4 flex items-center justify-between gap-4">
+        <div>
+          <h1 class="text-lg font-semibold">Evaluation Cycles</h1>
+          <p class="text-sm text-gray-600">Create, activate, and manage evaluation cycles.</p>
+        </div>
+        <button id="cycle-create" type="button" class="px-3 py-2 rounded text-sm font-medium bg-primary text-white">Create Cycle</button>
+      </div>
+
+      <div class="bg-white border border-borderColor rounded overflow-hidden">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left text-xs font-semibold text-gray-600 px-4 py-2">Name</th>
+              <th class="text-left text-xs font-semibold text-gray-600 px-4 py-2">Period</th>
+              <th class="text-left text-xs font-semibold text-gray-600 px-4 py-2">Start</th>
+              <th class="text-left text-xs font-semibold text-gray-600 px-4 py-2">End</th>
+              <th class="text-left text-xs font-semibold text-gray-600 px-4 py-2">Status</th>
+              <th class="text-left text-xs font-semibold text-gray-600 px-4 py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="cycles-tbody"></tbody>
+        </table>
+        <div id="cycles-empty" class="hidden p-4 text-sm text-gray-600">No cycles found.</div>
+      </div>
+    </div>
+
+    <div id="cycle-modal" class="hidden fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center p-4">
+      <div class="w-full max-w-lg bg-white rounded border border-borderColor shadow">
+        <div class="flex items-center justify-between p-4 border-b border-borderColor">
+          <div class="font-semibold">Cycle</div>
+          <button id="cycle-modal-close" type="button" class="px-2 py-1 border rounded bg-white hover:bg-dark-transparent">X</button>
+        </div>
+        <div class="p-4 space-y-3">
+          <input id="cycle-id" class="hidden" />
+
+          <div>
+            <label class="block text-sm font-medium">Name</label>
+            <input id="cycle-name" class="w-full border border-borderColor rounded px-3 py-2" placeholder="Q1 2024 Performance Review" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium">Period</label>
+            <select id="cycle-period" class="w-full border border-borderColor rounded px-3 py-2">
+              <option value="QUARTERLY">QUARTERLY</option>
+              <option value="ANNUAL">ANNUAL</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium">Start Date</label>
+              <input id="cycle-start" type="date" class="w-full border border-borderColor rounded px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium">End Date</label>
+              <input id="cycle-end" type="date" class="w-full border border-borderColor rounded px-3 py-2" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium">Tenant ID (optional)</label>
+            <input id="cycle-tenant" class="w-full border border-borderColor rounded px-3 py-2" placeholder="tenant_123" />
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button id="cycle-modal-cancel" type="button" class="px-3 py-2 rounded text-sm border border-borderColor bg-white hover:bg-dark-transparent">Cancel</button>
+            <button id="cycle-save" type="button" class="px-3 py-2 rounded text-sm font-medium bg-primary text-white">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="../dist/assets/js/performance/cycles.js"></script>
+  </body>
+</html>

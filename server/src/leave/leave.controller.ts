@@ -2,14 +2,13 @@ import {
   Controller,
   Post,
   Body,
-  UsePipes,
-  ValidationPipe,
   Get,
   Param,
   ParseIntPipe,
   Patch,
   HttpCode,
   HttpStatus,
+  Delete,
 } from '@nestjs/common';
 import { LeaveService } from './leave.service';
 import { CreateLeaveDto } from './dto/create-leave.dto';
@@ -19,6 +18,14 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 @Controller('leaves')
 export class LeaveController {
   constructor(private readonly leaveService: LeaveService) {}
+
+// get all leaves
+  @Get()
+  @ApiOperation({ summary: 'Get all leave requests' })
+  @ApiResponse({ status: 200, description: 'Returns an array of all leave requests.'})
+  getAllLeaves() {
+    return this.leaveService.getAllLeaves();
+  }
 
   /**
    * Endpoint for an employee to submit a new leave request.
@@ -35,6 +42,20 @@ export class LeaveController {
     return this.leaveService.createRequest(createLeaveDto);
   }
 
+
+  /**
+   *   get leave by profile id
+   */
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get leave request by profile ID' })
+  @ApiResponse({ status: 200, description: 'Returns the leave request details.'})
+  @ApiResponse({ status: 404, description: 'Leave request not found.'})
+  getLeaveById(@Param('id', ParseIntPipe) id: number) {
+    return this.leaveService.getLeaveById(id);
+  }
+
+
   /**
    * Endpoint for an employee to view their current leave balances.
    * GET /leaves/balances/1
@@ -44,6 +65,14 @@ export class LeaveController {
   @ApiResponse({ status: 200, description: 'Returns an array of leave balances.'})
   getBalances(@Param('profileId', ParseIntPipe) profileId: number) {
     return this.leaveService.getBalancesByProfile(profileId);
+  }
+
+   // getall leaves by manager id
+  @Get('manager/:managerId')
+  @ApiOperation({ summary: 'Get all leave requests for employees under a manager' })
+  @ApiResponse({ status: 200, description: 'Returns an array of leave requests.'})
+  getLeavesByManagerId(@Param('managerId', ParseIntPipe) managerId: number) {
+    return this.leaveService.getLeavesByManagerId(managerId);
   }
 
   /**
@@ -60,6 +89,15 @@ export class LeaveController {
     @Body() updateDto: UpdateLeaveStatusDto,
   ) {
     return this.leaveService.approveOrReject(id, updateDto);
+  }
+
+  // delete many leaves by profile id
+  @Delete(':profileId')
+  @ApiOperation({ summary: 'Delete leave requests by profile ID' })
+  @ApiResponse({ status: 200, description: 'The leave requests have been successfully deleted.'})
+  @ApiResponse({ status: 404, description: 'No leave requests found for the given profile ID.'})
+  deleteLeavesByProfileId(@Param('profileId', ParseIntPipe) profileId: number) {
+    return this.leaveService.deleteLeavesByProfileId(profileId);
   }
   
   // Add other GET /leaves/:id and GET /leaves methods here later.

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en" class="h-full">
+
+<head>
+  <!-- Meta Tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dashboard | SmartHR - Advanced Bootstrap 5 Multipurpose Admin Dashboard Template for HRM, Payroll & CRM</title>
+	
+	<meta name="description" content="SmartHR - An advanced Bootstrap 5 admin dashboard template for HRM and CRM. Ideal for managing employee records, payroll, attendance, recruitment, and team performance with an intuitive and responsive design. Perfect for HR teams and business managers looking to streamline workforce management.">
+	<meta name="keywords" content="HR dashboard template, HRM admin template, Bootstrap 5 HR dashboard, workforce management dashboard, employee management system, payroll dashboard, HR analytics, admin dashboard, CRM admin template, human resources management, HR admin template, team management dashboard, recruitment dashboard, employee attendance system, performance management, HR CRM, HR dashboard HTML, Bootstrap HR template, employee engagement, HR software, project management dashboard">
+	<meta name="author" content="Dreams Technologies">
+	<meta name="robots" content="index, follow">
+
+	<!-- Apple Touch Icon -->
+	<link rel="apple-touch-icon" sizes="180x180" href="../../assets/img/apple-touch-icon.png">
+
+	<!-- Favicon -->
+	<link rel="icon" href="../../assets/img/favicon.png" type="image/x-icon">
+	<link rel="shortcut icon" href="../../assets/img/favicon.png" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./recruitment/styles.css" />
+</head>
+
+<body class="h-full bg-white text-black" data-page="jobs">
+  <div id="global-loading" class="hidden fixed inset-0 z-[90] bg-black/20">
+    <div class="absolute inset-0 flex items-center justify-center">
+      <div class="rounded-xl bg-white border border-gray-300 shadow-lg px-5 py-4 flex items-center gap-3">
+        <div class="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+        <div id="global-loading-text" class="text-sm text-black">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="min-h-full flex">
+    <aside class="hidden md:flex md:w-64 md:flex-col border-r border-gray-300 bg-white">
+      <div class="flex gap-5 px-4 py-4 border-b border-gray-300">
+        <div>
+        <button onclick="window.history.back()" aria-label="Go back" title="Back" class="p-2 bg-orange-400 rounded-full hover:bg-orange/10 focus:outline-none focus:ring-2 focus:ring-white/50 text-white transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        </div>
+        <div>
+          <div class="text-sm font-semibold">Recruitment</div>
+          <div class="text-xs text-gray-500">Recruiter dashboard</div>
+        </div>
+      </div>
+
+      <nav class="p-3 flex flex-col gap-1">
+        <a data-nav="jobs" href="../recruitment/index.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Jobs</a>
+        <a data-nav="candidates" href="../recruitment/candidates.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Candidates</a>
+        <a data-nav="documents" href="../recruitment/documents.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Documents</a>
+        <a data-nav="careers" href="../recruitment/career.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Careers (Public)</a>
+        <a data-nav="apply" href="../recruitment/apply.html" class="px-3 py-2 rounded-lg text-sm text-black hover:bg-gray-100">Public Apply Form</a>
+      </nav>
+
+      <div class="mt-auto p-3 border-t border-gray-300">
+        <button id="home-btn" class="w-full px-3 py-2 rounded-lg bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm">Home</button>
+      </div>
+    </aside>
+
+    <main class="flex-1 min-w-0">
+      <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-gray-300">
+        <div class="px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="md:hidden text-sm font-semibold">Recruitment</div>
+            <div id="me-badge" class="text-xs px-2 py-1 rounded bg-gray-100 text-black">Checking…</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="p-4 space-y-6">
+        <section class="bg-white border border-gray-300 rounded-xl">
+          <div class="px-4 py-4 border-b border-gray-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <div class="text-base font-semibold">Job postings</div>
+              <div class="text-xs text-gray-500">Create, publish, pause, close and manage pipelines.</div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
+              <select id="jobs-filter-status" class="px-3 py-2 rounded border border-gray-300 bg-white text-sm">
+                <option value="">All statuses</option>
+                <option value="DRAFT">DRAFT</option>
+                <option value="OPEN">OPEN</option>
+                <option value="PAUSED">PAUSED</option>
+                <option value="CLOSED">CLOSED</option>
+              </select>
+              <button id="job-create-btn" class="px-3 py-2 rounded bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm">New job</button>
+            </div>
+          </div>
+
+          <div class="overflow-auto">
+            <table class="min-w-full">
+              <thead>
+                <tr class="text-left text-xs uppercase tracking-wide text-gray-500">
+                  <th class="px-4 py-3">Title</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Applications</th>
+                  <th class="px-4 py-3">Published</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-tbody" class="text-sm"></tbody>
+            </table>
+          </div>
+
+          <div id="jobs-pagination" class="px-4 py-3"></div>
+        </section>
+
+        <section id="kanban-section" class="hidden bg-white border border-gray-300 rounded-xl">
+          <div class="px-4 py-4 border-b border-gray-300 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-base font-semibold">Kanban board</div>
+              <div class="text-xs text-gray-500" id="kanban-job-title">—</div>
+            </div>
+            <button id="kanban-close-btn" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">Close</button>
+          </div>
+
+          <div class="p-4">
+            <div id="kanban-empty" class="hidden text-sm text-gray-500">No applications found for this posting.</div>
+            <div id="kanban-columns" class="flex gap-3 overflow-auto pb-2"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="job-modal" class="hidden fixed inset-0 z-[80]" aria-hidden="true" data-modal>
+    <div class="absolute inset-0 bg-black/40" data-modal-overlay></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-2xl rounded-xl bg-white border border-gray-300 shadow-xl">
+        <div class="px-4 py-4 border-b border-gray-300 flex items-center justify-between">
+          <div id="job-modal-title" class="text-base font-semibold">Create job posting</div>
+          <button id="job-modal-cancel" class="text-gray-400 hover:text-gray-600" type="button" data-modal-close>✕</button>
+        </div>
+
+        <form id="job-modal-form" class="p-4 grid grid-cols-1 gap-3">
+          <input id="job-id" type="hidden" />
+
+          <div>
+            <label class="block text-xs text-gray-600">Title *</label>
+            <input id="job-title" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" required />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-gray-600">Department</label>
+              <input id="job-department" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-600">Site</label>
+              <input id="job-site" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-600">Description</label>
+            <textarea id="job-description" class="w-full min-h-[110px] px-3 py-2 rounded border border-gray-300 bg-white text-sm"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-600">Requirements</label>
+            <textarea id="job-requirements" class="w-full min-h-[110px] px-3 py-2 rounded border border-gray-300 bg-white text-sm"></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs text-gray-600">Salary min</label>
+              <input id="job-salary-min" type="number" min="0" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-600">Salary max</label>
+              <input id="job-salary-max" type="number" min="0" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-600">Currency</label>
+              <input id="job-salary-currency" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" placeholder="USD" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-600">Expires at</label>
+            <input id="job-expiresAt" type="date" class="w-full px-3 py-2 rounded border border-gray-300 bg-white text-sm" />
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button type="button" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm" data-modal-close>Cancel</button>
+            <button type="submit" class="px-3 py-2 rounded bg-[rgb(242,101,34)] hover:bg-[rgb(220,90,30)] text-white text-sm">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="application-modal" class="hidden fixed inset-0 z-[85]" aria-hidden="true" data-modal>
+    <div class="absolute inset-0 bg-black/40" data-modal-overlay></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-4xl rounded-xl bg-white border border-gray-300 shadow-xl">
+        <div class="px-4 py-4 border-b border-gray-300 flex items-center justify-between">
+          <div class="text-base font-semibold">Application details</div>
+          <button class="text-gray-400 hover:text-gray-600" type="button" data-modal-close>✕</button>
+        </div>
+        <div id="application-modal-body" class="p-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="delete-job-modal" class="hidden fixed inset-0 z-[90]" aria-hidden="true" data-modal>
+    <div class="absolute inset-0 bg-black/40" data-modal-overlay></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-md rounded-xl bg-white border border-gray-300 shadow-xl">
+        <div class="px-6 py-6">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-black">Delete Job Posting</h3>
+              <p class="text-sm text-gray-600 mt-1">This action will permanently delete the job posting and cannot be undone.</p>
+            </div>
+          </div>
+          
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+              </svg>
+              <div class="text-sm text-red-800">
+                <p class="font-medium">Warning:</p>
+                <p class="mt-1">Deleting this job posting will also remove all associated applications and cannot be recovered. Consider closing the posting instead if you want to preserve the data.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-sm text-gray-600 mb-6">
+            Are you sure you want to delete <span id="delete-job-title" class="font-medium text-black"></span>?
+          </div>
+
+          <div class="flex gap-3 justify-end">
+            <button type="button" class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-black text-sm font-medium transition-colors" data-modal-close>
+              Cancel
+            </button>
+            <button type="button" id="confirm-delete-job-btn" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+              Delete Job Posting
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <script src="../recruitment/scripts/core.js"></script>
+  <script src="../recruitment/scripts/ui.js"></script>
+  <script src="../recruitment/scripts/api.js"></script>
+  <script src="../recruitment/scripts/app.js"></script>
+  <script src="../recruitment/scripts/kanban.js"></script>
+  <script src="../recruitment/scripts/jobs.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.HRMSRecruitment && window.HRMSRecruitment.jobs) {
+        window.HRMSRecruitment.jobs.init();
+      }
+    });
+  </script>
+</body>
+
+</html>

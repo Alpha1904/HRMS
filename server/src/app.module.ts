@@ -10,6 +10,23 @@ import { UserModule } from './user/user.module';
 import { ProfileModule } from './profile/profile.module';
 import { ManagerModule } from './manager/manager.module';
 import { LeaveModule } from './leave/leave.module';
+import { LeavePolicyModule } from './leave-policy/leave-policy.module';
+import { NotificationModule } from './notification/notification.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from './schedule/schedule.module';
+import { ShiftRequestModule } from './shift-request/shift-request.module';
+import { GoalModule } from './goal/goal.module';
+import { EvaluationModule } from './evaluation/evaluation.module';
+import { MessageModule } from './message/message.module';
+import { AnnouncementModule } from './announcement/announcement.module';
+import { ForumModule } from './forum/forum.module';
+import { TestService } from './test/test.service';
+import { ChatModule } from './chat/chat.module';
+import { HiringModule } from './hiring/hiring.module';
+import { DocumentsModule } from './documents/documents.module';
+import { PerformanceModule } from './performance/performance.module';
+import { DeparturesModule } from './departures/departures.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule,
@@ -22,12 +39,28 @@ import { LeaveModule } from './leave/leave.module';
         limit: 5,
       },
     ]),
+    EventEmitterModule.forRoot(),
     EmailModule,
     ProfileModule,
     ManagerModule,
     LeaveModule,
+    LeavePolicyModule,
+    NotificationModule,
+    ScheduleModule,
+    ShiftRequestModule,
+    GoalModule,
+    EvaluationModule,
+    MessageModule,
+    AnnouncementModule,
+    ForumModule,
+    ChatModule,
+    HiringModule,
+    DocumentsModule,
+    PerformanceModule,
+    DeparturesModule,
+    PaymentModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, TestService],
 })
 export class AppModule {}

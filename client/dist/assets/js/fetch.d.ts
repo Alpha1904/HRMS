@@ -1,0 +1,87 @@
+/**
+ * Based on main.ts, the global prefix is 'api'.
+ * We assume the server is running on port 3000.
+ * [cite: 46, 49]
+ */
+declare global {
+    interface Window {
+        __API_BASE__?: string;
+    }
+}
+export declare function detectApiBase(): string;
+/**
+ * A helper function for handling fetch responses.
+ */
+export declare function handleResponse(response: Response): Promise<any>;
+/**
+ * Finds all profiles with pagination and filtering.
+ * Corresponds to: @Get() findAll(@Query() query: QueryProfileDto)
+ *
+ * @param {object} [queryParams] - Optional query parameters (e.g., { page: 1, limit: 10, filter: 'Developer' })
+ * @returns {Promise<object>} A paginated list of profiles and total count.
+ */
+export declare function fetchProfiles(queryParams?: Record<string, any>): Promise<any>;
+/**
+ * Finds a single profile by its *Profile ID*.
+ * Corresponds to: @Get(':id') findOne(@Param('id') id: number)
+ * [cite: 37]
+ * @param {number} id - The Profile ID.
+ * @returns {Promise<object>} The profile object.
+ */
+export declare function fetchProfileById(id: number): Promise<object>;
+export declare function fetchManagerById(id: number): Promise<object>;
+/**
+ * Finds a single profile by its associated *User ID*.
+ * Corresponds to: @Get('/user/:userId') findOneByUserId(@Param('userId') userId: number)
+ * [cite: 38]
+ * @param {number} userId - The User ID.
+ * @returns {Promise<object>} The profile object.
+ */
+export declare function fetchProfileByUserId(userId: number): Promise<object>;
+/**
+ * Updates a profile by its *Profile ID*.
+ * Corresponds to: @Patch(':id') update(@Param('id') id: number, @Body() updateProfileDto: UpdateProfileDto)
+ * [cite: 34, 39]
+ * @param {number} id - The Profile ID.
+ * @param {object} updateProfileDto - The data to update (e.g., { phone: '...', designation: '...' }).
+ * @returns {Promise<object>} The updated profile object.
+ */
+export declare function updateProfile(id: number, updateProfileDto: object): Promise<object>;
+/**
+ * Updates a profile's avatar by its *Profile ID*.
+ * Corresponds to: @Patch(':id/avatar') updateAvatar(...)
+ *
+ * @param {number} id - The Profile ID.
+ * @param {FormData} formData - A FormData object containing the file (e.g., formData.append('file', fileInput.files[0])).
+ * @returns {Promise<object>} The updated profile object.
+ */
+export declare function updateAvatar(id: number, formData: FormData): Promise<object>;
+/**
+ * Soft-deletes a profile by its *Profile ID*.
+ * Corresponds to: @Delete(':id') remove(@Param('id') id: number)
+ * [cite: 43]
+ * @param {number} id - The Profile ID.
+ * @returns {Promise<object>} A confirmation of the deletion.
+ */
+export declare function deleteProfile(id: number): Promise<object>;
+/**
+ * Creates a new profile.
+ * Corresponds to: @Post() create(@Body() createProfileDto: CreateProfileDto)
+ * @param {object} createProfileDto - The profile data to create.
+ * @returns {Promise<object>} The created profile object.
+ */
+export declare function createProfile(createProfileDto: object): Promise<object>;
+/**
+ * Fetche leaves by profile id
+ */
+export declare function fetchLeavesByProfileId(profileId: number): Promise<any>;
+/**
+ * Submit a new leave request
+ */
+export declare function submitLeaveRequest(createLeaveDto: object): Promise<any>;
+export declare function fetchLeavesByManagerId(managerId: number): Promise<any>;
+export declare function fetchAllSchedules(): Promise<any>;
+export declare function newShift(createScheduleDto: object): Promise<any>;
+export declare function updateShift(shiftId: number, updateScheduleDto: object): Promise<any>;
+export declare function reassignShift(shiftId: number, profileId: number): Promise<any>;
+//# sourceMappingURL=fetch.d.ts.map

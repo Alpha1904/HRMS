@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
-import { ContractType } from '@prisma/client';
+import { ContractType, User } from '@prisma/client';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
@@ -11,8 +11,23 @@ import {
   IsObject,
   IsBoolean,
   IsEnum,
+  IsEmail,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+// DTO for the nested user object that can be updated via profile update
+class UpdateUserPayloadDto {
+  @IsEmail()
+  @IsOptional()
+  @ApiPropertyOptional({ description: "The user's email address", example: 'user@example.com' })
+  email?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiPropertyOptional({ description: 'Whether the user account is active', example: true })
+  isActive?: boolean;
+}
 
 // We create a base DTO with all updatable fields
 class BaseProfileDto {
@@ -26,7 +41,7 @@ class BaseProfileDto {
   @ApiPropertyOptional({ description: 'URL for the user avatar', example: 'https://example.com/avatar.png' })
   avatarUrl?: string;
 
-  @IsPhoneNumber() // Use a specific validator (e.g., 'E.164') if needed
+   // Use a specific validator (e.g., 'E.164') if needed
   @IsOptional()
   @ApiPropertyOptional({ description: "The user's phone number", example: '+15551234567' })
   phone?: string;
@@ -46,11 +61,10 @@ class BaseProfileDto {
   @ApiPropertyOptional({ description: "The user's job title or position", example: 'Senior Software Engineer' })
   position?: string;
 
-  @IsDate()
-  @Type(() => Date)
+  @IsString()
   @IsOptional()
   @ApiPropertyOptional({ description: 'The date the user was hired', example: '2022-08-15' })
-  hireDate?: Date;
+  hireDate?: string;
 
   @IsInt()
   @IsOptional()
@@ -83,6 +97,12 @@ class BaseProfileDto {
   @IsOptional()
   @ApiPropertyOptional({ description: 'The date of termination' })
   terminationDate?: Date;
+
+  @ValidateNested()
+  @Type(() => UpdateUserPayloadDto)
+  @IsOptional()
+  @ApiPropertyOptional({ description: 'User-related fields (email, isActive)', example: { email: 'user@example.com', isActive: true } })
+  user?: UpdateUserPayloadDto;
 }
 
 // The UpdateProfileDto is a Partial of the base,

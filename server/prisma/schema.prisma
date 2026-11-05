@@ -51,6 +51,31 @@ enum EvalPeriod {
   AD_HOC
 }
 
+enum EvaluationPeriod {
+  QUARTERLY
+  ANNUAL
+}
+
+enum EvaluationStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+enum EvaluationType {
+  AUTOMATIC
+  MANUAL
+  SELF
+}
+
+enum ObjectiveStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
 enum PostingStatus {
   OPEN
   CLOSED
@@ -60,11 +85,10 @@ enum PostingStatus {
 
 enum ApplicationStatus {
   PENDING
-  REVIEWED
+  SCREENING
   INTERVIEW
-  SELECTED
+  EXAMINATION
   REJECTED
-  OFFERED
   HIRED
 }
 
@@ -76,13 +100,7 @@ enum TrainingType {
   MANDATORY
 }
 
-enum DepartureReason {
-  RESIGNATION
-  FIRING
-  RETIREMENT
-  TERMINATION
-  LAYOFF
-}
+
 
 enum ReportType {
   PERFORMANCE
@@ -92,6 +110,42 @@ enum ReportType {
   DIVERSITY
   COMPLIANCE
 }
+
+enum ShiftChangeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+ enum DepartureType {
+  RESIGNATION
+  DISMISSAL
+  RETIREMENT
+ }
+
+ enum DepartureStatus {
+  PENDING
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+ }
+
+ enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+ }
 
 // ========================================
 // CORE AUTH & USER MANAGEMENT
@@ -118,13 +172,13 @@ model User {
   tenantId String? // For multi-tenancy (company/organization ID)
 
   // One-to-one: Every user has exactly one profile
-  profile Profile? @relation("UserProfile")
+  profile       Profile?       @relation("UserProfile")
   // [NEW] Relation to Notifications
-  notifications    Notification[] @relation("UserNotifications")
+  notifications Notification[] @relation("UserNotifications")
 
   // Messaging (internal communication)
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
+  sentMessages     UserMessage[] @relation("SentMessages")
+  receivedMessages UserMessage[] @relation("ReceivedMessages")
 
   // Job Postings created by user
   jobPostingsCreated JobPosting[] @relation("JobPostingsCreated")
@@ -139,6 +193,15 @@ model User {
 
   // Audit logs performed by this user
   auditLogs AuditLog[] @relation("UserAuditLogs")
+
+  createdDepartures Departure[] @relation("DepartureCreatedBy")
+  updatedDepartures Departure[] @relation("DepartureUpdatedBy")
+  uploadedDocuments DepartureDocument[] @relation("DocumentUploadedBy")
+  assignedChecklists DepartureChecklist[] @relation("ChecklistAssignee")
+  performedHistory DepartureHistory[] @relation("HistoryPerformedBy")
+
+  // Payment and Bonus Management relations
+  createdSalaryAdjustments SalaryAdjustment[] @relation("CreatedSalaryAdjustments")
 
   @@index([email])
   @@index([role])
@@ -162,7 +225,7 @@ model Profile {
   site            String? // e.g., "New York Office"
   department      String?
   position        String?
-  hireDate        DateTime?
+  hireDate        String?
   terminationDate DateTime?
   isTerminated    Boolean       @default(false)
   seniority       Int? // Years of experience/seniority
@@ -178,31 +241,49 @@ model Profile {
   manager         Profile?  @relation("ManagerProfiles", fields: [managerId], references: [id])
   managerId       Int?
 
+  shiftId Int?
+
   // Common relationships
-  documents            Document[]    @relation("ProfileDocuments")
-  leaves               Leave[]       @relation("ProfileLeaves")
-  leaveBalances   LeaveBalance[] @relation("ProfileLeaveBalances")
-  managedLeaves        Leave[]       @relation("ManagerLeaveApprovals")
-  hrAdminLeaves        Leave[]       @relation("HRAdminLeaveOverrides")
-  schedules            Schedule[]    @relation("ProfileSchedules")
-  evaluations          Evaluation[]  @relation("ProfileEvaluations")
-  evaluatorEvaluations Evaluation[]  @relation("EvaluatorEvaluations")
-  trainings            Training[]    @relation("ProfileTrainings")
-  assignedTrainings    Training[]    @relation("AssignedTrainings")
-  payments             Payment[]     @relation("ProfilePayments")
-  processedPayments    Payment[]     @relation("ProcessedPayments")
-  departures           Departure?    @relation("ProfileDeparture")
-  processedDepartures  Departure[]   @relation("ProcessedDepartures")
-  applications         Application[] @relation("ProfileApplications") // For candidates/recruiters
+  documents           Document[]           @relation("ProfileDocuments")
+  leaves              Leave[]              @relation("ProfileLeaves")
+  leaveBalances       LeaveBalance[]       @relation("ProfileLeaveBalances")
+  managedLeaves       Leave[]              @relation("ManagerLeaveApprovals")
+  hrAdminLeaves       Leave[]              @relation("HRAdminLeaveOverrides")
+  shifts              Shift?               @relation("ProfileShifts", fields: [shiftId], references: [id], onDelete: Cascade)
+  shiftChangeRequests ShiftChangeRequest[] @relation("ProfileShiftRequests")
+  trainings           Training[]           @relation("ProfileTrainings")
+  assignedTrainings   Training[]           @relation("AssignedTrainings")
+  applications        Application[]        @relation("ProfileApplications") // For candidates/recruiters
 
   // Announcements (HR only, but linked via profile)
   announcements Announcement[] @relation("ProfileAnnouncements")
+  topics        Topic[]        @relation("ProfileTopics")
+  replies       Reply[]        @relation("ProfileReplies")
 
-  // Reports (HR only)
-  reports Report[] @relation("ProfileReports")
+  // Chat Rooms
+  memberships ChatMember[]
+  messages    ChatMessage[]
+
 
   // Job postings (recruiter only)
   jobPostings JobPosting[] @relation("ProfileJobPostings")
+
+  evaluations          PerformanceEvaluation[]
+  manualEvaluations    ManualEvaluation[]      @relation("ReviewerEvaluations")
+  objectiveProgressLog ObjectiveProgress[]     @relation("ObjectiveProgressUpdatedBy")
+
+  goals                  Goal[]       @relation("ProfileGoals")
+  evaluationsAsEmployee  Evaluation[] @relation("EvaluationEmployee")
+  evaluationsAsEvaluator Evaluation[] @relation("EvaluationEvaluator")
+
+  departures Departure[] @relation("EmployeeDepartures")
+  conductedInterviews ExitInterview[] @relation("Interviewer")
+  handoverPlans HandoverPlan[] @relation("HandoverAssignee")
+
+  // Payment and Bonus Management relations
+  compensationComponents CompensationComponent[] @relation("ProfileCompensationComponents")
+  salaryAdjustments      SalaryAdjustment[]      @relation("ProfileSalaryAdjustments")
+  payslips               Payslip[]               @relation("ProfilePayslips")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -234,7 +315,7 @@ model Permissions {
 }
 
 // ========================================
-// CANDIDATE: Simplified external applicants
+// HIRING
 // ========================================
 model Candidate {
   id          Int      @id @default(autoincrement())
@@ -253,9 +334,6 @@ model Candidate {
   @@index([email])
 }
 
-// ========================================
-// RECRUITING
-// ========================================
 model JobPosting {
   id           Int           @id @default(autoincrement())
   title        String
@@ -303,11 +381,16 @@ model Application {
   offerSentAt   DateTime?
   hiredAt       DateTime?
 
+  // Optional: For drag-and-drop ordering within a column. 
+  // We use Float to easily insert between two items (e.g., 1.0 and 2.0 -> 1.5)
+  boardPosition Float? @default(0)
+
   // Notes/feedback
   feedback String?
   score    Float? // AI or manual score (0-100)
 
-  document Document? @relation("ApplicationDocument")
+  document     Document?     @relation("ApplicationDocument")
+  interactions Interaction[] @relation("ApplicationInteractions")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -316,6 +399,16 @@ model Application {
   @@index([postingId])
   @@index([status])
   @@index([profileId])
+}
+
+model Interaction {
+  id        Int      @id @default(autoincrement())
+  type      String // NOTE, EMAIL, INTERVIEW_INVITE
+  content   String
+  createdAt DateTime @default(now())
+
+  applicationId Int
+  application   Application @relation("ApplicationInteractions", fields: [applicationId], references: [id])
 }
 
 // ========================================
@@ -382,22 +475,22 @@ model Leave {
 
 // This is the "Bank Account" for leave *balances*
 model LeaveBalance {
-  id              Int       @id @default(autoincrement())
-  
-  profileId       Int
-  profile         Profile   @relation("ProfileLeaveBalances", fields: [profileId], references: [id], onDelete: Cascade)
-  
-  leaveType       LeaveType // e.g., VACATION, SICK
-  year            Int       // e.g., 2025 (Balances are almost always annual)
-  
-  totalAllocated  Float     // Total days given for the year (e.g., 20)
-  daysUsed        Float     @default(0) // Total days approved and taken
-  
-  // Optional: Track days carried over from last year
-  daysCarriedOver Float     @default(0) 
+  id Int @id @default(autoincrement())
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  profileId Int
+  profile   Profile @relation("ProfileLeaveBalances", fields: [profileId], references: [id], onDelete: Cascade)
+
+  leaveType LeaveType // e.g., VACATION, SICK
+  year      Int // e.g., 2025 (Balances are almost always annual)
+
+  totalAllocated Float // Total days given for the year (e.g., 20)
+  daysUsed       Float @default(0) // Total days approved and taken
+
+  // Optional: Track days carried over from last year
+  daysCarriedOver Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Ensures one balance record per employee, per type, per year
   @@unique([profileId, leaveType, year])
@@ -406,84 +499,128 @@ model LeaveBalance {
 
 //  This is the "Rules Engine" for leave *policies*
 model LeavePolicy {
-  id              Int       @id @default(autoincrement())
-  name            String    @unique // e.g., "Senior Engineer Policy", "Standard UK Policy"
-  description     String?
-  
-  leaveType       LeaveType // The type of leave this policy grants
-  daysAllocated   Float     // How many days it grants
-  
+  id          Int     @id @default(autoincrement())
+  name        String  @unique // e.g., "Senior Engineer Policy", "Standard UK Policy"
+  description String?
+
+  leaveType     LeaveType // The type of leave this policy grants
+  daysAllocated Float // How many days it grants
+
   // --- Applicability Criteria (who does this apply to?) ---
   // A 'null' value for a criteria means "applies to all"
-  
-  contractType    ContractType? // e.g., Only for FULL_TIME
-  role            Role?         // e.g., Only for MANAGER
-  department      String?       // e.g., Only for "Engineering"
-  site            String?       // e.g., Only for "New York Office"
-  
+
+  contractType ContractType? // e.g., Only for FULL_TIME
+  role         Role? // e.g., Only for MANAGER
+  department   String? // e.g., Only for "Engineering"
+  site         String? // e.g., Only for "New York Office"
+
   // Apply policy based on years of service (uses 'seniority' from Profile)
-  minSeniority    Int?          @default(0) // Min years of service
-  maxSeniority    Int?          // Max years of service (null = no max)
-  
+  minSeniority Int? @default(0) // Min years of service
+  maxSeniority Int? // Max years of service (null = no max)
+
   // Can this leave be carried over?
-  isCarryOverAllowed Boolean   @default(false)
+  isCarryOverAllowed Boolean @default(false)
   maxCarryOverDays   Float?
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([contractType, role, department])
 }
 
 // ========================================
-// SCHEDULING
+// [NEW] SCHEDULE & TIMETABLE MANAGEMENT
 // ========================================
 
-model Schedule {
-  id        Int     @id @default(autoincrement())
-  profileId Int     @unique
-  profile   Profile @relation("ProfileSchedules", fields: [profileId], references: [id], onDelete: Cascade)
+// This is the "Rule Book" or "Pattern" (e.g., "M-F 9-5")
+model WorkScheduleTemplate {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
 
-  // Flexible shift structure
-  shifts        Json[] // e.g., [{day: "MON", start: "09:00", end: "17:00", location: "Office"}]
-  rotationType  String? // e.g., "Fixed", "Rotating"
-  workWeekHours Float? // Total weekly hours
+  // Applicability criteria (null = applies to all)
+  site       String?
+  department String?
+  role       Role?
 
-  effectiveFrom DateTime?
-  effectiveTo   DateTime?
+  // Rotation settings
+  isRotation      Boolean @default(false) // For the "Shift Rotations" feature
+  rotationDaysOn  Int? // e.g., 7
+  rotationDaysOff Int? // e.g., 3
+
+  // Standard hours for this template
+  // We use strings for flexibility (e.g., "09:00", "17:00")
+  defaultStartTime String?
+  defaultEndTime   String?
+
+  // This template can be used to generate many shifts
+  shifts Shift[] @relation("TemplateShifts")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([profileId])
+  @@index([site, department, role])
+}
+
+// This is a *single assigned shift* for one person
+model Shift {
+  id      Int       @id @default(autoincrement())
+  profile Profile[] @relation("ProfileShifts")
+
+  title       String? // e.g., "Morning Shift", "Evening Shift"
+  description String?
+  isCompleted Boolean @default(false)
+
+  date      DateTime @db.Date // The specific day of the shift
+  startTime DateTime @db.Time // The start time (e.g., 09:00:00)
+  endTime   DateTime @db.Time // The end time (e.g., 17:00:00)
+
+  // Optional: The template this shift was generated from
+  templateId Int?
+  template   WorkScheduleTemplate? @relation("TemplateShifts", fields: [templateId], references: [id], onDelete: SetNull)
+
+  // This shift can have change requests
+  changeRequests ShiftChangeRequest[] @relation("ShiftChangeRequests")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@index([templateId])
+}
+
+// This is an "Employee Modification" request
+model ShiftChangeRequest {
+  id Int @id @default(autoincrement())
+
+  shiftId Int // The specific shift being changed
+  shift   Shift @relation("ShiftChangeRequests", fields: [shiftId], references: [id], onDelete: Cascade)
+
+  requesterId Int // The employee (Profile) asking for the change
+  requester   Profile @relation("ProfileShiftRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  reason String?
+  status ShiftChangeStatus @default(PENDING)
+
+  // Proposed new times (null = no change)
+  newDate      DateTime? @db.Date
+  newStartTime DateTime? @db.Time
+  newEndTime   DateTime? @db.Time
+
+  // For manager/HR approval
+  managerFeedback String?
+  processedById   Int? // User ID of the manager who actioned this
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shiftId])
+  @@index([requesterId, status])
 }
 
 // ========================================
 // PERFORMANCE & LEARNING
 // ========================================
-model Evaluation {
-  id        Int     @id @default(autoincrement())
-  profileId Int
-  profile   Profile @relation("ProfileEvaluations", fields: [profileId], references: [id], onDelete: Cascade)
-
-  evaluatorId Int?
-  evaluator   Profile? @relation("EvaluatorEvaluations", fields: [evaluatorId], references: [id], onUpdate: NoAction, onDelete: NoAction)
-
-  period       EvalPeriod
-  overallScore Float? // 1-5 scale
-  scores       Json? // {competency1: 4, competency2: 3}
-  achievements String?
-  improvements String?
-  goals        Json? // Array of {goal: string, targetDate: date}
-  selfEval     Boolean    @default(false)
-  feedback     String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([profileId, period])
-  @@index([evaluatorId])
-}
 
 model Training {
   id             Int          @id @default(autoincrement())
@@ -516,37 +653,96 @@ model Training {
 // ========================================
 // PAYROLL & BENEFITS
 // ========================================
-model Payment {
-  id        Int     @id @default(autoincrement())
-  profileId Int
-  profile   Profile @relation("ProfilePayments", fields: [profileId], references: [id], onDelete: Cascade)
 
-  // Processed/approved by HR
-  processedById Int?
-  processedBy   Profile? @relation("ProcessedPayments", fields: [processedById], references: [id], onUpdate: NoAction, onDelete: NoAction)
+// Enum for compensation types
+enum CompensationType {
+  BASE_SALARY
+  BONUS
+  INCENTIVE
+  OTHER
+}
 
-  period        String // e.g., "2025-11"
-  baseSalary    Float
-  bonuses       Float?
-  deductions    Json? // {tax: 1000, benefits: 200}
-  overtimeHours Float?
-  totalNet      Float // Calculated net pay
-  payslipUrl    String? // Link to generated payslip
-  paymentDate   DateTime
+// Enum for frequency of compensation
+enum Frequency {
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+  ONE_TIME
+}
 
-  status String @default("PAID") // DRAFT, PROCESSED, PAID
+// Model for compensation components (base salary, bonuses, incentives, etc.)
+model CompensationComponent {
+  id          Int              @id @default(autoincrement())
+  profileId   Int
+  profile     Profile          @relation("ProfileCompensationComponents", fields: [profileId], references: [id], onDelete: Cascade)
+  type        CompensationType
+  amount      Decimal          @db.Decimal(10, 2)
+  frequency   Frequency?
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  active      Boolean          @default(true)
+
+  // Relation to adjustments (if adjusted)
+  adjustments SalaryAdjustment[] @relation("ComponentSalaryAdjustments")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([profileId])
+  @@index([type])
+  @@index([active])
+}
+
+// Model for salary adjustments/changes (increases, performance bonuses, etc.)
+model SalaryAdjustment {
+  id             Int                    @id @default(autoincrement())
+  profileId      Int
+  profile        Profile                @relation("ProfileSalaryAdjustments", fields: [profileId], references: [id], onDelete: Cascade)
+  componentId    Int?
+  component      CompensationComponent? @relation("ComponentSalaryAdjustments", fields: [componentId], references: [id], onDelete: SetNull)
+  adjustmentType String
+  amount         Decimal                @db.Decimal(10, 2)
+  percentage     Float?
+  reason         String?
+  effectiveDate  DateTime
+  createdById    Int
+  createdBy      User                   @relation("CreatedSalaryAdjustments", fields: [createdById], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([profileId, period])
-  @@index([paymentDate])
+  @@index([profileId])
+  @@index([componentId])
+  @@index([createdById])
+  @@index([effectiveDate])
 }
+
+// Model for monthly payslips
+model Payslip {
+  id          Int     @id @default(autoincrement())
+  profileId   Int
+  profile     Profile @relation("ProfilePayslips", fields: [profileId], references: [id], onDelete: Cascade)
+  month       DateTime
+  grossAmount Decimal  @db.Decimal(10, 2)
+  deductions  Decimal? @db.Decimal(10, 2)
+  netAmount   Decimal  @db.Decimal(10, 2)
+  breakdown   Json?
+  filePath    String
+  generatedAt DateTime @default(now())
+  viewedAt    DateTime?
+
+  @@index([profileId])
+  @@index([month])
+  @@unique([profileId, month])
+}
+
 
 // ========================================
 // COMMUNICATION & ENGAGEMENT
 // ========================================
-model Message {
+model UserMessage {
   id         Int  @id @default(autoincrement())
   senderId   Int
   sender     User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
@@ -565,6 +761,7 @@ model Message {
 
   @@index([senderId, receiverId])
   @@index([createdAt, isRead])
+  @@map("Message")
 }
 
 model Announcement {
@@ -588,73 +785,140 @@ model Announcement {
   @@index([publishDate])
 }
 
-//This is the "Alert System" for in-app notifications
-model Notification {
-  id          Int       @id @default(autoincrement())
-  
-  recipientId Int       // The User ID of the person to notify
-  recipient   User      @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
-  
-  message     String    // e.g., "Jane Doe has requested 3 days of vacation."
-  isRead      Boolean   @default(false)
-  
-  // Optional: A link to navigate to on-click
-  // e.g., "/app/leaves/123" or "/app/announcements/45"
-  linkUrl     String?   
-  
-  createdAt   DateTime  @default(now())
-  
-  @@index([recipientId, isRead])
+// The top-level "space" or "category"
+model Forum {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  // Optional: Restrict this forum to a specific department
+  department String?
+
+  // A forum contains many topics
+  topics Topic[]
+
+  createdAt DateTime @default(now())
+
+  @@index([department])
 }
-// ========================================
-// OFFBOARDING & REPORTING
-// ========================================
-model Departure {
-  id        Int     @id @default(autoincrement())
-  profileId Int     @unique
-  profile   Profile @relation("ProfileDeparture", fields: [profileId], references: [id], onDelete: Cascade)
 
-  // Processed by HR
-  processedById Int?
-  processedBy   Profile? @relation("ProcessedDepartures", fields: [processedById], references: [id], onUpdate: NoAction, onDelete: NoAction)
+// The "thread" or "post" that starts a discussion
+model Topic {
+  id       Int     @id @default(autoincrement())
+  title    String
+  content  String // The original post content
+  isPinned Boolean @default(false)
 
-  reason             DepartureReason
-  exitDate           DateTime
-  noticePeriodDays   Int?
-  finalPayAmount     Float?
-  indemnity          Float?
-  exitInterviewNotes String?
-  surveyResponses    Json? // Structured feedback
+  forumId Int
+  forum   Forum @relation(fields: [forumId], references: [id], onDelete: Cascade)
 
-  status String @default("PENDING") // PENDING, APPROVED, COMPLETED
+  authorId Int // The Profile ID of the author
+  author   Profile @relation("ProfileTopics", fields: [authorId], references: [id])
+
+  // A topic has many replies
+  replies Reply[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([profileId])
-  @@index([exitDate, status])
+  @@index([forumId])
+  @@index([authorId])
 }
 
-model Report {
-  id          Int        @id @default(autoincrement())
-  type        ReportType
-  title       String?
-  filters     Json? // Query params: {department: "IT", period: "Q4"}
-  data        Json // Generated report content (e.g., CSV/JSON export)
-  fileUrl     String? // Exported file link
-  generatedAt DateTime   @default(now())
+// A "comment" or "reply" to a Topic
+model Reply {
+  id      Int    @id @default(autoincrement())
+  content String
 
-  // Generated by HR profile
-  generatedById Int
-  generatedBy   Profile @relation("ProfileReports", fields: [generatedById], references: [id], onDelete: Cascade)
+  topicId Int
+  topic   Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
-  @@index([generatedById, type])
-  @@index([generatedAt])
+  authorId Int // The Profile ID of the author
+  author   Profile @relation("ProfileReplies", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([topicId])
+  @@index([authorId])
 }
 
 // ========================================
+// chat 
+//=========================================
+
+enum EmployeeStatus {
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+}
+
+enum ChatType {
+  DIRECT
+  GROUP
+  ANNOUNCEMENT
+}
+
+model ChatRoom {
+  id        String   @id @default(uuid())
+  name      String? // Null for 1:1 chats
+  type      ChatType @default(DIRECT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  ChatMember[]
+  messages ChatMessage[]
+
+  @@index([updatedAt])
+}
+
+model ChatMember {
+  id     String @id @default(uuid())
+  userId Int
+  roomId String
+  role   String @default("MEMBER") // 'OWNER', 'ADMIN', 'MEMBER'
+
+  user Profile  @relation(fields: [userId], references: [id])
+  room ChatRoom @relation(fields: [roomId], references: [id])
+
+  @@unique([userId, roomId]) // Prevents duplicate membership
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  content   String
+  senderId  Int
+  roomId    String
+  createdAt DateTime @default(now())
+  isEdited  Boolean  @default(false)
+
+  sender Profile  @relation(fields: [senderId], references: [id])
+  room   ChatRoom @relation(fields: [roomId], references: [id])
+
+  @@map("ChatMessage")
+}
+
+//This is the "Alert System" for in-app notifications
+model Notification {
+  id Int @id @default(autoincrement())
+
+  recipientId Int // The User ID of the person to notify
+  recipient   User @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  message String // e.g., "Jane Doe has requested 3 days of vacation."
+  isRead  Boolean @default(false)
+
+  // Optional: A link to navigate to on-click
+  // e.g., "/app/leaves/123" or "/app/announcements/45"
+  linkUrl String?
+
+  createdAt DateTime @default(now())
+
+  @@index([recipientId, isRead])
+}
+
+/// ========================================
 // AUDIT RELATIONS (Reused for consistency)
-// ========================================
 
 model AuditLog {
   id         Int     @id @default(autoincrement())
@@ -675,3 +939,312 @@ model AuditLog {
   @@index([resource, resourceId])
   @@index([createdAt])
 }
+// ========================================
+
+
+model EvaluationCycle {
+  id        Int              @id @default(autoincrement())
+  name      String
+  period    EvaluationPeriod
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean          @default(true)
+
+  deletedAt DateTime?
+
+  evaluations PerformanceEvaluation[]
+
+  tenantId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([period])
+  @@index([isActive])
+  @@index([tenantId])
+}
+
+model PerformanceEvaluation {
+  id         Int     @id @default(autoincrement())
+  employeeId Int
+  employee   Profile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  cycleId Int
+  cycle   EvaluationCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+
+  status     EvaluationStatus @default(DRAFT)
+  finalScore Float?
+  rank       Int?
+
+  automaticScore EvaluationScore?
+  manualReview   ManualEvaluation?
+  selfReview     SelfEvaluation?
+
+  objectives EmployeeObjective[]
+
+  tenantId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([employeeId, cycleId])
+  @@index([status])
+  @@index([tenantId])
+}
+
+model EvaluationCriteria {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  weight      Float
+  isActive    Boolean @default(true)
+
+  tenantId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([tenantId])
+}
+
+model EvaluationScore {
+  id           Int                   @id @default(autoincrement())
+  evaluationId Int                   @unique
+  evaluation   PerformanceEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  totalScore  Float
+  breakdown   Json
+  generatedAt DateTime @default(now())
+}
+
+model ManualEvaluation {
+  id           Int                   @id @default(autoincrement())
+  evaluationId Int                   @unique
+  evaluation   PerformanceEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  reviewerId Int
+  reviewer   Profile @relation("ReviewerEvaluations", fields: [reviewerId], references: [id])
+
+  strengths       String
+  weaknesses      String
+  achievements    String?
+  recommendations String?
+  score           Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reviewerId])
+}
+
+model SelfEvaluation {
+  id           Int                   @id @default(autoincrement())
+  evaluationId Int                   @unique
+  evaluation   PerformanceEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  comments     String
+  achievements String?
+  challenges   String?
+  selfScore    Float?
+
+  submittedAt DateTime @default(now())
+}
+
+model EmployeeObjective {
+  id           Int                   @id @default(autoincrement())
+  evaluationId Int
+  evaluation   PerformanceEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  targetValue String?
+  status      ObjectiveStatus @default(NOT_STARTED)
+  weight      Float?
+
+  progress ObjectiveProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model ObjectiveProgress {
+  id          Int               @id @default(autoincrement())
+  objectiveId Int
+  objective   EmployeeObjective @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+
+  progressNote String
+  progressRate Float?
+  updatedById  Int
+  updatedBy    Profile @relation("ObjectiveProgressUpdatedBy", fields: [updatedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([objectiveId])
+}
+
+model Evaluation {
+  id Int @id @default(autoincrement())
+
+  profileId Int
+  profile   Profile @relation("EvaluationEmployee", fields: [profileId], references: [id], onDelete: Cascade)
+
+  evaluatorId Int?
+  evaluator   Profile? @relation("EvaluationEvaluator", fields: [evaluatorId], references: [id], onDelete: NoAction)
+
+  period       EvalPeriod
+  overallScore Float?
+  scores       Json?
+  achievements String?
+  improvements String?
+  selfEval     Boolean    @default(false)
+  feedback     String?
+
+  goalsSet Goal[] @relation("EvaluationGoals")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId, period])
+  @@index([evaluatorId])
+}
+
+model Goal {
+  id Int @id @default(autoincrement())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profileId Int
+  profile   Profile @relation("ProfileGoals", fields: [profileId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  status      GoalStatus @default(NOT_STARTED)
+  progress    Int?       @default(0)
+  targetDate  DateTime?
+
+  createdInEvaluationId Int?
+  createdInEvaluation   Evaluation? @relation("EvaluationGoals", fields: [createdInEvaluationId], references: [id], onDelete: SetNull)
+
+  @@index([profileId, status])
+}
+
+ model Departure {
+  id Int @id @default(autoincrement())
+  employeeId Int
+  employee Profile @relation("EmployeeDepartures", fields: [employeeId], references: [id], onDelete: Cascade)
+  type DepartureType
+  reason String?
+  noticeDate DateTime
+  requiredNoticeDays Int?
+  actualNoticeDays Int?
+  lastWorkDate DateTime
+  severancePay Float?
+  severanceBreakdown Json?
+  severanceApproved Boolean? @default(false)
+  status DepartureStatus @default(PENDING)
+  notes String?
+  tenantId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdById Int?
+  createdBy User? @relation("DepartureCreatedBy", fields: [createdById], references: [id])
+  updatedById Int?
+  updatedBy User? @relation("DepartureUpdatedBy", fields: [updatedById], references: [id])
+  exitInterview ExitInterview?
+  exitSurvey ExitSurvey?
+  documents DepartureDocument[]
+  checklistItems DepartureChecklist[]
+  handoverPlan HandoverPlan?
+  history DepartureHistory[]
+  @@unique([employeeId, noticeDate])
+  @@index([employeeId])
+  @@index([type])
+  @@index([status])
+  @@index([tenantId])
+ }
+
+ model ExitInterview {
+  id Int @id @default(autoincrement())
+  departureId Int @unique
+  departure Departure @relation(fields: [departureId], references: [id], onDelete: Cascade)
+  interviewerId Int
+  interviewer Profile @relation("Interviewer", fields: [interviewerId], references: [id])
+  scheduledDate DateTime?
+  interviewDate DateTime?
+  notes String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([interviewerId])
+ }
+
+ model ExitSurvey {
+  id Int @id @default(autoincrement())
+  departureId Int @unique
+  departure Departure @relation(fields: [departureId], references: [id], onDelete: Cascade)
+  responses Json
+  submittedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ }
+
+ model DepartureDocument {
+  id Int @id @default(autoincrement())
+  departureId Int
+  departure Departure @relation(fields: [departureId], references: [id], onDelete: Cascade)
+  name String
+  url String
+  type String?
+  uploadedAt DateTime @default(now())
+  uploadedById Int?
+  uploadedBy User? @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+  @@index([departureId])
+ }
+
+ model DepartureChecklist {
+  id Int @id @default(autoincrement())
+  departureId Int
+  departure Departure @relation(fields: [departureId], references: [id], onDelete: Cascade)
+  taskName String
+  description String?
+  assigneeId Int?
+  assignee User? @relation("ChecklistAssignee", fields: [assigneeId], references: [id])
+  dueDate DateTime?
+  status TaskStatus @default(NOT_STARTED)
+  completedAt DateTime?
+  notes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([departureId])
+  @@index([status])
+ }
+
+ model HandoverPlan {
+  id Int @id @default(autoincrement())
+  departureId Int @unique
+  departure Departure @relation(fields: [departureId], references: [id], onDelete: Cascade)
+  assigneeId Int
+  assignee Profile @relation("HandoverAssignee", fields: [assigneeId], references: [id])
+  notes String?
+  tasks Json?
+  completed Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([assigneeId])
+ }
+
+ model DepartureHistory {
+  id Int @id @default(autoincrement())
+  departureId Int
+  departure Departure @relation(fields: [departureId], references: [id], onDelete: Cascade)
+  eventType String
+  details Json?
+  timestamp DateTime @default(now())
+  performedById Int?
+  performedBy User? @relation("HistoryPerformedBy", fields: [performedById], references: [id])
+  @@index([departureId])
+  @@index([timestamp])
+ }

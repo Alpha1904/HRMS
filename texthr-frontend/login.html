@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - HRMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white shadow-sm border border-slate-200 rounded-xl p-6">
+      <div class="mb-6">
+        <h1 class="text-xl font-semibold text-slate-900">Sign in</h1>
+        <p class="text-sm text-slate-600 mt-1">Manage departures, checklists, interviews and documents.</p>
+      </div>
+
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Email</label>
+          <input id="email" type="email" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="hr_admin@hrms.com" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Password</label>
+          <input id="password" type="password" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="password123" />
+        </div>
+
+        <div class="flex items-center justify-between">
+          <button id="loginBtn" type="submit" class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-60">Sign in</button>
+          <a class="text-sm text-slate-600 hover:text-slate-900" href="./dashboard.html">Go to app</a>
+        </div>
+
+        <div id="loginError" class="hidden text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3"></div>
+      </form>
+    </div>
+
+    <div id="toastRoot" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+    <script type="module" src="./assets/js/auth.js"></script>
+    <script type="module">
+      import { login } from './assets/js/auth.js';
+      import { toast, setLoading } from './assets/js/utils.js';
+
+      const form = document.getElementById('loginForm');
+      const errorEl = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorEl.classList.add('hidden');
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        try {
+          setLoading(btn, true);
+          await login({ email, password });
+          toast('Signed in', 'success');
+          window.location.replace('./dashboard.html');
+        } catch (err) {
+          const msg = err?.message || 'Login failed';
+          errorEl.textContent = msg;
+          errorEl.classList.remove('hidden');
+        } finally {
+          setLoading(btn, false);
+        }
+      });
+    </script>
+  </body>
+</html>

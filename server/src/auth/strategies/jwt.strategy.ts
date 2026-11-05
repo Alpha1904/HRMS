@@ -30,8 +30,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 }
 
 export const cookieExtractor = (req: Request): string | null => {
-  return (
-    req.cookies?.['accessToken'] ||
-    ExtractJwt.fromAuthHeaderAsBearerToken()(req)
-  );
+  const token = req.cookies?.['accessToken'];
+  const bearerToken = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+  
+  console.log('[JWT] Attempting to extract token...');
+  console.log('[JWT] Cookies:', req.cookies);
+  console.log('[JWT] AccessToken from cookie:', token ? 'Found' : 'Not found');
+  console.log('[JWT] Bearer token:', bearerToken ? 'Found' : 'Not found');
+  
+  const result = token || bearerToken;
+  console.log('[JWT] Final token:', result ? 'Found' : 'Not found');
+  
+  return result || null;
 };

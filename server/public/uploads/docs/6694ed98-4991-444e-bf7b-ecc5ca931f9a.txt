@@ -1,0 +1,94 @@
+You are an expert frontend developer specializing in building responsive web applications using HTML5, Tailwind CSS (for styling), and vanilla JavaScript (with minimal libraries where necessary). Your task is to build the complete frontend for the recruitment (hiring) section of an HRMS platform. This frontend should integrate with the existing NestJS backend API, handling authentication via JWT tokens (assume tokens are stored in localStorage or provided manually; no dedicated login page—perhaps a simple token input field on the dashboard if needed). Focus on a recruiter-facing dashboard with a Kanban board for managing application pipelines, using drag-and-drop functionality to update application statuses and positions.
+The backend API endpoints are as follows (base URL: http://localhost:3000; use fetch for CRUD operations, include Authorization: Bearer <token> for protected routes):
+
+Job Postings:
+POST /job-postings (create)
+GET /job-postings (list with ?status=OPEN&page=1&limit=10)
+GET /job-postings/:id
+PATCH /job-postings/:id (update)
+PATCH /job-postings/:id/publish
+PATCH /job-postings/:id/pause
+PATCH /job-postings/:id/close
+DELETE /job-postings/:id
+
+Candidates:
+POST /candidates (create)
+GET /candidates (list with filters)
+GET /candidates/:id
+PATCH /candidates/:id (update)
+PATCH /candidates/:id/deactivate
+
+Applications:
+POST /applications (apply, multipart for resume)
+GET /applications/posting/:postingId (list with ?status=PENDING)
+GET /applications/:id
+PATCH /applications/:id/status (body: {status: 'SHORTLISTED'})
+PATCH /applications/:id/position (body: {boardPosition: 1.5})
+PATCH /applications/:id/feedback (body: {feedback: '...', score: 80})
+
+Interactions (nested under applications):
+POST /applications/:applicationId/interactions (body: {type: 'INTERVIEW_INVITE', content: '...'})
+GET /applications/:applicationId/interactions
+
+Documents:
+POST /documents/upload (multipart/form-data: file, entityType='application', entityId=1, type='RESUME')
+
+
+Application statuses: PENDING, SCREENING, SHORTLISTED, INTERVIEW, EXAMINATION, REJECTED, HIRED.
+Requirements
+
+Tech Stack:
+HTML5 for structure.
+Tailwind CSS (v3+) for styling (include via CDN or assume installed; use utility classes for responsive, dark-mode compatible UI).
+Vanilla JavaScript for logic, API calls (fetch), and DOM manipulation.
+For drag-and-drop: Use SortableJS (include via CDN) to enable Kanban card dragging between/within columns.
+No frameworks like React/Vue—keep it simple, modular JS.
+
+Pages/Components:
+Dashboard: Sidebar navigation (Jobs, Candidates, Documents, Logout). Main area: List of job postings (cards/table with title, status, application count; buttons to create new, edit, publish/pause/close/delete). Include a field to input/paste JWT token if not stored.
+Job Posting Form: Modal or page for create/edit job (fields: title, description, department, site, salaryRange {min, max, currency}, requirements).
+Kanban Board (per Job Posting): For a selected job, display columns for each ApplicationStatus. Each column is a droppable list.
+Cards: Represent applications (show candidate name, email, score, feedback snippet; clickable to view details).
+Drag-and-drop: Moving card within column updates boardPosition (PATCH /applications/:id/position); to another column updates status (PATCH /applications/:id/status) and resets position.
+Fetch applications via GET /applications/posting/:id, sort by boardPosition per status.
+
+Application Details Modal/Page: View full application (candidate/profile info, resume link, interactions list, form to add interaction/email/invite, feedback form, document upload).
+Candidate List/Page: Table of candidates with search/filter, details view.
+Documents Page: Dedicated page for managing documents. List all documents (fetch via custom query or related endpoints if needed), with filters by type/entity (profile/candidate/application). Include upload form (select entityType, entityId, type, file). View/download links (using /uploads/ paths). Search by fileName/type, pagination.
+Error Handling: Show toasts/alerts for API errors (e.g., 403 Forbidden if not recruiter).
+Pagination: For lists (jobs, candidates, applications, documents).
+Responsiveness: Mobile-friendly (use Tailwind responsive classes).
+Security: Check token on load; prompt for token if invalid/missing. Role check via /auth/me if needed.
+
+Kanban Specifics:
+Columns: Dynamically generate based on ApplicationStatus enum (7 columns).
+Cards: Draggable divs with Tailwind styles (e.g., bg-white shadow-md p-4).
+Use SortableJS: Initialize on columns for multi-drag (allow drag between lists, onEnd handler to detect new column/status and new position, then API call to update).
+After drag: Refresh board data to reflect changes.
+
+General UI:
+Modern, clean design: Use Tailwind for buttons (bg-blue-500 hover:bg-blue-600), modals (fixed inset-0 bg-black/50), etc.
+Loading spinners for API calls.
+Forms: Validate inputs (e.g., required fields) before submit.
+
+Assumptions:
+Backend runs on localhost:3000.
+User is recruiter (Role.RECRUITER); hide/show features based on role if fetched.
+Handle external candidate applications (public form to apply to a job).
+For emails/notifications: Just trigger API; assume backend handles sending.
+
+
+Output Deliverables
+
+Full source code in a directory structure:
+index.html (main entry, dashboard).
+documents.html (for the new doc page).
+styles.css (if not using Tailwind CDN; compile Tailwind if needed).
+scripts/ (app.js for global, job.js, kanban.js, documents.js, etc.).
+Include SortableJS CDN in HTML: <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+Provide a README.md with setup: Open index.html in browser, ensure backend running, test flows (input token → create job → view Kanban → drag card → add interaction → manage documents).
+Postman-like test instructions for frontend-backend integration.
+Ensure code is modular, commented, and error-resilient.
+
+Build this step-by-step, ensuring seamless API integration and smooth UX. Test locally if possible.
